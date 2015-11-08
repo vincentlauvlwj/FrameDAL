@@ -44,11 +44,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\Column.cs" />
+    <Compile Include="Attributes\GeneratorType.cs" />
+    <Compile Include="Attributes\Id.cs" />
+    <Compile Include="Attributes\Table.cs" />
+    <Compile Include="Config\Configuration.cs" />
+    <Compile Include="Config\ConfigUtil.cs" />
+    <Compile Include="Core\AppContext.cs" />
+    <Compile Include="Core\BaseSession.cs" />
+    <Compile Include="Core\ISession.cs" />
+    <Compile Include="Core\MySqlSession.cs" />
     <Compile Include="DbHelper\BaseHelper.cs" />
     <Compile Include="DbHelper\IDbHelper.cs" />
     <Compile Include="DbHelper\MySqlHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Query\BaseQuery.cs" />
+    <Compile Include="Query\IQuery.cs" />
+    <Compile Include="Query\MySqlQuery.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
