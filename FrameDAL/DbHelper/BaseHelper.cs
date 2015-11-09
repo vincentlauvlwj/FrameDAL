@@ -38,18 +38,21 @@ namespace FrameDAL.DbHelper
 
         public void BeginTransaction()
         {
-            if (GetTransactionTier() == 0)
+            lock (dict)
             {
-                Bundle bundle = new Bundle();
-                bundle.Connection = NewConnection(connStr);
-                bundle.Connection.Open();
-                bundle.Transaction = bundle.Connection.BeginTransaction();
-                bundle.Tier = 1;
-                dict.Add(Thread.CurrentThread.ManagedThreadId, bundle);
-            }
-            else
-            {
-                dict[Thread.CurrentThread.ManagedThreadId].Tier++;
+                if (GetTransactionTier() == 0)
+                {
+                    Bundle bundle = new Bundle();
+                    bundle.Connection = NewConnection(connStr);
+                    bundle.Connection.Open();
+                    bundle.Transaction = bundle.Connection.BeginTransaction();
+                    bundle.Tier = 1;
+                    dict.Add(Thread.CurrentThread.ManagedThreadId, bundle);
+                }
+                else
+                {
+                    dict[Thread.CurrentThread.ManagedThreadId].Tier++;
+                }
             }
         }
 
@@ -57,32 +60,38 @@ namespace FrameDAL.DbHelper
 
         public void CommitTransaction()
         {
-            if (GetTransactionTier() == 1)
+            lock (dict)
             {
-                Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
-                dict.Remove(Thread.CurrentThread.ManagedThreadId);
-                bundle.Transaction.Commit();
-                bundle.Connection.Close();
-            }
-            else
-            {
-                dict[Thread.CurrentThread.ManagedThreadId].Tier--;
+                if (GetTransactionTier() == 1)
+                {
+                    Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
+                    dict.Remove(Thread.CurrentThread.ManagedThreadId);
+                    bundle.Transaction.Commit();
+                    bundle.Connection.Close();
+                }
+                else
+                {
+                    dict[Thread.CurrentThread.ManagedThreadId].Tier--;
+                }
             }
         }
 
 
         public void RollbackTransaction()
         {
-            if (GetTransactionTier() == 1)
+            lock (dict)
             {
-                Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
-                dict.Remove(Thread.CurrentThread.ManagedThreadId);
-                bundle.Transaction.Rollback();
-                bundle.Connection.Close();
-            }
-            else
-            {
-                dict[Thread.CurrentThread.ManagedThreadId].Tier--;
+                if (GetTransactionTier() == 1)
+                {
+                    Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
+                    dict.Remove(Thread.CurrentThread.ManagedThreadId);
+                    bundle.Transaction.Rollback();
+                    bundle.Connection.Close();
+                }
+                else
+                {
+                    dict[Thread.CurrentThread.ManagedThreadId].Tier--;
+                }
             }
         }
 

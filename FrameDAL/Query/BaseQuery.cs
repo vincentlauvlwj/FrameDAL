@@ -93,7 +93,11 @@ namespace FrameDAL.Query
 
         public T ExecuteGetEntity<T>()
         {
-            return ExecuteGetList<T>()[0];
+            List<T> results = ExecuteGetList<T>();
+            if (results.Count > 0)
+                return ExecuteGetList<T>()[0];
+            else
+                return default(T);
         }
     }
 }

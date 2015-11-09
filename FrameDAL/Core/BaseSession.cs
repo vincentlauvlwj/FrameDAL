@@ -55,8 +55,8 @@ namespace FrameDAL.Core
         public void BeginTransaction()
         {
             if (IsClosed) throw new ApplicationException("Session已关闭");
-            Flush();
             DbHelper.BeginTransaction();
+            Flush();
         }
 
         public void CommitTransaction()
@@ -128,22 +128,27 @@ namespace FrameDAL.Core
         public void Flush()
         {
             if (IsClosed) throw new ApplicationException("Session已关闭");
-            try
+            if (cache.Count == 0) return;
+            if (db.InTransaction())
             {
-                BeginTransaction();
-
                 while (cache.Count != 0)
                 {
                     Bundle bundle = cache.Dequeue();
                     CreateQuery(bundle.SqlText, bundle.Parameters).ExecuteNonQuery();
                 }
-
-                CommitTransaction();
             }
-            catch
+            else
             {
-                RollbackTransaction();
-                throw;
+                try
+                {
+                    BeginTransaction();
+                    CommitTransaction();
+                }
+                catch
+                {
+                    RollbackTransaction();
+                    throw;
+                }
             }
         }
 

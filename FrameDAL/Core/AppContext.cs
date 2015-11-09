@@ -22,16 +22,17 @@ namespace FrameDAL.Core
 
         private IDbHelper db;
         private Configuration config;
-        private Dictionary<Type, ConstructorInfo> constructors;
-        private Dictionary<Type, Table> tables;
-        private Dictionary<Type, PropertyInfo[]> props;
-        private Dictionary<Type, PropertyInfo> idProps;
-        private Dictionary<PropertyInfo, Column> columns;
-        private Dictionary<PropertyInfo, Id> ids;
-        private Dictionary<Type, string> inserts;
-        private Dictionary<Type, string> deletes;
-        private Dictionary<Type, string> updates;
-        private Dictionary<Type, string> selects;
+
+        private Dictionary<Type, ConstructorInfo> constructors = new Dictionary<Type, ConstructorInfo>();
+        private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
+        private Dictionary<Type, PropertyInfo[]> props = new Dictionary<Type,PropertyInfo[]>();
+        private Dictionary<Type, PropertyInfo> idProps = new Dictionary<Type,PropertyInfo>();
+        private Dictionary<PropertyInfo, Column> columns = new Dictionary<PropertyInfo,Column>();
+        private Dictionary<PropertyInfo, Id> ids = new Dictionary<PropertyInfo,Id>();
+        private Dictionary<Type, string> inserts = new Dictionary<Type,string>();
+        private Dictionary<Type, string> deletes = new Dictionary<Type,string>();
+        private Dictionary<Type, string> updates = new Dictionary<Type,string>();
+        private Dictionary<Type, string> selects = new Dictionary<Type,string>();
 
         private AppContext(Configuration config) 
         {
@@ -45,16 +46,6 @@ namespace FrameDAL.Core
                 default:
                     throw new ApplicationException("暂不支持的数据库类型");
             }
-            constructors = new Dictionary<Type, ConstructorInfo>();
-            tables = new Dictionary<Type, Table>();
-            props = new Dictionary<Type, PropertyInfo[]>();
-            idProps = new Dictionary<Type, PropertyInfo>();
-            columns = new Dictionary<PropertyInfo, Column>();
-            ids = new Dictionary<PropertyInfo, Id>();
-            inserts = new Dictionary<Type, string>();
-            deletes = new Dictionary<Type, string>();
-            updates = new Dictionary<Type, string>();
-            selects = new Dictionary<Type, string>();
         }
 
         public ISession OpenSession()
@@ -71,204 +62,237 @@ namespace FrameDAL.Core
 
         public void ClearCache()
         {
-            constructors.Clear();
-            tables.Clear();
-            props.Clear();
-            idProps.Clear();
-            columns.Clear();
-            ids.Clear();
-            inserts.Clear();
-            deletes.Clear();
-            updates.Clear();
-            selects.Clear();
+            lock(constructors) constructors.Clear();
+            lock(tables) tables.Clear();
+            lock(props) props.Clear();
+            lock(idProps) idProps.Clear();
+            lock(columns) columns.Clear();
+            lock(ids) ids.Clear();
+            lock(inserts) inserts.Clear();
+            lock(deletes) deletes.Clear();
+            lock(updates) updates.Clear();
+            lock(selects) selects.Clear();
         }
 
         public ConstructorInfo GetConstructor(Type type)
         {
-            if (constructors.ContainsKey(type))
+            lock (constructors)
             {
-                return constructors[type];
-            }
-            else
-            {
-                ConstructorInfo cons = type.GetConstructor(new Type[0]);
-                constructors.Add(type, cons);
-                return cons;
+                if (constructors.ContainsKey(type))
+                {
+                    return constructors[type];
+                }
+                else
+                {
+                    ConstructorInfo cons = type.GetConstructor(new Type[0]);
+                    constructors.Add(type, cons);
+                    return cons;
+                }
             }
         }
 
         public Table GetTable(Type type)
         {
-            if (tables.ContainsKey(type))
+            lock (tables)
             {
-                return tables[type];
-            }
-            else
-            {
-                Table table = Attribute.GetCustomAttribute(type, typeof(Table)) as Table;
-                tables.Add(type, table);
-                return table;
+                if (tables.ContainsKey(type))
+                {
+                    return tables[type];
+                }
+                else
+                {
+                    Table table = Attribute.GetCustomAttribute(type, typeof(Table)) as Table;
+                    tables.Add(type, table);
+                    return table;
+                }
             }
         }
 
         public PropertyInfo[] GetProperties(Type type)
         {
-            if (props.ContainsKey(type))
+            lock (props)
             {
-                return props[type];
-            }
-            else
-            {
-                PropertyInfo[] properties = type.GetProperties();
-                props.Add(type, properties);
-                return properties;
+                if (props.ContainsKey(type))
+                {
+                    return props[type];
+                }
+                else
+                {
+                    PropertyInfo[] properties = type.GetProperties();
+                    props.Add(type, properties);
+                    return properties;
+                }
             }
         }
 
         public PropertyInfo GetIdProperty(Type type)
         {
-            if (idProps.ContainsKey(type))
+            lock (idProps)
             {
-                return idProps[type];
-            }
-            else
-            {
-                foreach (PropertyInfo prop in GetProperties(type))
+                if (idProps.ContainsKey(type))
                 {
-                    Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
-                    if (id != null)
-                    {
-                        idProps.Add(type, prop);
-                        ids.Add(prop, id);
-                        return prop;
-                    }
+                    return idProps[type];
                 }
-                return null;
+                else
+                {
+                    foreach (PropertyInfo prop in GetProperties(type))
+                    {
+                        Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
+                        if (id != null)
+                        {
+                            idProps.Add(type, prop);
+                            lock (ids)
+                            {
+                                if (!ids.ContainsKey(prop)) ids.Add(prop, id);
+                            }
+                            return prop;
+                        }
+                    }
+                    return null;
+                }
             }
         }
 
         public Column GetColumn(PropertyInfo prop)
         {
-            if (columns.ContainsKey(prop))
+            lock (columns)
             {
-                return columns[prop];
-            }
-            else
-            {
-                Column col = Attribute.GetCustomAttribute(prop, typeof(Column)) as Column;
-                columns.Add(prop, col);
-                return col;
+                if (columns.ContainsKey(prop))
+                {
+                    return columns[prop];
+                }
+                else
+                {
+                    Column col = Attribute.GetCustomAttribute(prop, typeof(Column)) as Column;
+                    columns.Add(prop, col);
+                    return col;
+                }
             }
         }
 
         public Id GetId(PropertyInfo prop)
         {
-            if (ids.ContainsKey(prop))
+            lock (ids)
             {
-                return ids[prop];
-            }
-            else
-            {
-                Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
-                ids.Add(prop, id);
-                return id;
+                if (ids.ContainsKey(prop))
+                {
+                    return ids[prop];
+                }
+                else
+                {
+                    Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
+                    ids.Add(prop, id);
+                    return id;
+                }
             }
         }
 
         public string GetInsertSql(Type type)
         {
-            if (inserts.ContainsKey(type))
+            lock (inserts)
             {
-                return inserts[type];
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("insert into ");
-                sb.Append(GetTable(type).Name);
-                sb.Append(" (");
-                foreach (PropertyInfo prop in GetProperties(type))
+                if (inserts.ContainsKey(type))
                 {
-                    sb.Append(GetColumn(prop).Name + ", ");
+                    return inserts[type];
                 }
-                sb.Remove(sb.Length - 2, 2);
-                sb.Append(") values (");
-                for (int i = 0; i < GetProperties(type).Length; i++)
+                else
                 {
-                    sb.Append("?, ");
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("insert into ");
+                    sb.Append(GetTable(type).Name);
+                    sb.Append(" (");
+                    foreach (PropertyInfo prop in GetProperties(type))
+                    {
+                        sb.Append(GetColumn(prop).Name + ", ");
+                    }
+                    sb.Remove(sb.Length - 2, 2);
+                    sb.Append(") values (");
+                    for (int i = 0; i < GetProperties(type).Length; i++)
+                    {
+                        sb.Append("?, ");
+                    }
+                    sb.Remove(sb.Length - 2, 2);
+                    sb.Append(")");
+                    string sql = sb.ToString();
+                    inserts.Add(type, sql);
+                    return sql;
                 }
-                sb.Remove(sb.Length - 2, 2);
-                sb.Append(")");
-                string sql = sb.ToString();
-                inserts.Add(type, sql);
-                return sql;
             }
         }
 
         public string GetDeleteSql(Type type)
         {
-            if (deletes.ContainsKey(type))
+            lock (deletes)
             {
-                return deletes[type];
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("delete from ");
-                sb.Append(GetTable(type).Name);
-                sb.Append(" where ");
-                sb.Append(GetColumn(GetIdProperty(type)).Name);
-                sb.Append("=?");
-                string sql = sb.ToString();
-                deletes.Add(type, sql);
-                return sql;
+                if (deletes.ContainsKey(type))
+                {
+                    return deletes[type];
+                }
+                else
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("delete from ");
+                    sb.Append(GetTable(type).Name);
+                    sb.Append(" where ");
+                    sb.Append(GetColumn(GetIdProperty(type)).Name);
+                    sb.Append("=?");
+                    string sql = sb.ToString();
+                    deletes.Add(type, sql);
+                    return sql;
+                }
             }
         }
 
         public string GetUpdateSql(Type type)
         {
-            if (updates.ContainsKey(type))
+            lock (updates)
             {
-                return updates[type];
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("update ");
-                sb.Append(GetTable(type).Name);
-                sb.Append(" set ");
-                foreach (PropertyInfo prop in GetProperties(type))
+                if (updates.ContainsKey(type))
                 {
-                    sb.Append(GetColumn(prop).Name);
-                    sb.Append("=?, ");
+                    return updates[type];
                 }
-                sb.Remove(sb.Length - 2, 2);
-                sb.Append(" where ");
-                sb.Append(GetColumn(GetIdProperty(type)).Name);
-                sb.Append("=?");
-                string sql = sb.ToString();
-                updates.Add(type, sql);
-                return sql;
+                else
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("update ");
+                    sb.Append(GetTable(type).Name);
+                    sb.Append(" set ");
+                    foreach (PropertyInfo prop in GetProperties(type))
+                    {
+                        sb.Append(GetColumn(prop).Name);
+                        sb.Append("=?, ");
+                    }
+                    sb.Remove(sb.Length - 2, 2);
+                    sb.Append(" where ");
+                    sb.Append(GetColumn(GetIdProperty(type)).Name);
+                    sb.Append("=?");
+                    string sql = sb.ToString();
+                    updates.Add(type, sql);
+                    return sql;
+                }
             }
         }
 
         public string GetSelectSql(Type type)
         {
-            if (selects.ContainsKey(type))
+            lock (selects)
             {
-                return selects[type];
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("select * from ");
-                sb.Append(GetTable(type).Name);
-                sb.Append(" where ");
-                sb.Append(GetColumn(GetIdProperty(type)).Name);
-                sb.Append("=?");
-                string sql = sb.ToString();
-                selects.Add(type, sql);
-                return sql;
+                if (selects.ContainsKey(type))
+                {
+                    return selects[type];
+                }
+                else
+                {
+                    StringBuilder sb = new StringBuilder();
+                    sb.Append("select * from ");
+                    sb.Append(GetTable(type).Name);
+                    sb.Append(" where ");
+                    sb.Append(GetColumn(GetIdProperty(type)).Name);
+                    sb.Append("=?");
+                    string sql = sb.ToString();
+                    selects.Add(type, sql);
+                    return sql;
+                }
             }
         }
     }
