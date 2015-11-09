@@ -52,7 +52,7 @@ namespace FrameDAL.DbHelper
 
         protected override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
         {
-            DbCommand cmd = NewCommand();
+            DbCommand cmd = new MySqlCommand();
             if (conn != null) cmd.Connection = conn;
             if (trans != null) cmd.Transaction = trans;
 
@@ -62,11 +62,6 @@ namespace FrameDAL.DbHelper
                 AddParamsToCmd(cmd as MySqlCommand, parameters);
             }
             return cmd;
-        }
-
-        protected override DbCommand NewCommand()
-        {
-            return new MySqlCommand();
         }
 
         protected override DbDataAdapter NewDataAdapter(DbCommand cmd)

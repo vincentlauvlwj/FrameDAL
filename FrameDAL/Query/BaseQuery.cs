@@ -10,7 +10,19 @@ namespace FrameDAL.Query
 {
     public abstract class BaseQuery : IQuery
     {
-        public Core.ISession Session { get; set; }
+        public ISession Session 
+        {
+            get
+            {
+                return Sess;
+            }
+            set
+            {
+                Sess = (BaseSession) value;
+            }
+        }
+
+        protected BaseSession Sess { get; set; }
 
         public string SqlText { get; set; }
 
@@ -20,24 +32,39 @@ namespace FrameDAL.Query
 
         public int PageSize { get; set; }
 
-        public void ExecuteNonQuery()
+        public int? ExecuteNonQuery()
         {
-            throw new NotImplementedException();
+            if (Sess.DbHelper.InTransaction())
+            {
+                return Sess.DbHelper.ExecuteNonQuery(SqlText, Parameters);
+            }
+            else
+            {
+                Sess.AddToCache(SqlText, Parameters);
+                return null;
+            }
         }
 
         public object ExecuteScalar()
         {
-            throw new NotImplementedException();
+            Sess.Flush();
+            return Sess.DbHelper.ExecuteScalar(SqlText, Parameters);
         }
 
-        public System.Data.DataSet ExecuteGetDataSet()
+        protected abstract void BeforeQuery();
+
+        public DataSet ExecuteGetDataSet()
         {
-            throw new NotImplementedException();
+            Sess.Flush();
+            BeforeQuery();
+            return Sess.DbHelper.ExecuteGetDataSet(SqlText, Parameters);
         }
 
-        public System.Data.DataTable ExecuteGetDataTable()
+        public DataTable ExecuteGetDataTable()
         {
-            throw new NotImplementedException();
+            Sess.Flush();
+            BeforeQuery();
+            return Sess.DbHelper.ExecuteGetDataTable(SqlText, Parameters);
         }
 
         public List<T> ExecuteGetList<T>()

@@ -19,7 +19,7 @@ namespace FrameDAL.Query
 
         int PageSize { get; set; }
 
-        void ExecuteNonQuery();
+        int? ExecuteNonQuery();
 
         object ExecuteScalar();
 

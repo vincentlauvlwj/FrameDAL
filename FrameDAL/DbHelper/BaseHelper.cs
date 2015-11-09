@@ -86,8 +86,6 @@ namespace FrameDAL.DbHelper
             }
         }
 
-        protected abstract DbCommand NewCommand();
-
         protected abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
 
         public int ExecuteNonQuery(string sqlText, params object[] parameters)

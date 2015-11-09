@@ -7,8 +7,9 @@ namespace FrameDAL.Attributes
 {
     public enum GeneratorType
     {
-        Uuid = 1,
-        Identity = 2,
-        Sequence = 3
+        Assign = 1,
+        Uuid = 2,
+        Identity = 3,
+        Sequence = 4
     }
 }
