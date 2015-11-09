@@ -60,6 +60,11 @@ namespace FrameDAL.Core
             }
         }
 
+        public string GetNamedSql(string name)
+        { 
+            return config.NamedSql[name];
+        }
+
         public void ClearCache()
         {
             lock(constructors) constructors.Clear();

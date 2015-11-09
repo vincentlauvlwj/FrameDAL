@@ -164,6 +164,16 @@ namespace FrameDAL.Core
             return query;
         }
 
+        public IQuery CreateNamedQuery(string name, params object[] parameters)
+        {
+            if (IsClosed) throw new ApplicationException("Session已关闭");
+            IQuery query = CreateQuery();
+            query.Session = this;
+            query.SqlText = AppContext.Instance.GetNamedSql(name);
+            query.Parameters = parameters;
+            return query;
+        }
+
         public void Dispose()
         {
             Close();

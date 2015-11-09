@@ -28,6 +28,8 @@ namespace FrameDAL.Core
 
         IQuery CreateQuery(string sqlText, params object[] parameters);
 
+        IQuery CreateNamedQuery(string name, params object[] parameters);
+
         void Close();
     }
 }

@@ -31,7 +31,8 @@ namespace FrameTest
             // TestScalar();
             // TestDataTable();
             // TestPageSize();
-            TestGetList();
+            // TestGetList();
+            TestNamedQuery();
         }
 
         private void TestAdd()
@@ -164,6 +165,14 @@ namespace FrameTest
                     select account.name as account_name, user.name as user_name 
                     from account left outer join user on (account.user_id=user.id)";
                 dataGridView1.DataSource = session.CreateQuery(sql).ExecuteGetList<VO>();
+            }
+        }
+
+        private void TestNamedQuery()
+        {
+            using (ISession session = AppContext.Instance.OpenSession())
+            {
+                dataGridView1.DataSource = session.CreateNamedQuery("test.query", "1").ExecuteGetList<VO>();
             }
         }
     }
