@@ -176,8 +176,100 @@ namespace FrameDAL.Core
         }
 
         public string GetInsertSql(Type type)
-        { 
-            
+        {
+            if (inserts.ContainsKey(type))
+            {
+                return inserts[type];
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("insert into ");
+                sb.Append(GetTable(type).Name);
+                sb.Append(" (");
+                foreach (PropertyInfo prop in GetProperties(type))
+                {
+                    sb.Append(GetColumn(prop).Name + ", ");
+                }
+                sb.Remove(sb.Length - 2, 2);
+                sb.Append(") values (");
+                for (int i = 0; i < GetProperties(type).Length; i++)
+                {
+                    sb.Append("?, ");
+                }
+                sb.Remove(sb.Length - 2, 2);
+                sb.Append(")");
+                string sql = sb.ToString();
+                inserts.Add(type, sql);
+                return sql;
+            }
+        }
+
+        public string GetDeleteSql(Type type)
+        {
+            if (deletes.ContainsKey(type))
+            {
+                return deletes[type];
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("delete from ");
+                sb.Append(GetTable(type).Name);
+                sb.Append(" where ");
+                sb.Append(GetColumn(GetIdProperty(type)).Name);
+                sb.Append("=?");
+                string sql = sb.ToString();
+                deletes.Add(type, sql);
+                return sql;
+            }
+        }
+
+        public string GetUpdateSql(Type type)
+        {
+            if (updates.ContainsKey(type))
+            {
+                return updates[type];
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("update ");
+                sb.Append(GetTable(type).Name);
+                sb.Append(" set ");
+                foreach (PropertyInfo prop in GetProperties(type))
+                {
+                    sb.Append(GetColumn(prop).Name);
+                    sb.Append("=?, ");
+                }
+                sb.Remove(sb.Length - 2, 2);
+                sb.Append(" where ");
+                sb.Append(GetColumn(GetIdProperty(type)).Name);
+                sb.Append("=?");
+                string sql = sb.ToString();
+                updates.Add(type, sql);
+                return sql;
+            }
+        }
+
+        public string GetSelectSql(Type type)
+        {
+            if (selects.ContainsKey(type))
+            {
+                return selects[type];
+            }
+            else
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append("select * from ");
+                sb.Append(GetTable(type).Name);
+                sb.Append(" where ");
+                sb.Append(GetColumn(GetIdProperty(type)).Name);
+                sb.Append("=?");
+                string sql = sb.ToString();
+                selects.Add(type, sql);
+                return sql;
+            }
         }
     }
 }
