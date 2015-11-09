@@ -147,15 +147,5 @@ namespace FrameDAL.DbHelper
             else
                 return null;
         }
-
-        public List<T> ExecuteGetList<T>(string sqlText, params object[] parameters)
-        {
-            throw new NotImplementedException();
-        }
-
-        public T ExecuteGetEntity<T>(string sqlText, params object[] parameters)
-        {
-            return ExecuteGetList<T>(sqlText, parameters)[0];
-        }
     }
 }

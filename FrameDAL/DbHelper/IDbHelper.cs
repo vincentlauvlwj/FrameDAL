@@ -23,9 +23,5 @@ namespace FrameDAL.DbHelper
         DataSet ExecuteGetDataSet(string sqlText, params object[] parameters);
 
         DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
-
-        List<T> ExecuteGetList<T>(string sqlText, params object[] parameters);
-
-        T ExecuteGetEntity<T>(string sqlText, params object[] parameters);
     }
 }

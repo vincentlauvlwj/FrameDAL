@@ -22,11 +22,16 @@ namespace FrameDAL.Core
 
         private IDbHelper db;
         private Configuration config;
+        private Dictionary<Type, ConstructorInfo> constructors;
         private Dictionary<Type, Table> tables;
         private Dictionary<Type, PropertyInfo[]> props;
         private Dictionary<Type, PropertyInfo> idProps;
         private Dictionary<PropertyInfo, Column> columns;
         private Dictionary<PropertyInfo, Id> ids;
+        private Dictionary<Type, string> inserts;
+        private Dictionary<Type, string> deletes;
+        private Dictionary<Type, string> updates;
+        private Dictionary<Type, string> selects;
 
         private AppContext(Configuration config) 
         {
@@ -40,20 +45,56 @@ namespace FrameDAL.Core
                 default:
                     throw new ApplicationException("暂不支持的数据库类型");
             }
+            constructors = new Dictionary<Type, ConstructorInfo>();
             tables = new Dictionary<Type, Table>();
             props = new Dictionary<Type, PropertyInfo[]>();
             idProps = new Dictionary<Type, PropertyInfo>();
             columns = new Dictionary<PropertyInfo, Column>();
             ids = new Dictionary<PropertyInfo, Id>();
+            inserts = new Dictionary<Type, string>();
+            deletes = new Dictionary<Type, string>();
+            updates = new Dictionary<Type, string>();
+            selects = new Dictionary<Type, string>();
+        }
+
+        public ISession OpenSession()
+        {
+            switch (config.DbType)
+            {
+                case Configuration.DatabaseType.MySql:
+                    return new MySqlSession(db);
+
+                default:
+                    throw new ApplicationException("暂不支持的数据库类型");
+            }
         }
 
         public void ClearCache()
         {
+            constructors.Clear();
             tables.Clear();
             props.Clear();
             idProps.Clear();
             columns.Clear();
             ids.Clear();
+            inserts.Clear();
+            deletes.Clear();
+            updates.Clear();
+            selects.Clear();
+        }
+
+        public ConstructorInfo GetConstructor(Type type)
+        {
+            if (constructors.ContainsKey(type))
+            {
+                return constructors[type];
+            }
+            else
+            {
+                ConstructorInfo cons = type.GetConstructor(new Type[0]);
+                constructors.Add(type, cons);
+                return cons;
+            }
         }
 
         public Table GetTable(Type type)
@@ -65,7 +106,6 @@ namespace FrameDAL.Core
             else
             {
                 Table table = Attribute.GetCustomAttribute(type, typeof(Table)) as Table;
-                if (table == null) return null;
                 tables.Add(type, table);
                 return table;
             }
@@ -116,7 +156,6 @@ namespace FrameDAL.Core
             else
             {
                 Column col = Attribute.GetCustomAttribute(prop, typeof(Column)) as Column;
-                if (col == null) return null;
                 columns.Add(prop, col);
                 return col;
             }
@@ -131,10 +170,14 @@ namespace FrameDAL.Core
             else
             {
                 Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
-                if (id == null) return null;
                 ids.Add(prop, id);
                 return id;
             }
+        }
+
+        public string GetInsertSql(Type type)
+        { 
+            
         }
     }
 }
