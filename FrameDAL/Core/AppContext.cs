@@ -6,13 +6,28 @@ using System.Reflection;
 using FrameDAL.Config;
 using FrameDAL.DbHelper;
 using FrameDAL.Attributes;
+using FrameDAL.Exceptions;
 
 namespace FrameDAL.Core
 {
+    /// <summary>
+    /// Author: Vincent Lau
+    /// 应用程序上下文。
+    /// 该类保存了框架运行过程中产生的缓存，这些缓存可提高反射的效率，
+    /// 提供了获得缓存中的反射信息的方法，还提供了获得Session的方法。
+    /// 该类使用单例模式，在程序运行过程中只有一个实例，可通过AppContext.Instance获得该实例
+    /// </summary>
     public class AppContext
     {
+        /// <summary>
+        /// 保存了AppContext的唯一实例
+        /// </summary>
         public static AppContext Instance { get; private set; }
 
+        /// <summary>
+        /// 静态构造方法，加载框架配置文件，调用私有构造方法产生AppContext实例
+        /// 若配置文件有异常，抛出TypeInitializationException
+        /// </summary>
         static AppContext()
         {
             Configuration config = new Configuration();
@@ -23,6 +38,7 @@ namespace FrameDAL.Core
         private IDbHelper db;
         private Configuration config;
 
+        // 缓存了各种信息的Dictionary
         private Dictionary<Type, ConstructorInfo> constructors = new Dictionary<Type, ConstructorInfo>();
         private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
         private Dictionary<Type, PropertyInfo[]> props = new Dictionary<Type,PropertyInfo[]>();
@@ -34,6 +50,11 @@ namespace FrameDAL.Core
         private Dictionary<Type, string> updates = new Dictionary<Type,string>();
         private Dictionary<Type, string> selects = new Dictionary<Type,string>();
 
+        /// <summary>
+        /// 私有构造方法，通过配置信息获得数据库访问助手，不同的数据库使用不同的访问助手
+        /// 如果数据库不受支持，抛出NotSupportedException
+        /// </summary>
+        /// <param name="config">框架配置信息</param>
         private AppContext(Configuration config) 
         {
             this.config = config;
@@ -44,10 +65,15 @@ namespace FrameDAL.Core
                     break;
 
                 default:
-                    throw new ApplicationException("暂不支持的数据库类型");
+                    throw new NotSupportedException("暂不支持" + config.DbType + "数据库。");
             }
         }
 
+        /// <summary>
+        /// 打开Session
+        /// 如果数据库不受支持，抛出NotSupportedException
+        /// </summary>
+        /// <returns>返回打开的Session</returns>
         public ISession OpenSession()
         {
             switch (config.DbType)
@@ -56,15 +82,23 @@ namespace FrameDAL.Core
                     return new MySqlSession(db);
 
                 default:
-                    throw new ApplicationException("暂不支持的数据库类型");
+                    throw new NotSupportedException("暂不支持" + config.DbType + "数据库。");
             }
         }
 
+        /// <summary>
+        /// 获得配置文件中的命名SQL
+        /// </summary>
+        /// <param name="name">要获得的SQL的名称</param>
+        /// <returns>SQL字符串</returns>
         public string GetNamedSql(string name)
-        { 
+        {
             return config.NamedSql[name];
         }
 
+        /// <summary>
+        /// 清除框架运行过程中产生的反射信息的缓存，此操作可能会使效率降低
+        /// </summary>
         public void ClearCache()
         {
             lock(constructors) constructors.Clear();
@@ -79,6 +113,12 @@ namespace FrameDAL.Core
             lock(selects) selects.Clear();
         }
 
+        /// <summary>
+        /// 获取缓存中的公共无参构造方法
+        /// 如果类中没有公共无参构造方法，抛出EntityMappingException
+        /// </summary>
+        /// <param name="type">要获取构造方法的类</param>
+        /// <returns>返回公共无参构造方法</returns>
         public ConstructorInfo GetConstructor(Type type)
         {
             lock (constructors)
@@ -90,12 +130,19 @@ namespace FrameDAL.Core
                 else
                 {
                     ConstructorInfo cons = type.GetConstructor(new Type[0]);
+                    if (cons == null) throw new EntityMappingException(type.FullName + "类中没有公共的无参构造方法。");
                     constructors.Add(type, cons);
                     return cons;
                 }
             }
         }
 
+        /// <summary>
+        /// 获取缓存中的Table特性类对象
+        /// 如果该类没有添加Table特性，或者Table.Name属性为空或空白字符串，抛出EntityMappingException
+        /// </summary>
+        /// <param name="type">要获取特性的类</param>
+        /// <returns>返回Table特性</returns>
         public Table GetTable(Type type)
         {
             lock (tables)
@@ -107,6 +154,8 @@ namespace FrameDAL.Core
                 else
                 {
                     Table table = Attribute.GetCustomAttribute(type, typeof(Table)) as Table;
+                    if (table == null || string.IsNullOrWhiteSpace(table.Name)) 
+                        throw new EntityMappingException(type.FullName + "类没有映射到数据库中的表。");
                     tables.Add(type, table);
                     return table;
                 }

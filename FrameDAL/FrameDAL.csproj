@@ -52,6 +52,9 @@
     <Compile Include="Config\ConfigUtil.cs" />
     <Compile Include="Core\AppContext.cs" />
     <Compile Include="Core\BaseSession.cs" />
+    <Compile Include="Exceptions\ConfigurationException.cs" />
+    <Compile Include="Exceptions\EntityMappingException.cs" />
+    <Compile Include="Exceptions\FrameDALException.cs" />
     <Compile Include="Core\ISession.cs" />
     <Compile Include="Core\MySqlSession.cs" />
     <Compile Include="DbHelper\BaseHelper.cs" />

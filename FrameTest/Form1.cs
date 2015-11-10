@@ -23,7 +23,7 @@ namespace FrameTest
         {
             // TestAdd();
             // TestDelete();
-            // MessageBox.Show(TestGet().Name);
+            MessageBox.Show(TestGet().Name);
             // TestUpdate();
             // TestFlush();
             // TestTransaction();
@@ -32,7 +32,7 @@ namespace FrameTest
             // TestDataTable();
             // TestPageSize();
             // TestGetList();
-            TestNamedQuery();
+            // TestNamedQuery();
         }
 
         private void TestAdd()
