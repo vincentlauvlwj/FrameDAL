@@ -21,9 +21,9 @@ namespace FrameTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // TestAdd();
+            TestAdd();
             // TestDelete();
-            MessageBox.Show(TestGet().Name);
+            // MessageBox.Show(TestGet().Name);
             // TestUpdate();
             // TestFlush();
             // TestTransaction();

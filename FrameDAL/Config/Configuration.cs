@@ -11,7 +11,7 @@ namespace FrameDAL.Config
     /// Author: Vincent Lau
     /// 封装了框架配置文件中的配置信息的类。
     /// 本框架的配置文件名为FrameDAL.ini，应放在程序启动目录，其具体的内容格式如下
-    /// 
+    /// <code>
     /// [Settings]
     /// DbType=MySql
     /// [ConnStr]
@@ -24,7 +24,7 @@ namespace FrameDAL.Config
     /// ; ...
     /// ; 其他命名SQL的名称和值...
     /// ; ...
-    /// 
+    /// </code>
     /// </summary>
     public class Configuration
     {
@@ -54,10 +54,10 @@ namespace FrameDAL.Config
 
         /// <summary>
         /// 加载指定目录的配置文件
-        /// 若配置文件不存在，抛出FileNotFoundException
-        /// 若配置文件中没有配置数据库连接串，抛出ConfigurationException
         /// </summary>
         /// <param name="path">文件路径</param>
+        /// <exception cref="FileNotFoundException">配置文件不存在</exception>
+        /// <exception cref="ConfigurationException">配置文件中没有配置数据库连接串</exception>
         public void Load(string path)
         {
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);

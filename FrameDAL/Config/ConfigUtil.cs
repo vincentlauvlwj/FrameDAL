@@ -6,15 +6,14 @@ using System.Runtime.InteropServices;
 
 namespace FrameDAL.Config
 {
-    /*
-     * 针对INI文件的API操作方法，其中的节点（Section)、键（KEY）都不区分大小写
-     * 如果指定的INI文件不存在，会自动创建该文件。
-     * 
-     * CharSet定义的时候使用了什么类型，在使用相关方法时必须要使用相应的类型
-     *      例如 GetPrivateProfileSectionNames声明为CharSet.Auto,那么就应该使用 Marshal.PtrToStringAuto来读取相关内容
-     *      如果使用的是CharSet.Ansi，就应该使用Marshal.PtrToStringAnsi来读取内容
-     *      
-     */
+    /// <summary>
+    /// 针对INI文件的API操作方法，其中的节点（Section)、键（KEY）都不区分大小写
+    /// 如果指定的INI文件不存在，会自动创建该文件。
+    /// 
+    /// CharSet定义的时候使用了什么类型，在使用相关方法时必须要使用相应的类型
+    /// 例如 GetPrivateProfileSectionNames声明为CharSet.Auto,那么就应该使用 Marshal.PtrToStringAuto来读取相关内容
+    /// 如果使用的是CharSet.Ansi，就应该使用Marshal.PtrToStringAnsi来读取内容
+    /// </summary>
     public class ConfigUtil
     {
         #region API声明

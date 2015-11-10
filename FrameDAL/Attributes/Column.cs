@@ -6,7 +6,7 @@ using System.Text;
 namespace FrameDAL.Attributes
 {
     /// <summary>
-    /// Author: Vincent Lau
+    /// Author: Vincent Lau.
     /// 声明数据库字段信息的特性类。
     /// 施加在具有Table特性的实体类的属性上，可配置从该属性到数据库字段之间的映射关系。
     /// 也可施加在普通的VO类的属性上，该VO类可用于封装查询返回的数据记录，

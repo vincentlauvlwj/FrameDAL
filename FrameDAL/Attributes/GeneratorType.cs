@@ -6,7 +6,7 @@ using System.Text;
 namespace FrameDAL.Attributes
 {
     /// <summary>
-    /// Author: Vincent Lau
+    /// Author: Vincent Lau.
     /// 表示主键生成策略的枚举类
     /// </summary>
     public enum GeneratorType

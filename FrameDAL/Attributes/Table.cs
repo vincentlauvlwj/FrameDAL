@@ -6,7 +6,7 @@ using System.Text;
 namespace FrameDAL.Attributes
 {
     /// <summary>
-    /// Author: Vincent Lau
+    /// Author: Vincent Lau.
     /// 表示数据表信息的特性类。
     /// 施加在实体类上，配置该实体类到数据表的映射。
     /// </summary>

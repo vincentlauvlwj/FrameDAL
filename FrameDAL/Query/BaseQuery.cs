@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using System.Reflection;
 using FrameDAL.Core;
+using FrameDAL.Attributes;
 
 namespace FrameDAL.Query
 {
@@ -76,7 +77,9 @@ namespace FrameDAL.Query
                 T entity = (T)AppContext.Instance.GetConstructor(typeof(T)).Invoke(null);
                 foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
                 {
-                    object value = row[AppContext.Instance.GetColumn(prop).Name];
+                    Column col = AppContext.Instance.GetColumn(prop);
+                    if(col == null) continue;
+                    object value = row[col.Name];
                     if (!(value is DBNull))
                     {
                         Type t = prop.PropertyType;
