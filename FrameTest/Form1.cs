@@ -45,7 +45,7 @@ namespace FrameTest
             account.Balance = 1234;
             using (ISession session = context.OpenSession())
             {
-                session.Add(account);
+                MessageBox.Show(session.Add(account).ToString());
             }
         }
 

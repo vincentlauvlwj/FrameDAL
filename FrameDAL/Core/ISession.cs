@@ -14,7 +14,7 @@ namespace FrameDAL.Core
 
         void RollbackTransaction();
 
-        void Add(object entity);
+        object Add(object entity);
 
         void Delete(object entity);
 

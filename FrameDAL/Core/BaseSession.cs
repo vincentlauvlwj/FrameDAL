@@ -71,7 +71,7 @@ namespace FrameDAL.Core
             DbHelper.RollbackTransaction();
         }
 
-        public void Add(object entity)
+        public object Add(object entity)
         {
             if (IsClosed) throw new ApplicationException("Session已关闭");
             PropertyInfo idProp = AppContext.Instance.GetIdProperty(entity.GetType());
@@ -90,6 +90,7 @@ namespace FrameDAL.Core
                 default:
                     break;
             }
+
             PropertyInfo[] props = AppContext.Instance.GetProperties(entity.GetType());
             object[] parameters = new object[props.Length];
             for (int i = 0; i < props.Length; i++)
@@ -97,6 +98,15 @@ namespace FrameDAL.Core
                 parameters[i] = props[i].GetValue(entity, null);
             }
             CreateQuery(AppContext.Instance.GetInsertSql(entity.GetType()), parameters).ExecuteNonQuery();
+
+            if (id.GeneratorType == GeneratorType.Identity)
+            {
+                return CreateQuery("select @@Identity from dual").ExecuteScalar();
+            }
+            else
+            {
+                return idProp.GetValue(entity, null);
+            }
         }
 
         public void Delete(object entity)
