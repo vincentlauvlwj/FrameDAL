@@ -42,7 +42,16 @@ namespace FrameTest
             test.Name = "test";
             using (ISession session = context.OpenSession())
             {
-                MessageBox.Show(session.Add(test).ToString());
+                try
+                {
+                    session.BeginTransaction();
+                    MessageBox.Show(session.Add(test).ToString());
+                    session.CommitTransaction();
+                }
+                catch
+                {
+                    session.RollbackTransaction();
+                }
             }
         }
 

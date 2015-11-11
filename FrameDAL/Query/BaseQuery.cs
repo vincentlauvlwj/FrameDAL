@@ -48,24 +48,54 @@ namespace FrameDAL.Query
 
         public object ExecuteScalar()
         {
-            Sess.Flush();
-            return Sess.DbHelper.ExecuteScalar(SqlText, Parameters);
+            try
+            {
+                Sess.BeginTransaction();
+                object result = Sess.DbHelper.ExecuteScalar(SqlText, Parameters);
+                Sess.CommitTransaction();
+                return result;
+            }
+            catch
+            {
+                Sess.RollbackTransaction();
+                throw;
+            }
         }
 
         protected abstract void BeforeQuery();
 
         public DataSet ExecuteGetDataSet()
         {
-            Sess.Flush();
-            BeforeQuery();
-            return Sess.DbHelper.ExecuteGetDataSet(SqlText, Parameters);
+            try
+            {
+                Sess.BeginTransaction();
+                BeforeQuery();
+                DataSet result = Sess.DbHelper.ExecuteGetDataSet(SqlText, Parameters);
+                Sess.CommitTransaction();
+                return result;
+            }
+            catch
+            {
+                Sess.RollbackTransaction();
+                throw;
+            }
         }
 
         public DataTable ExecuteGetDataTable()
         {
-            Sess.Flush();
-            BeforeQuery();
-            return Sess.DbHelper.ExecuteGetDataTable(SqlText, Parameters);
+            try
+            {
+                Sess.BeginTransaction();
+                BeforeQuery();
+                DataTable result = Sess.DbHelper.ExecuteGetDataTable(SqlText, Parameters);
+                Sess.CommitTransaction();
+                return result;
+            }
+            catch
+            {
+                Sess.RollbackTransaction();
+                throw;
+            }
         }
 
         public List<T> ExecuteGetList<T>()
