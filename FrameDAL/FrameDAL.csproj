@@ -55,6 +55,7 @@
     <Compile Include="Core\AppContext.cs" />
     <Compile Include="Core\BaseSession.cs" />
     <Compile Include="Exceptions\ConfigurationException.cs" />
+    <Compile Include="Exceptions\DbAccessException.cs" />
     <Compile Include="Exceptions\EntityMappingException.cs" />
     <Compile Include="Exceptions\FrameDALException.cs" />
     <Compile Include="Core\ISession.cs" />

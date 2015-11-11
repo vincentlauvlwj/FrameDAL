@@ -79,15 +79,7 @@ namespace FrameDAL.Query
                 {
                     Column col = AppContext.Instance.GetColumn(prop);
                     if(col == null) continue;
-                    object value = row[col.Name];
-                    if (!(value is DBNull))
-                    {
-                        Type t = prop.PropertyType;
-                        prop.SetValue(
-                            entity,
-                            Convert.ChangeType(value, t.IsGenericType ? t.GetGenericArguments()[0] : t),
-                            null);
-                    }
+                    AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
                 }
                 results.Add(entity);
             }

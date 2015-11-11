@@ -11,7 +11,7 @@ using FrameDAL.Exceptions;
 namespace FrameDAL.Core
 {
     /// <summary>
-    /// Author: Vincent Lau
+    /// Author: Vincent Lau.
     /// 应用程序上下文。
     /// AppContext提供了获得Session的方法，保存了框架运行过程中产生的缓存，这些缓存可提高反射效率。
     /// 该类使用单例模式，在程序运行过程中只有一个实例，可通过AppContext.Instance获得该实例。
@@ -32,6 +32,8 @@ namespace FrameDAL.Core
     /// ; ...
     /// </code>
     /// 其中DbType目前只支持MySql, Oracle（注意大小写）
+    /// 
+    /// GitHub: https://github.com/vincentlauvlwj/FrameDAL
     /// </summary>
     /// <see cref="FrameDAL.Config.Configuration"/>
     public class AppContext
@@ -240,13 +242,9 @@ namespace FrameDAL.Core
                 {
                     foreach (PropertyInfo prop in GetProperties(type))
                     {
-                        Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
-                        CheckId(prop, id);
+                        Id id = GetId(prop);
+                        if (id == null) continue;
                         idProps.Add(type, prop);
-                        lock (ids)
-                        {
-                            if (!ids.ContainsKey(prop)) ids.Add(prop, id);
-                        }
                         return prop;
                     }
                     throw new EntityMappingException(type.FullName + "类中没有配置Id属性。");
@@ -458,6 +456,28 @@ namespace FrameDAL.Core
                     selects.Add(type, sql);
                     return sql;
                 }
+            }
+        }
+
+        /// <summary>
+        /// 安全设置实体属性的值
+        /// </summary>
+        /// <param name="entity">要设置属性值的实体</param>
+        /// <param name="prop">属性</param>
+        /// <param name="value">值</param>
+        public void SetPropertyValue(object entity, PropertyInfo prop, object value)
+        {
+            if (value is DBNull)
+            {
+                prop.SetValue(entity, null, null);
+            }
+            else
+            {
+                Type t = prop.PropertyType;
+                prop.SetValue(
+                    entity,
+                    Convert.ChangeType(value, t.IsGenericType ? t.GetGenericArguments()[0] : t),
+                    null);
             }
         }
     }

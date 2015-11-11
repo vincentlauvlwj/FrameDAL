@@ -38,14 +38,11 @@ namespace FrameTest
         private void TestAdd()
         {
             AppContext context = AppContext.Instance;
-            Account account = new Account();
-            account.Name = "测试";
-            account.Password = "123";
-            account.UserId = "1";
-            account.Balance = 1234;
+            Test test = new Test();
+            test.Name = "test";
             using (ISession session = context.OpenSession())
             {
-                MessageBox.Show(session.Add(account).ToString());
+                MessageBox.Show(session.Add(test).ToString());
             }
         }
 

@@ -8,6 +8,10 @@ using MySql.Data.MySqlClient;
 
 namespace FrameDAL.DbHelper
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// MySql数据库访问助手
+    /// </summary>
     public class MySqlHelper : BaseHelper
     {
         public MySqlHelper(string connStr) : base(connStr) { }
@@ -15,6 +19,25 @@ namespace FrameDAL.DbHelper
         protected override DbConnection NewConnection(string connStr)
         {
             return new MySqlConnection(connStr);
+        }
+
+        protected override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
+        {
+            DbCommand cmd = new MySqlCommand();
+            if (conn != null) cmd.Connection = conn;
+            if (trans != null) cmd.Transaction = trans;
+
+            cmd.CommandText = sqlText;
+            if (parameters != null && parameters.Length != 0)
+            {
+                AddParamsToCmd(cmd as MySqlCommand, parameters);
+            }
+            return cmd;
+        }
+
+        protected override DbDataAdapter NewDataAdapter(DbCommand cmd)
+        {
+            return new MySqlDataAdapter(cmd as MySqlCommand);
         }
 
         private void AddParamsToList(ArrayList arr, object[] parameters)
@@ -48,25 +71,6 @@ namespace FrameDAL.DbHelper
             }
             sb.Append(temp[temp.Length - 1]);
             cmd.CommandText = sb.ToString();
-        }
-
-        protected override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
-        {
-            DbCommand cmd = new MySqlCommand();
-            if (conn != null) cmd.Connection = conn;
-            if (trans != null) cmd.Transaction = trans;
-
-            cmd.CommandText = sqlText;
-            if (parameters != null && parameters.Length != 0)
-            {
-                AddParamsToCmd(cmd as MySqlCommand, parameters);
-            }
-            return cmd;
-        }
-
-        protected override DbDataAdapter NewDataAdapter(DbCommand cmd)
-        {
-            return new MySqlDataAdapter(cmd as MySqlCommand);
         }
     }
 }

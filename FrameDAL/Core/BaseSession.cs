@@ -9,8 +9,20 @@ using FrameDAL.Attributes;
 
 namespace FrameDAL.Core
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 各种Session类的基类，实现了Session的一些通用的方法，不同的数据库使用不同的Session。
+    /// Session是线程不安全的，在不同的线程内使用同一个Session对象可能会造成不可预知的错误。
+    /// Session对象可通过AppContext.OpenSession()方法获得。
+    /// Session对象维护了一个缓冲区，当事务未开启时进行的非查询操作将会暂存在缓冲区内，调用Flush()方法可
+    /// 将缓冲区内的操作一次性送到数据库中执行。调用Close(), Dispose(), BeginTransaction()方法或者执行
+    /// 查询操作时，Flush()方法会自动调用，以保证数据的一致性。
+    /// </summary>
     public abstract class BaseSession : ISession
     {
+        /// <summary>
+        /// 获得一个bool值，指示Session是否已经关闭
+        /// </summary>
         public bool IsClosed { get; private set; }
 
         protected IDbHelper db;
@@ -19,7 +31,7 @@ namespace FrameDAL.Core
         {
             get
             {
-                if (IsClosed) throw new ApplicationException("Session已关闭");
+                if (IsClosed) throw new InvalidOperationException("Session已关闭");
                 return db;
             }
             private set
@@ -43,34 +55,58 @@ namespace FrameDAL.Core
             cache = new Queue<Bundle>();
         }
 
+        /// <summary>
+        /// 将一个非查询操作放入缓冲区
+        /// </summary>
+        /// <param name="sqlText">SQL命令</param>
+        /// <param name="parameters">SQL命令的参数</param>
+        /// <exception cref="InvalidOperationException">Session已关闭</exception>
         internal virtual void AddToCache(string sqlText, object[] parameters)
         {
-            if (IsClosed) throw new ApplicationException("Session已关闭");
+            if (IsClosed) throw new InvalidOperationException("Session已关闭");
             Bundle bundle = new Bundle();
             bundle.SqlText = sqlText;
             bundle.Parameters = parameters;
             cache.Enqueue(bundle);
         }
 
+        /// <summary>
+        /// 开启事务，具体的实现依赖于IDbHelper.BeginTransaction()方法
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Session已关闭</exception>
         public void BeginTransaction()
         {
-            if (IsClosed) throw new ApplicationException("Session已关闭");
+            if (IsClosed) throw new InvalidOperationException("Session已关闭");
             DbHelper.BeginTransaction();
             Flush();
         }
 
+        /// <summary>
+        /// 提交事务，具体的实现依赖于DbHelper
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Session已关闭</exception>
         public void CommitTransaction()
         {
-            if (IsClosed) throw new ApplicationException("Session已关闭");
+            if (IsClosed) throw new InvalidOperationException("Session已关闭");
             DbHelper.CommitTransaction();
         }
 
+        /// <summary>
+        /// 回滚事务，具体的实现依赖于DbHelper
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Session已关闭</exception>
         public void RollbackTransaction()
         {
-            if (IsClosed) throw new ApplicationException("Session已关闭");
+            if (IsClosed) throw new InvalidOperationException("Session已关闭");
             DbHelper.RollbackTransaction();
         }
 
+        /// <summary>
+        /// 将实体对象插入数据库，当主键生成器不为Assign时，此方法会根据主键生成器的配置自动为其生成主键
+        /// </summary>
+        /// <param name="entity">实体对象</param>
+        /// <returns>插入成功后，返回主键值</returns>
+        /// <exception cref="InvalidOperationException">Session已关闭</exception>
         public object Add(object entity)
         {
             if (IsClosed) throw new ApplicationException("Session已关闭");
@@ -79,34 +115,32 @@ namespace FrameDAL.Core
             switch (id.GeneratorType)
             {
                 case GeneratorType.Uuid:
-                    idProp.SetValue(entity, Guid.NewGuid().ToString(), null);
+                    AppContext.Instance.SetPropertyValue(entity, idProp, Guid.NewGuid().ToString());
                     break;
 
                 case GeneratorType.Sequence:
                     object nextval = CreateQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
-                    idProp.SetValue(entity, nextval, null);
+                    AppContext.Instance.SetPropertyValue(entity, idProp, nextval);
                     break;
 
                 default:
                     break;
             }
 
-            PropertyInfo[] props = AppContext.Instance.GetProperties(entity.GetType());
-            object[] parameters = new object[props.Length];
-            for (int i = 0; i < props.Length; i++)
+            List<object> parameters = new List<object>();
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
-                parameters[i] = props[i].GetValue(entity, null);
+                if (AppContext.Instance.GetColumn(prop) == null) continue;
+                parameters.Add(prop.GetValue(entity, null));
             }
-            CreateQuery(AppContext.Instance.GetInsertSql(entity.GetType()), parameters).ExecuteNonQuery();
+            CreateQuery(AppContext.Instance.GetInsertSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
 
             if (id.GeneratorType == GeneratorType.Identity)
             {
-                return CreateQuery("select @@Identity from dual").ExecuteScalar();
+                object pk = CreateQuery("select @@Identity from dual").ExecuteScalar();
+                AppContext.Instance.SetPropertyValue(entity, idProp, pk);
             }
-            else
-            {
-                return idProp.GetValue(entity, null);
-            }
+            return idProp.GetValue(entity, null);
         }
 
         public void Delete(object entity)
