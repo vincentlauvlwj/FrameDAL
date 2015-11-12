@@ -5,6 +5,10 @@ using System.Text;
 
 namespace FrameDAL.Exceptions
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 当实体-数据表映射错误时，抛出该异常
+    /// </summary>
     public class EntityMappingException : FrameDALException
     {
         public EntityMappingException() : base() { }

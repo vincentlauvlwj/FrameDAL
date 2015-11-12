@@ -5,6 +5,10 @@ using System.Text;
 
 namespace FrameDAL.Exceptions
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 当配置文件有错误时，抛出该异常
+    /// </summary>
     public class ConfigurationException : FrameDALException
     {
         public ConfigurationException() : base() { }

@@ -5,6 +5,10 @@ using System.Text;
 
 namespace FrameDAL.Exceptions
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 当访问数据库发生错误时，抛出该异常
+    /// </summary>
     public class DbAccessException : FrameDALException
     {
         public DbAccessException() : base() { }
