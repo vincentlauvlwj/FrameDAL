@@ -467,11 +467,7 @@ namespace FrameDAL.Core
         /// <param name="value">值</param>
         public void SetPropertyValue(object entity, PropertyInfo prop, object value)
         {
-            if (value is DBNull)
-            {
-                prop.SetValue(entity, null, null);
-            }
-            else
+            if (!(value is DBNull))
             {
                 Type t = prop.PropertyType;
                 prop.SetValue(
