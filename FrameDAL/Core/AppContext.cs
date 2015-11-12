@@ -91,8 +91,12 @@ namespace FrameDAL.Core
             this.config = config;
             switch (config.DbType)
             { 
-                case Configuration.DatabaseType.MySql:
+                case Configuration.DatabaseType.MySQL:
                     db = new MySqlHelper(config.ConnStr);
+                    break;
+
+                case Configuration.DatabaseType.Oracle:
+                    db = new OracleHelper(config.ConnStr);
                     break;
 
                 default:
@@ -109,8 +113,11 @@ namespace FrameDAL.Core
         {
             switch (config.DbType)
             {
-                case Configuration.DatabaseType.MySql:
+                case Configuration.DatabaseType.MySQL:
                     return new MySqlSession(db);
+
+                case Configuration.DatabaseType.Oracle:
+                    return new OracleSession(db);
 
                 default:
                     throw new NotSupportedException("暂不支持" + config.DbType + "数据库。");

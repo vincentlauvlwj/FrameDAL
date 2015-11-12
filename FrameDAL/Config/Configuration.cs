@@ -33,7 +33,7 @@ namespace FrameDAL.Config
         /// </summary>
         public class DatabaseType
         {
-            public const string MySql = "MySql";
+            public const string MySQL = "MySQL";
             public const string Oracle = "Oracle";
         }
 

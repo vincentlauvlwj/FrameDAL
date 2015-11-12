@@ -9,12 +9,12 @@ namespace FrameTest
     [Table("account")]
     public class Account
     {
-        [Column("user_id")]
-        public string UserId { get; set; }
-
-        [Id(GeneratorType.Uuid)]
+        [Id(GeneratorType.Sequence, SeqName = "seq_abnormal_class_no")]
         [Column("id")]
         public string Id { get; set; }
+
+        [Column("user_id")]
+        public string UserId { get; set; }
 
         [Column("name")]
         public string Name { get; set; }

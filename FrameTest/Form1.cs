@@ -21,7 +21,7 @@ namespace FrameTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            TestAdd();
+            // TestAdd();
             // TestDelete();
             // MessageBox.Show(TestGet().Name);
             // TestUpdate();
@@ -30,7 +30,7 @@ namespace FrameTest
             // TestNonQuery();
             // TestScalar();
             // TestDataTable();
-            // TestPageSize();
+            TestPageSize();
             // TestGetList();
             // TestNamedQuery();
         }
@@ -38,20 +38,14 @@ namespace FrameTest
         private void TestAdd()
         {
             AppContext context = AppContext.Instance;
-            Test test = new Test();
-            test.Name = "test";
+            Account account = new Account();
+            account.UserId = "123";
+            account.Name = "test";
+            account.Password = "pwd";
+            account.Balance = 10;
             using (ISession session = context.OpenSession())
             {
-                try
-                {
-                    session.BeginTransaction();
-                    MessageBox.Show(session.Add(test).ToString());
-                    session.CommitTransaction();
-                }
-                catch
-                {
-                    session.RollbackTransaction();
-                }
+                MessageBox.Show(session.Add(account).ToString());
             }
         }
 
@@ -178,7 +172,7 @@ namespace FrameTest
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                dataGridView1.DataSource = session.CreateNamedQuery("test.query", "1").ExecuteGetList<VO>();
+                dataGridView1.DataSource = session.CreateNamedQuery("test.oracle.query", "11000022").ExecuteGetList<VO>();
             }
         }
     }

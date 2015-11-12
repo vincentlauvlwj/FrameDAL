@@ -48,7 +48,7 @@ namespace FrameDAL.Query
         public object[] Parameters { get; set; }
 
         /// <summary>
-        /// 当进行分页查询时，获得或设置返回的第一条结果的索引
+        /// 当进行分页查询时，获得或设置返回的第一条结果的索引，该索引从0开始
         /// </summary>
         public int FirstResult { get; set; }
 
@@ -97,7 +97,8 @@ namespace FrameDAL.Query
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理，此方法由子类实现
         /// </summary>
-        protected abstract void BeforeQuery();
+        /// <returns>返回预处理后的SQL命令</returns>
+        protected abstract string BeforeQuery();
 
         /// <summary>
         /// 执行查询，返回数据集
@@ -108,8 +109,7 @@ namespace FrameDAL.Query
             try
             {
                 Sess.BeginTransaction();
-                BeforeQuery();
-                DataSet result = Sess.DbHelper.ExecuteGetDataSet(SqlText, Parameters);
+                DataSet result = Sess.DbHelper.ExecuteGetDataSet(BeforeQuery(), Parameters);
                 Sess.CommitTransaction();
                 return result;
             }
@@ -129,8 +129,7 @@ namespace FrameDAL.Query
             try
             {
                 Sess.BeginTransaction();
-                BeforeQuery();
-                DataTable result = Sess.DbHelper.ExecuteGetDataTable(SqlText, Parameters);
+                DataTable result = Sess.DbHelper.ExecuteGetDataTable(BeforeQuery(), Parameters);
                 Sess.CommitTransaction();
                 return result;
             }

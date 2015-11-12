@@ -15,10 +15,11 @@ namespace FrameDAL.Query
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
         /// </summary>
-        protected override void BeforeQuery()
+        /// <returns>返回预处理后的SQL命令</returns>
+        protected override string BeforeQuery()
         {
-            if (PageSize == 0) return;
-            SqlText += " limit " + FirstResult + ", " + PageSize;
+            if (PageSize == 0) return SqlText;
+            return SqlText + " limit " + FirstResult + ", " + PageSize;
         }
     }
 }
