@@ -13,7 +13,7 @@ namespace FrameDAL.Config
     /// 本框架的配置文件名为FrameDAL.ini，应放在程序启动目录，其具体的内容格式如下
     /// <code>
     /// [Settings]
-    /// DbType=MySql
+    /// DbType=MySQL
     /// [ConnStr]
     /// server=localhost
     /// ; ...

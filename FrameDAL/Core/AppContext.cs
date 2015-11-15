@@ -19,7 +19,7 @@ namespace FrameDAL.Core
     /// 配置文件的格式如下
     /// <code>
     /// [Settings]
-    /// DbType=MySql
+    /// DbType=MySQL
     /// [ConnStr]
     /// server=localhost
     /// ; ...

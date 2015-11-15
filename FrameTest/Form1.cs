@@ -148,13 +148,13 @@ namespace FrameTest
             }
         }
 
-        public class VO
+        public class AccountOwner
         {
             [Column("account_name")]
             public string AccountName { get; set; }
 
             [Column("user_name")]
-            public string UserName { get; set; }
+            public string Owner { get; set; }
         }
 
         private void TestGetList()
@@ -164,7 +164,7 @@ namespace FrameTest
                 string sql = @"
                     select account.name as account_name, user.name as user_name 
                     from account left outer join user on (account.user_id=user.id)";
-                dataGridView1.DataSource = session.CreateQuery(sql).ExecuteGetList<VO>();
+                dataGridView1.DataSource = session.CreateQuery(sql).ExecuteGetList<AccountOwner>();
             }
         }
 
