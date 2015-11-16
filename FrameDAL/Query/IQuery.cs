@@ -19,9 +19,9 @@ namespace FrameDAL.Query
     public interface IQuery
     {
         /// <summary>
-        /// 获得或设置该Query所依赖的Session对象
+        /// 获得该Query所依赖的Session对象
         /// </summary>
-        ISession Session { get; set; }
+        ISession Session { get; }
 
         /// <summary>
         /// 获得或设置该Query的SQL命令

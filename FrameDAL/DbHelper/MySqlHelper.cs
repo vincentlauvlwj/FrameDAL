@@ -14,7 +14,7 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public class MySqlHelper : BaseHelper
     {
-        public MySqlHelper(string connStr) : base(connStr) { }
+        internal MySqlHelper(string connStr) : base(connStr) { }
 
         /// <summary>
         /// 创建一个DbConnection对象

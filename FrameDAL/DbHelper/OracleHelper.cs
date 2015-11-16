@@ -13,7 +13,7 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public class OracleHelper : BaseHelper
     {
-        public OracleHelper(string connStr) : base(connStr) { }
+        internal OracleHelper(string connStr) : base(connStr) { }
 
         /// <summary>
         /// 创建一个DbConnection对象

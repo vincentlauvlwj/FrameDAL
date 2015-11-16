@@ -11,6 +11,8 @@ namespace FrameDAL.Query
     /// </summary>
     public class OracleQuery : BaseQuery
     {
+        internal OracleQuery() : base() { }
+
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
         /// </summary>

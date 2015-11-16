@@ -104,7 +104,7 @@ namespace FrameTest
                 }
                 catch
                 {
-                    session.RollbackTransaction();
+                    if(session.InTransaction()) session.RollbackTransaction();
                 }
             }
         }
@@ -172,7 +172,7 @@ namespace FrameTest
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                dataGridView1.DataSource = session.CreateNamedQuery("test.oracle.query", "11000022").ExecuteGetList<VO>();
+                dataGridView1.DataSource = session.CreateNamedQuery("test.oracle.query", "11000022").ExecuteGetList<AccountOwner>();
             }
         }
     }

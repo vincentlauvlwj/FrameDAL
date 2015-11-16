@@ -9,7 +9,7 @@ namespace FrameTest
     [Table("account")]
     public class Account
     {
-        [Id(GeneratorType.Sequence, SeqName = "seq_abnormal_class_no")]
+        [Id(GeneratorType.Uuid)]
         [Column("id")]
         public string Id { get; set; }
 

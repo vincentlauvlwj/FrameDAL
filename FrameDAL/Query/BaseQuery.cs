@@ -21,7 +21,7 @@ namespace FrameDAL.Query
     public abstract class BaseQuery : IQuery
     {
         /// <summary>
-        /// 获得或设置该Query所依赖的Session对象
+        /// 获得该Query所依赖的Session对象
         /// </summary>
         public ISession Session 
         {
@@ -29,7 +29,7 @@ namespace FrameDAL.Query
             {
                 return Sess;
             }
-            set
+            internal set
             {
                 Sess = (BaseSession) value;
             }
@@ -89,7 +89,7 @@ namespace FrameDAL.Query
             }
             catch
             {
-                Sess.RollbackTransaction();
+                if(Sess.InTransaction()) Sess.RollbackTransaction();
                 throw;
             }
         }
@@ -115,7 +115,7 @@ namespace FrameDAL.Query
             }
             catch
             {
-                Sess.RollbackTransaction();
+                if(Sess.InTransaction()) Sess.RollbackTransaction();
                 throw;
             }
         }
@@ -135,7 +135,7 @@ namespace FrameDAL.Query
             }
             catch
             {
-                Sess.RollbackTransaction();
+                if(Sess.InTransaction()) Sess.RollbackTransaction();
                 throw;
             }
         }

@@ -91,7 +91,9 @@ namespace FrameDAL.DbHelper
         /// </summary>
         public void CommitTransaction()
         {
-            if (GetTransactionTier() == 1)
+            int tier = GetTransactionTier();
+            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
+            if (tier == 1)
             {
                 Bundle bundle = local.Value;
                 local.Value = null;
@@ -113,7 +115,9 @@ namespace FrameDAL.DbHelper
         /// </summary>
         public void RollbackTransaction()
         {
-            if (GetTransactionTier() == 1)
+            int tier = GetTransactionTier();
+            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
+            if (tier == 1)
             {
                 Bundle bundle = local.Value;
                 local.Value = null;
