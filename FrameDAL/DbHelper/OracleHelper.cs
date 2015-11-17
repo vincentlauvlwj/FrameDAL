@@ -30,7 +30,7 @@ namespace FrameDAL.DbHelper
         /// </summary>
         /// <param name="conn">数据库连接</param>
         /// <param name="trans">数据库事务</param>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回DbCommand对象</returns>
         protected override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)

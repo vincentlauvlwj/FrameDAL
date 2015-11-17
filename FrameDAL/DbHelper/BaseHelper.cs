@@ -138,7 +138,7 @@ namespace FrameDAL.DbHelper
         /// </summary>
         /// <param name="conn">数据库连接</param>
         /// <param name="trans">数据库事务</param>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回DbCommand对象</returns>
         protected abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
@@ -146,7 +146,7 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 执行非查询操作
         /// </summary>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>受影响的记录数</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
@@ -175,7 +175,7 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 获得一个标量值
         /// </summary>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回一个标量值</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
@@ -211,7 +211,7 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 执行查询，返回数据集
         /// </summary>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回数据集</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
@@ -244,7 +244,7 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 执行查询，返回数据表
         /// </summary>
-        /// <param name="sqlText">含有问号通配符的SQL命令</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回数据表</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
