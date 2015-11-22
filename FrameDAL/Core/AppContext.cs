@@ -70,7 +70,6 @@ namespace FrameDAL.Core
         private Configuration config;
 
         // 缓存了各种信息的Dictionary
-        private Dictionary<Type, ConstructorInfo> constructors = new Dictionary<Type, ConstructorInfo>();
         private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
         private Dictionary<Type, PropertyInfo[]> props = new Dictionary<Type,PropertyInfo[]>();
         private Dictionary<Type, PropertyInfo> idProps = new Dictionary<Type,PropertyInfo>();
@@ -141,7 +140,6 @@ namespace FrameDAL.Core
         /// </summary>
         public void ClearCache()
         {
-            lock(constructors) constructors.Clear();
             lock(tables) tables.Clear();
             lock(props) props.Clear();
             lock(idProps) idProps.Clear();
@@ -151,31 +149,6 @@ namespace FrameDAL.Core
             lock(deletes) deletes.Clear();
             lock(updates) updates.Clear();
             lock(selects) selects.Clear();
-        }
-
-        /// <summary>
-        /// 获取缓存中的公共无参构造方法
-        /// </summary>
-        /// <param name="type">要获取构造方法的类</param>
-        /// <returns>返回公共无参构造方法</returns>
-        /// <exception cref="EntityMappingException">类中没有公共无参构造方法</exception>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        public ConstructorInfo GetConstructor(Type type)
-        {
-            lock (constructors)
-            {
-                if (constructors.ContainsKey(type))
-                {
-                    return constructors[type];
-                }
-                else
-                {
-                    ConstructorInfo cons = type.GetConstructor(new Type[0]);
-                    if (cons == null) throw new EntityMappingException(type.FullName + "类中没有公共的无参构造方法。");
-                    constructors.Add(type, cons);
-                    return cons;
-                }
-            }
         }
 
         /// <summary>

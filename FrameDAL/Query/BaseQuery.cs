@@ -6,6 +6,7 @@ using System.Data;
 using System.Reflection;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
+using FrameDAL.Exceptions;
 
 namespace FrameDAL.Query
 {
@@ -151,20 +152,27 @@ namespace FrameDAL.Query
         /// <see cref="FrameDAL.Attributes.Column"/>
         public List<T> ExecuteGetList<T>()
         {
-            List<T> results = new List<T>();
-            DataTable dt = ExecuteGetDataTable();
-            foreach (DataRow row in dt.Rows)
+            try
             {
-                T entity = (T)AppContext.Instance.GetConstructor(typeof(T)).Invoke(null);
-                foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
+                List<T> results = new List<T>();
+                DataTable dt = ExecuteGetDataTable();
+                foreach (DataRow row in dt.Rows)
                 {
-                    Column col = AppContext.Instance.GetColumn(prop);
-                    if(col == null) continue;
-                    AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
+                    T entity = (T)Activator.CreateInstance<T>();
+                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
+                    {
+                        Column col = AppContext.Instance.GetColumn(prop);
+                        if (col == null) continue;
+                        AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
+                    }
+                    results.Add(entity);
                 }
-                results.Add(entity);
+                return results;
             }
-            return results;
+            catch (MissingMethodException e)
+            {
+                throw new EntityMappingException(typeof(T).FullName + "类中没有公共的无参构造方法。", e);
+            }
         }
 
         /// <summary>

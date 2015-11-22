@@ -30,9 +30,9 @@ namespace FrameTest
             // TestNonQuery();
             // TestScalar();
             // TestDataTable();
-            TestPageSize();
+            // TestPageSize();
             // TestGetList();
-            // TestNamedQuery();
+            TestNamedQuery();
         }
 
         private void TestAdd()
@@ -172,7 +172,7 @@ namespace FrameTest
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                dataGridView1.DataSource = session.CreateNamedQuery("test.oracle.query", "11000022").ExecuteGetList<AccountOwner>();
+                dataGridView1.DataSource = session.CreateNamedQuery("test.query", "1").ExecuteGetList<AccountOwner>();
             }
         }
     }
