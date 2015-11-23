@@ -32,7 +32,7 @@ namespace FrameDAL.Core
     /// ; 其他命名SQL的名称和值...
     /// ; ...
     /// </code>
-    /// 其中DbType目前只支持MySql, Oracle（注意大小写）
+    /// 其中DbType目前只支持MySQL, Oracle（注意大小写）
     /// 
     /// GitHub: https://github.com/vincentlauvlwj/FrameDAL
     /// </summary>
@@ -58,7 +58,7 @@ namespace FrameDAL.Core
                         if (_Instance == null)
                         {
                             Configuration config = new Configuration();
-                            config.Load(Environment.CurrentDirectory + @"\FrameDAL.ini");
+                            config.Load();
                             _Instance = new AppContext(config);
                         }
                     }
