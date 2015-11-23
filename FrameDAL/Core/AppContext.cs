@@ -7,6 +7,7 @@ using FrameDAL.Config;
 using FrameDAL.DbHelper;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
+using FrameDAL.Dialect;
 
 namespace FrameDAL.Core
 {
@@ -68,6 +69,7 @@ namespace FrameDAL.Core
 
         private IDbHelper db;
         private Configuration config;
+        private IDialect dialect;
 
         // 缓存了各种信息的Dictionary
         private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
@@ -75,10 +77,6 @@ namespace FrameDAL.Core
         private Dictionary<Type, PropertyInfo> idProps = new Dictionary<Type,PropertyInfo>();
         private Dictionary<PropertyInfo, Column> columns = new Dictionary<PropertyInfo,Column>();
         private Dictionary<PropertyInfo, Id> ids = new Dictionary<PropertyInfo,Id>();
-        private Dictionary<Type, string> inserts = new Dictionary<Type,string>();
-        private Dictionary<Type, string> deletes = new Dictionary<Type,string>();
-        private Dictionary<Type, string> updates = new Dictionary<Type,string>();
-        private Dictionary<Type, string> selects = new Dictionary<Type,string>();
 
         /// <summary>
         /// 私有构造方法，通过配置信息获得数据库访问助手，不同的数据库使用不同的访问助手
@@ -92,10 +90,12 @@ namespace FrameDAL.Core
             { 
                 case Configuration.DatabaseType.MySQL:
                     db = new MySqlHelper(config.ConnStr);
+                    dialect = new MySqlDialect();
                     break;
 
                 case Configuration.DatabaseType.Oracle:
                     db = new OracleHelper(config.ConnStr);
+                    dialect = new OracleDialect();
                     break;
 
                 default:
@@ -110,17 +110,7 @@ namespace FrameDAL.Core
         /// <exception cref="NotSupportedException">数据库不受支持</exception>
         public ISession OpenSession()
         {
-            switch (config.DbType)
-            {
-                case Configuration.DatabaseType.MySQL:
-                    return new MySqlSession(db);
-
-                case Configuration.DatabaseType.Oracle:
-                    return new OracleSession(db);
-
-                default:
-                    throw new NotSupportedException("暂不支持" + config.DbType + "数据库。");
-            }
+            return new SessionImpl(db);
         }
 
         /// <summary>
@@ -145,10 +135,7 @@ namespace FrameDAL.Core
             lock(idProps) idProps.Clear();
             lock(columns) columns.Clear();
             lock(ids) ids.Clear();
-            lock(inserts) inserts.Clear();
-            lock(deletes) deletes.Clear();
-            lock(updates) updates.Clear();
-            lock(selects) selects.Clear();
+            dialect.ClearCache();
         }
 
         /// <summary>
@@ -287,154 +274,6 @@ namespace FrameDAL.Core
                     CheckId(prop, id);
                     ids.Add(prop, id);
                     return id;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 从缓存中获得实体类对应的表的insert sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>insert sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
-        /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
-        public string GetInsertSql(Type type)
-        {
-            lock (inserts)
-            {
-                if (inserts.ContainsKey(type))
-                {
-                    return inserts[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("insert into ");
-                    sb.Append(GetTable(type).Name);
-                    sb.Append(" (");
-                    int count = 0;
-                    foreach (PropertyInfo prop in GetProperties(type))
-                    {
-                        Column col = GetColumn(prop);
-                        if(col == null) continue;
-                        sb.Append(col.Name + ", ");
-                        count++;
-                    }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(") values (");
-                    for (int i = 0; i < count; i++)
-                    {
-                        sb.Append("?, ");
-                    }
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(")");
-                    string sql = sb.ToString();
-                    inserts.Add(type, sql);
-                    return sql;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 从缓存中获得实体类对应的delete sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>delete sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
-        public string GetDeleteSql(Type type)
-        {
-            lock (deletes)
-            {
-                if (deletes.ContainsKey(type))
-                {
-                    return deletes[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("delete from ");
-                    sb.Append(GetTable(type).Name);
-                    sb.Append(" where ");
-                    sb.Append(GetColumn(GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    deletes.Add(type, sql);
-                    return sql;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 从缓存中获得实体类对应的update sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>update sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public string GetUpdateSql(Type type)
-        {
-            lock (updates)
-            {
-                if (updates.ContainsKey(type))
-                {
-                    return updates[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("update ");
-                    sb.Append(GetTable(type).Name);
-                    sb.Append(" set ");
-                    int count = 0;
-                    foreach (PropertyInfo prop in GetProperties(type))
-                    {
-                        Column col = GetColumn(prop);
-                        if(col == null) continue;
-                        sb.Append(col.Name);
-                        sb.Append("=?, ");
-                        count++;
-                    }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(" where ");
-                    sb.Append(GetColumn(GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    updates.Add(type, sql);
-                    return sql;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 从缓存中获得实体类对应的select sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>select sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public string GetSelectSql(Type type)
-        {
-            lock (selects)
-            {
-                if (selects.ContainsKey(type))
-                {
-                    return selects[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("select * from ");
-                    sb.Append(GetTable(type).Name);
-                    sb.Append(" where ");
-                    sb.Append(GetColumn(GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    selects.Add(type, sql);
-                    return sql;
                 }
             }
         }

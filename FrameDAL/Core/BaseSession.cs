@@ -5,7 +5,7 @@ using System.Text;
 using System.Reflection;
 using System.Threading;
 using FrameDAL.DbHelper;
-using FrameDAL.Query;
+using FrameDAL.Core;
 using FrameDAL.Attributes;
 
 namespace FrameDAL.Core
@@ -23,7 +23,7 @@ namespace FrameDAL.Core
     /// 将缓冲区内的操作一次性送到数据库中执行。调用Close(), Dispose(), BeginTransaction()方法或者执行
     /// 查询操作时，Flush()方法会自动调用，以保证数据的一致性。
     /// </summary>
-    public abstract class BaseSession : ISession
+    public class SessionImpl : ISession
     {
         /// <summary>
         /// 获得一个bool值，指示Session是否已经关闭
@@ -57,7 +57,7 @@ namespace FrameDAL.Core
 
         protected Queue<Bundle> cache;
 
-        protected BaseSession(IDbHelper db)
+        public SessionImpl(IDbHelper db)
         {
             this.db = db;
             IsClosed = false;
@@ -259,7 +259,15 @@ namespace FrameDAL.Core
         /// </summary>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public abstract IQuery CreateQuery();
+        public IQuery CreateQuery()
+        {
+            if (IsClosed) throw new ApplicationException("Session已关闭。");
+            if (threadId != Thread.CurrentThread.ManagedThreadId)
+                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            QueryImpl query = new QueryImpl();
+            query.Session = this;
+            return query;
+        }
 
         /// <summary>
         /// 创建Query对象，同时使用给定参数对其进行初始化

@@ -8,7 +8,7 @@ using FrameDAL.Core;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
 
-namespace FrameDAL.Query
+namespace FrameDAL.Core
 {
     /// <summary>
     /// Author: Vincent Lau.
@@ -19,7 +19,7 @@ namespace FrameDAL.Query
     /// 的缓冲区中，当调用Sess.Flush()方法时，才会将缓冲区的操作送到数据库中执行。具体可参考Session的行为。
     /// </summary>
     /// <see cref="FrameDAL.Core.ISession"/>
-    public abstract class BaseQuery : IQuery
+    public class QueryImpl : IQuery
     {
         /// <summary>
         /// 获得该Query所依赖的Session对象
@@ -32,11 +32,11 @@ namespace FrameDAL.Query
             }
             internal set
             {
-                Sess = (BaseSession) value;
+                Sess = (SessionImpl) value;
             }
         }
 
-        protected BaseSession Sess { get; set; }
+        protected SessionImpl Sess { get; set; }
 
         /// <summary>
         /// 获得或设置该Query的SQL命令
@@ -94,12 +94,6 @@ namespace FrameDAL.Query
                 throw;
             }
         }
-
-        /// <summary>
-        /// 执行查询之前，对SQL命令进行预处理，此方法由子类实现
-        /// </summary>
-        /// <returns>返回预处理后的SQL命令</returns>
-        protected abstract string BeforeQuery();
 
         /// <summary>
         /// 执行查询，返回数据集

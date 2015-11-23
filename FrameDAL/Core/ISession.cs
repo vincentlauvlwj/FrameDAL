@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FrameDAL.Query;
+using FrameDAL.Core;
 
 namespace FrameDAL.Core
 {

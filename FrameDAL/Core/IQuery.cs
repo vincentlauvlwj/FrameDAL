@@ -5,7 +5,7 @@ using System.Text;
 using System.Data;
 using FrameDAL.Core;
 
-namespace FrameDAL.Query
+namespace FrameDAL.Core
 {
     /// <summary>
     /// Author: Vincent Lau.
