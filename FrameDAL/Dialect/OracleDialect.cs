@@ -7,6 +7,8 @@ namespace FrameDAL.Dialect
 {
     public class OracleDialect : BaseDialect
     {
+        internal OracleDialect() { }
+
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
         /// </summary>

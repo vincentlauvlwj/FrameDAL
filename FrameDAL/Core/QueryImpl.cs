@@ -104,7 +104,8 @@ namespace FrameDAL.Core
             try
             {
                 Sess.BeginTransaction();
-                DataSet result = Sess.DbHelper.ExecuteGetDataSet(BeforeQuery(), Parameters);
+                string sql = Sess.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+                DataSet result = Sess.DbHelper.ExecuteGetDataSet(sql, Parameters);
                 Sess.CommitTransaction();
                 return result;
             }
@@ -124,7 +125,8 @@ namespace FrameDAL.Core
             try
             {
                 Sess.BeginTransaction();
-                DataTable result = Sess.DbHelper.ExecuteGetDataTable(BeforeQuery(), Parameters);
+                string sql = Sess.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+                DataTable result = Sess.DbHelper.ExecuteGetDataTable(sql, Parameters);
                 Sess.CommitTransaction();
                 return result;
             }

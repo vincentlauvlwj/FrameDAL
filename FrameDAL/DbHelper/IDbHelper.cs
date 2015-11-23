@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using FrameDAL.Dialect;
 
 namespace FrameDAL.DbHelper
 {
@@ -15,6 +16,11 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public interface IDbHelper
     {
+        /// <summary>
+        /// 获取数据库方言
+        /// </summary>
+        IDialect Dialect { get; }
+
         /// <summary>
         /// 返回一个bool值，指示当前线程是否已开启事务
         /// </summary>

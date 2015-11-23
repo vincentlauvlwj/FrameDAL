@@ -43,10 +43,6 @@ namespace FrameDAL.Core
                     throw new InvalidOperationException("在其他的线程中使用此Session。");
                 return db;
             }
-            private set
-            {
-                db = value;
-            }
         }
 
         protected class Bundle 
@@ -162,7 +158,7 @@ namespace FrameDAL.Core
                 if (AppContext.Instance.GetColumn(prop) == null) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
-            CreateQuery(AppContext.Instance.GetInsertSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
+            CreateQuery(db.Dialect.GetInsertSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
 
             if (id.GeneratorType == GeneratorType.Identity)
             {
@@ -183,7 +179,7 @@ namespace FrameDAL.Core
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
             object pk = AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null);
-            CreateQuery(AppContext.Instance.GetDeleteSql(entity.GetType()), pk).ExecuteNonQuery();
+            CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), pk).ExecuteNonQuery();
         }
 
         /// <summary>
@@ -203,7 +199,7 @@ namespace FrameDAL.Core
                 parameters.Add(prop.GetValue(entity, null));
             }
             parameters.Add(AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null));
-            CreateQuery(AppContext.Instance.GetUpdateSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
+            CreateQuery(db.Dialect.GetUpdateSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
         }
 
         /// <summary>
@@ -218,7 +214,7 @@ namespace FrameDAL.Core
             if (IsClosed) throw new InvalidOperationException("Session已关闭。");
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
-            return CreateQuery(AppContext.Instance.GetSelectSql(typeof(T)), pk).ExecuteGetEntity<T>();
+            return CreateQuery(db.Dialect.GetSelectSql(typeof(T)), pk).ExecuteGetEntity<T>();
         }
 
         /// <summary>

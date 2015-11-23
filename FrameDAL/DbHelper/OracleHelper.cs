@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Data.Common;
 using System.Data.OleDb;
+using FrameDAL.Dialect;
 
 namespace FrameDAL.DbHelper
 {
@@ -13,7 +14,17 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public class OracleHelper : BaseHelper
     {
-        internal OracleHelper(string connStr) : base(connStr) { }
+        private IDialect _Dialect;
+
+        public override IDialect Dialect
+        {
+            get { return _Dialect; }
+        }
+
+        internal OracleHelper(string connStr) : base(connStr) 
+        {
+            _Dialect = new OracleDialect();
+        }
 
         /// <summary>
         /// 创建一个DbConnection对象

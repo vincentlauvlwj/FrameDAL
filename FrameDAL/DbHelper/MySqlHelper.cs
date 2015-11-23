@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Data.Common;
 using MySql.Data.MySqlClient;
+using FrameDAL.Dialect;
 
 namespace FrameDAL.DbHelper
 {
@@ -14,7 +15,17 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public class MySqlHelper : BaseHelper
     {
-        internal MySqlHelper(string connStr) : base(connStr) { }
+        private IDialect _Dialect;
+
+        public override IDialect Dialect
+        {
+            get { return _Dialect; }
+        }
+
+        internal MySqlHelper(string connStr) : base(connStr) 
+        {
+            _Dialect = new MySqlDialect();
+        }
 
         /// <summary>
         /// 创建一个DbConnection对象

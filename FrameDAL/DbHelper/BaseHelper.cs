@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Threading;
 using FrameDAL.Exceptions;
+using FrameDAL.Dialect;
 
 namespace FrameDAL.DbHelper
 {
@@ -20,6 +21,8 @@ namespace FrameDAL.DbHelper
     public abstract class BaseHelper : IDbHelper
     {
         protected string connStr;
+
+        public abstract IDialect Dialect { get; }
 
         protected BaseHelper(string connStr)
         {

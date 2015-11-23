@@ -69,7 +69,6 @@ namespace FrameDAL.Core
 
         private IDbHelper db;
         private Configuration config;
-        private IDialect dialect;
 
         // 缓存了各种信息的Dictionary
         private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
@@ -90,12 +89,10 @@ namespace FrameDAL.Core
             { 
                 case Configuration.DatabaseType.MySQL:
                     db = new MySqlHelper(config.ConnStr);
-                    dialect = new MySqlDialect();
                     break;
 
                 case Configuration.DatabaseType.Oracle:
                     db = new OracleHelper(config.ConnStr);
-                    dialect = new OracleDialect();
                     break;
 
                 default:
@@ -135,7 +132,7 @@ namespace FrameDAL.Core
             lock(idProps) idProps.Clear();
             lock(columns) columns.Clear();
             lock(ids) ids.Clear();
-            dialect.ClearCache();
+            db.Dialect.ClearCache();
         }
 
         /// <summary>

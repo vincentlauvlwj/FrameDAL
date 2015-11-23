@@ -30,9 +30,9 @@ namespace FrameTest
             // TestNonQuery();
             // TestScalar();
             // TestDataTable();
-            // TestPageSize();
+            TestPageSize();
             // TestGetList();
-            TestNamedQuery();
+            // TestNamedQuery();
         }
 
         private void TestAdd()
@@ -143,7 +143,7 @@ namespace FrameTest
             {
                 IQuery query = session.CreateQuery("select * from account");
                 query.FirstResult = 0;
-                query.PageSize = 2;
+                query.PageSize = 4;
                 dataGridView1.DataSource = query.ExecuteGetDataTable();
             }
         }
