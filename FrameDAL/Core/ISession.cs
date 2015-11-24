@@ -60,6 +60,14 @@ namespace FrameDAL.Core
         void Delete(object entity);
 
         /// <summary>
+        /// 删除数据库中指定主键的一条记录
+        /// </summary>
+        /// <typeparam name="T">要删除的记录所属的实体类型</typeparam>
+        /// <param name="id">主键值</param>
+        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
+        void DeleteById<T>(object id);
+
+        /// <summary>
         /// 更新数据库中的实体
         /// </summary>
         /// <param name="entity">要更新的实体</param>
@@ -70,10 +78,10 @@ namespace FrameDAL.Core
         /// 从数据库中获得实体
         /// </summary>
         /// <typeparam name="T">实体类型</typeparam>
-        /// <param name="pk">主键值</param>
+        /// <param name="id">主键值</param>
         /// <returns>返回获得的实体</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        T Get<T>(object pk);
+        T Get<T>(object id);
 
         /// <summary>
         /// 刷新缓存，把缓存中的非查询操作全部送到数据库中执行

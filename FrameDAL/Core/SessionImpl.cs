@@ -178,8 +178,22 @@ namespace FrameDAL.Core
             if (IsClosed) throw new InvalidOperationException("Session已关闭。");
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
-            object pk = AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null);
-            CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), pk).ExecuteNonQuery();
+            object id = AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null);
+            CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), id).ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// 删除数据库中指定主键的一条记录
+        /// </summary>
+        /// <typeparam name="T">要删除的记录所属的实体类型</typeparam>
+        /// <param name="id">主键值</param>
+        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
+        public void DeleteById<T>(object id)
+        {
+            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
+            if (threadId != Thread.CurrentThread.ManagedThreadId)
+                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CreateQuery(db.Dialect.GetDeleteSql(typeof(T)), id).ExecuteNonQuery();
         }
 
         /// <summary>
@@ -206,15 +220,15 @@ namespace FrameDAL.Core
         /// 从数据库中获得实体
         /// </summary>
         /// <typeparam name="T">实体类型</typeparam>
-        /// <param name="pk">主键值</param>
+        /// <param name="id">主键值</param>
         /// <returns>返回获得的实体</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public T Get<T>(object pk)
+        public T Get<T>(object id)
         {
             if (IsClosed) throw new InvalidOperationException("Session已关闭。");
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
-            return CreateQuery(db.Dialect.GetSelectSql(typeof(T)), pk).ExecuteGetEntity<T>();
+            return CreateQuery(db.Dialect.GetSelectSql(typeof(T)), id).ExecuteGetEntity<T>();
         }
 
         /// <summary>
