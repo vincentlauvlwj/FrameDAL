@@ -7,8 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using FrameDAL.Core;
-using FrameDAL.Core;
 using FrameDAL.Attributes;
+using FrameDAL.Config;
 
 namespace FrameTest
 {
@@ -21,16 +21,17 @@ namespace FrameTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            Configuration.DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
             // TestAdd();
             // TestDelete();
-            // MessageBox.Show(TestGet().Name);
+            MessageBox.Show(TestGet().Name);
             // TestUpdate();
             // TestFlush();
             // TestTransaction();
             // TestNonQuery();
             // TestScalar();
             // TestDataTable();
-            TestPageSize();
+            // TestPageSize();
             // TestGetList();
             // TestNamedQuery();
         }
@@ -63,7 +64,7 @@ namespace FrameTest
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                return session.Get<Account>("94a2d11b-cea4-4684-9b09-59bf273ff329");
+                return session.Get<Account>("1");
             }
         }
 

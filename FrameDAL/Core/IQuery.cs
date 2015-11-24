@@ -9,7 +9,6 @@ namespace FrameDAL.Core
 {
     /// <summary>
     /// Author: Vincent Lau.
-    /// 各种Query类的接口。不同的数据库使用不同的Query类。
     /// Query代表了一个数据库查询操作（当然也可以是非查询操作），可以用它提供的方法把SQL送到数据库中执行。
     /// Query依赖于特定的Session，当Session关闭时，Query对象也将不能使用。
     /// 当调用ExecuteNonQuery()方法执行非查询操作时，如果没有开启事务，该操作不会立即执行，而是放到Session

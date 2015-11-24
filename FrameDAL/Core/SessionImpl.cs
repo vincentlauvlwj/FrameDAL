@@ -12,7 +12,7 @@ namespace FrameDAL.Core
 {
     /// <summary>
     /// Author: Vincent Lau.
-    /// 各种Session类的基类，实现了Session的一些通用的方法，不同的数据库使用不同的Session。
+    /// ISession接口的实现类。
     /// Session代表了一个数据库会话，可使用它提供的方法将从数据库中存取实体。在一个会话中，可以有多次数据
     /// 库操作。会话根据需要自行打开或关闭数据库连接。一个会话可多次打开连接和关闭连接，长久不关闭会话并不
     /// 会占用太大的系统资源，但用完请一定要记得关闭，否则可能会导致缓存中的某些操作丢失。
@@ -30,9 +30,9 @@ namespace FrameDAL.Core
         /// </summary>
         public bool IsClosed { get; private set; }
 
-        protected int threadId;
+        private int threadId;
 
-        protected IDbHelper db;
+        private IDbHelper db;
 
         internal IDbHelper DbHelper 
         {
@@ -45,15 +45,15 @@ namespace FrameDAL.Core
             }
         }
 
-        protected class Bundle 
+        private class Bundle 
         {
             public string SqlText;
             public object[] Parameters;
         }
 
-        protected Queue<Bundle> cache;
+        private Queue<Bundle> cache;
 
-        public SessionImpl(IDbHelper db)
+        internal SessionImpl(IDbHelper db)
         {
             this.db = db;
             IsClosed = false;
@@ -251,7 +251,7 @@ namespace FrameDAL.Core
         }
 
         /// <summary>
-        /// 创建Query对象，不同的数据库使用不同的Query对象，此方法由子类实现。
+        /// 创建Query对象
         /// </summary>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
@@ -260,9 +260,7 @@ namespace FrameDAL.Core
             if (IsClosed) throw new ApplicationException("Session已关闭。");
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
-            QueryImpl query = new QueryImpl();
-            query.Session = this;
-            return query;
+            return new QueryImpl(this);
         }
 
         /// <summary>

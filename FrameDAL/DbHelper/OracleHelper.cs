@@ -16,6 +16,9 @@ namespace FrameDAL.DbHelper
     {
         private IDialect _Dialect;
 
+        /// <summary>
+        /// 获取Oracle数据库方言
+        /// </summary>
         public override IDialect Dialect
         {
             get { return _Dialect; }

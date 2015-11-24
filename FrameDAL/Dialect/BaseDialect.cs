@@ -9,8 +9,23 @@ using FrameDAL.Exceptions;
 
 namespace FrameDAL.Dialect
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 数据库方言类的基类，此类实现了一些通用的方法，通过此类获得的SQL具有跨数据的特性，
+    /// 因为无法确定所使用的数据库，所以此类只能生成一些通用的SQL，若想针对不同的数据库进行
+    /// 定制与优化，应写一个具体的方言类继承此类或直接实现IDialect接口。
+    /// </summary>
     public abstract class BaseDialect : IDialect
     {
+        /// <summary>
+        /// 执行查询之前，对SQL命令进行预处理，此方法由子类实现
+        /// </summary>
+        /// <param name="sqlText">要进行预处理的SQL</param>
+        /// <param name="firstResult">要返回的第一条结果的索引，该索引从0开始</param>
+        /// <param name="pageSize">返回的结果数量，若为0，则返回所有结果，不进行分页查询</param>
+        /// <returns>返回预处理后的SQL命令</returns>
+        public abstract string GetPagingSql(string sqlText, int firstResult, int pageSize);
+
         private Dictionary<Type, string> inserts = new Dictionary<Type, string>();
         private Dictionary<Type, string> deletes = new Dictionary<Type, string>();
         private Dictionary<Type, string> updates = new Dictionary<Type, string>();
@@ -152,7 +167,19 @@ namespace FrameDAL.Dialect
                 else
                 {
                     StringBuilder sb = new StringBuilder();
-                    sb.Append("select * from ");
+                    sb.Append("select ");
+                    int count = 0;
+                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+                    {
+                        Column col = AppContext.Instance.GetColumn(prop);
+                        if (col == null) continue;
+                        sb.Append(col.Name);
+                        sb.Append(", ");
+                        count++;
+                    }
+                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
+                    sb.Remove(sb.Length - 2, 2);
+                    sb.Append(" from ");
                     sb.Append(AppContext.Instance.GetTable(type).Name);
                     sb.Append(" where ");
                     sb.Append(AppContext.Instance.GetColumn(AppContext.Instance.GetIdProperty(type)).Name);
@@ -174,14 +201,5 @@ namespace FrameDAL.Dialect
             lock (updates) updates.Clear();
             lock (selects) selects.Clear();
         }
-
-        /// <summary>
-        /// 执行查询之前，对SQL命令进行预处理，此方法由子类实现
-        /// </summary>
-        /// <param name="sqlText">要进行预处理的SQL</param>
-        /// <param name="firstResult">要返回的第一条结果的索引，该索引从0开始</param>
-        /// <param name="pageSize">返回的结果数量</param>
-        /// <returns>返回预处理后的SQL命令</returns>
-        public abstract string GetPagingSql(string sqlText, int firstResult, int pageSize);
     }
 }

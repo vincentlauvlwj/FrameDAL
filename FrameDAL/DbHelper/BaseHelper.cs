@@ -20,9 +20,36 @@ namespace FrameDAL.DbHelper
     /// </summary>
     public abstract class BaseHelper : IDbHelper
     {
-        protected string connStr;
-
+        /// <summary>
+        /// 获取数据库方言
+        /// </summary>
         public abstract IDialect Dialect { get; }
+
+        /// <summary>
+        /// 创建一个DbConnection对象，由子类实现
+        /// </summary>
+        /// <param name="connStr">连接字符串</param>
+        /// <returns>DbConnection对象</returns>
+        protected abstract DbConnection NewConnection(string connStr);
+
+        /// <summary>
+        /// 使用给定参数创建DbCommand对象，由子类实现
+        /// </summary>
+        /// <param name="conn">数据库连接</param>
+        /// <param name="trans">数据库事务</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
+        /// <param name="parameters">SQL命令中的参数值</param>
+        /// <returns>返回DbCommand对象</returns>
+        protected abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+
+        /// <summary>
+        /// 创建一个数据适配器对象，由子类实现
+        /// </summary>
+        /// <param name="cmd">命令对象</param>
+        /// <returns>返回一个数据适配器对象</returns>
+        protected abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
+
+        protected string connStr;
 
         protected BaseHelper(string connStr)
         {
@@ -82,13 +109,6 @@ namespace FrameDAL.DbHelper
         }
 
         /// <summary>
-        /// 创建一个DbConnection对象，由子类实现
-        /// </summary>
-        /// <param name="connStr">连接字符串</param>
-        /// <returns>DbConnection对象</returns>
-        protected abstract DbConnection NewConnection(string connStr);
-
-        /// <summary>
         /// 提交当前线程上的事务，当嵌套打开事务时，只有与第一次BeginTransaction对应的那次
         /// CommitTransaction或RollbackTransaction调用会生效
         /// </summary>
@@ -135,16 +155,6 @@ namespace FrameDAL.DbHelper
                 // dict[Thread.CurrentThread.ManagedThreadId].Tier--;
             }
         }
-
-        /// <summary>
-        /// 使用给定参数创建DbCommand对象，由子类实现
-        /// </summary>
-        /// <param name="conn">数据库连接</param>
-        /// <param name="trans">数据库事务</param>
-        /// <param name="sqlText">含有问号占位符的SQL命令</param>
-        /// <param name="parameters">SQL命令中的参数值</param>
-        /// <returns>返回DbCommand对象</returns>
-        protected abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
 
         /// <summary>
         /// 执行非查询操作
@@ -203,13 +213,6 @@ namespace FrameDAL.DbHelper
                 throw new DbAccessException("SQL执行出错：" + sqlText + "。错误信息：" + e.Message + "。更多异常信息请参考InnerException。", e);
             }
         }
-
-        /// <summary>
-        /// 创建一个数据适配器对象，由子类实现
-        /// </summary>
-        /// <param name="cmd">命令对象</param>
-        /// <returns>返回一个数据适配器对象</returns>
-        protected abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
 
         /// <summary>
         /// 执行查询，返回数据集

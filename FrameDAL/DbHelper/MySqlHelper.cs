@@ -17,6 +17,9 @@ namespace FrameDAL.DbHelper
     {
         private IDialect _Dialect;
 
+        /// <summary>
+        /// 获取MySql数据库方言
+        /// </summary>
         public override IDialect Dialect
         {
             get { return _Dialect; }

@@ -12,11 +12,11 @@ namespace FrameDAL.Core
 {
     /// <summary>
     /// Author: Vincent Lau.
-    /// 各种Query类的基类。实现了Query的一些公共方法，不同的数据库使用不同的Query类。
+    /// IQuery接口的实现类。
     /// Query代表了一个数据库查询操作（当然也可以是非查询操作），可以用它提供的方法把SQL送到数据库中执行。
     /// Query依赖于特定的Session，当Session关闭时，Query对象也将不能使用。
     /// 当调用ExecuteNonQuery()方法执行非查询操作时，如果没有开启事务，该操作不会立即执行，而是放到Session
-    /// 的缓冲区中，当调用Sess.Flush()方法时，才会将缓冲区的操作送到数据库中执行。具体可参考Session的行为。
+    /// 的缓冲区中，当调用ISession.Flush()方法时，才会将缓冲区的操作送到数据库中执行。具体可参考Session的行为。
     /// </summary>
     /// <see cref="FrameDAL.Core.ISession"/>
     public class QueryImpl : IQuery
@@ -28,15 +28,16 @@ namespace FrameDAL.Core
         {
             get
             {
-                return Sess;
-            }
-            internal set
-            {
-                Sess = (SessionImpl) value;
+                return session;
             }
         }
 
-        protected SessionImpl Sess { get; set; }
+        private SessionImpl session;
+
+        internal QueryImpl(SessionImpl session)
+        {
+            this.session = session;
+        }
 
         /// <summary>
         /// 获得或设置该Query的SQL命令
@@ -64,13 +65,13 @@ namespace FrameDAL.Core
         /// <returns>当事务已开启，执行操作，返回受影响的行数。当事务未开启，将操作放入缓冲区，返回null</returns>
         public int? ExecuteNonQuery()
         {
-            if (Sess.DbHelper.InTransaction())
+            if (session.DbHelper.InTransaction())
             {
-                return Sess.DbHelper.ExecuteNonQuery(SqlText, Parameters);
+                return session.DbHelper.ExecuteNonQuery(SqlText, Parameters);
             }
             else
             {
-                Sess.AddToCache(SqlText, Parameters);
+                session.AddToCache(SqlText, Parameters);
                 return null;
             }
         }
@@ -83,14 +84,14 @@ namespace FrameDAL.Core
         {
             try
             {
-                Sess.BeginTransaction();
-                object result = Sess.DbHelper.ExecuteScalar(SqlText, Parameters);
-                Sess.CommitTransaction();
+                session.BeginTransaction();
+                object result = session.DbHelper.ExecuteScalar(SqlText, Parameters);
+                session.CommitTransaction();
                 return result;
             }
             catch
             {
-                if(Sess.InTransaction()) Sess.RollbackTransaction();
+                if(session.InTransaction()) session.RollbackTransaction();
                 throw;
             }
         }
@@ -103,15 +104,15 @@ namespace FrameDAL.Core
         {
             try
             {
-                Sess.BeginTransaction();
-                string sql = Sess.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
-                DataSet result = Sess.DbHelper.ExecuteGetDataSet(sql, Parameters);
-                Sess.CommitTransaction();
+                session.BeginTransaction();
+                string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+                DataSet result = session.DbHelper.ExecuteGetDataSet(sql, Parameters);
+                session.CommitTransaction();
                 return result;
             }
             catch
             {
-                if(Sess.InTransaction()) Sess.RollbackTransaction();
+                if(session.InTransaction()) session.RollbackTransaction();
                 throw;
             }
         }
@@ -124,15 +125,15 @@ namespace FrameDAL.Core
         {
             try
             {
-                Sess.BeginTransaction();
-                string sql = Sess.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
-                DataTable result = Sess.DbHelper.ExecuteGetDataTable(sql, Parameters);
-                Sess.CommitTransaction();
+                session.BeginTransaction();
+                string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+                DataTable result = session.DbHelper.ExecuteGetDataTable(sql, Parameters);
+                session.CommitTransaction();
                 return result;
             }
             catch
             {
-                if(Sess.InTransaction()) Sess.RollbackTransaction();
+                if(session.InTransaction()) session.RollbackTransaction();
                 throw;
             }
         }

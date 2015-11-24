@@ -34,6 +34,8 @@ namespace FrameDAL.Core
     /// </code>
     /// 其中DbType目前只支持MySQL, Oracle（注意大小写）
     /// 
+    /// Note: 配置文件的默认路径也可在获取AppContext之前通过设置Configuration.DefaultPath而改变
+    /// 
     /// GitHub: https://github.com/vincentlauvlwj/FrameDAL
     /// </summary>
     /// <see cref="FrameDAL.Config.Configuration"/>
@@ -103,8 +105,7 @@ namespace FrameDAL.Core
         /// <summary>
         /// 打开Session
         /// </summary>
-        /// <returns>返回打开的Session</returns>
-        /// <exception cref="NotSupportedException">数据库不受支持</exception>
+        /// <returns>返回一个打开的Session</returns>
         public ISession OpenSession()
         {
             return new SessionImpl(db);

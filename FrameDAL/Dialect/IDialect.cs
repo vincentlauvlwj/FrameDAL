@@ -5,6 +5,10 @@ using System.Text;
 
 namespace FrameDAL.Dialect
 {
+    /// <summary>
+    /// Author: Vincent Lau.
+    /// 表示数据库方言的接口，可通过此接口获得针对不同数据库定制的访问SQL
+    /// </summary>
     public interface IDialect
     {
         /// <summary>
@@ -49,7 +53,7 @@ namespace FrameDAL.Dialect
         /// </summary>
         /// <param name="sqlText">要进行预处理的SQL</param>
         /// <param name="firstResult">要返回的第一条结果的索引，该索引从0开始</param>
-        /// <param name="pageSize">返回的结果数量</param>
+        /// <param name="pageSize">返回的结果数量，若为0，则返回所有结果，不进行分页查询</param>
         /// <returns>返回预处理后的SQL命令</returns>
         string GetPagingSql(string sqlText, int firstResult, int pageSize);
 
