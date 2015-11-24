@@ -34,7 +34,7 @@ namespace FrameDAL.Core
     /// </code>
     /// 其中DbType目前只支持MySQL, Oracle（注意大小写）
     /// 
-    /// Note: 配置文件的默认路径也可在获取AppContext之前通过设置Configuration.DefaultPath而改变
+    /// Note: 配置文件的默认路径也可在获取AppContext之前通过设置Configuration.DefaultPath属性而改变
     /// 
     /// GitHub: https://github.com/vincentlauvlwj/FrameDAL
     /// </summary>

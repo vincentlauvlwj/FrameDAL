@@ -11,7 +11,7 @@ namespace FrameDAL.Config
     /// Author: Vincent Lau.
     /// 封装了框架配置文件中的配置信息的类。
     /// 本框架的默认的配置文件名为FrameDAL.ini，放在程序启动目录，
-    /// 也可在获取AppContext之前指定Configuration.DefaultPath改变默认的路径，
+    /// 也可在获取AppContext之前设置Configuration.DefaultPath属性改变默认的路径，
     /// 配置文件的具体的内容格式如下
     /// <code>
     /// [Settings]
@@ -30,10 +30,22 @@ namespace FrameDAL.Config
     /// </summary>
     public class Configuration
     {
+        private static string _DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
+
         /// <summary>
         /// 获取或设置配置文件的默认路径
         /// </summary>
-        public static string DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
+        public static string DefaultPath 
+        {
+            get
+            {
+                return _DefaultPath;
+            }
+            set
+            {
+                _DefaultPath = value;
+            }
+        }
 
         /// <summary>
         /// 保存数据库类型常量的内部类，目前支持MySql, Oracle，更多数据库支持期望日后更新。。。
