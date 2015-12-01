@@ -82,16 +82,16 @@ namespace FrameDAL.Config
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);
 
             DbType = ConfigUtil.GetStringValue(path, "Settings", "DbType", "");
+            if (string.IsNullOrWhiteSpace(DbType)) throw new ConfigurationException("配置文件没有配置DbType属性。");
 
             StringBuilder sb = new StringBuilder();
             foreach (string item in ConfigUtil.GetAllItems(path, "ConnStr"))
             {
                 sb.Append(item + ";");
             }
-            if (sb.Length == 0) throw new ConfigurationException("没有配置数据库连接串。");
+            if (sb.Length == 0) throw new ConfigurationException("配置文件没有配置数据库连接串。");
             ConnStr = sb.Remove(sb.Length - 1, 1).ToString();
 
-            sb = new StringBuilder();
             NamedSql = new Dictionary<string, string>();
             foreach (string item in ConfigUtil.GetAllItems(path, "NamedSql"))
             {
