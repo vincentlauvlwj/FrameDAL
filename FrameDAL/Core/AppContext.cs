@@ -17,22 +17,6 @@ namespace FrameDAL.Core
     /// AppContext提供了获得Session的方法，保存了框架运行过程中产生的缓存，这些缓存可提高反射效率。
     /// 该类使用单例模式，在程序运行过程中只有一个实例，可通过AppContext.Instance获得该实例。
     /// 框架启动时，从程序启动目录下的FrameDAL.ini文件中读取配置信息产生AppContext的唯一实例。
-    /// 配置文件的格式如下
-    /// <code>
-    /// [Settings]
-    /// DbType=MySQL
-    /// [ConnStr]
-    /// server=localhost
-    /// ; ...
-    /// ; 其他连接串中需要的配置信息...
-    /// ; ...
-    /// [NamedSql]
-    /// test.query=select * from account where id=?
-    /// ; ...
-    /// ; 其他命名SQL的名称和值...
-    /// ; ...
-    /// </code>
-    /// 其中DbType目前只支持MySQL, Oracle（注意大小写）
     /// 
     /// Note: 配置文件的默认路径也可在获取AppContext之前通过设置Configuration.DefaultPath属性而改变
     /// 
