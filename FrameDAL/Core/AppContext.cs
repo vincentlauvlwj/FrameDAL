@@ -71,7 +71,7 @@ namespace FrameDAL.Core
 
         /// <summary>
         /// 获取程序使用的DbHelper对象，利用此对象，可以进行本框架暂未支持的一些底层操作。
-        /// 推荐使用此属性获得DbHelper而不是自己创建，因为此方法获得的DbHelper是数据库无关的，可使代码不必与具体数据库耦合。
+        /// 推荐使用此属性获得DbHelper而不是自己创建，因为此属性获得的是IDbHelper接口，通过面向接口编程，可避免代码与具体数据库耦合。
         /// </summary>
         public IDbHelper DbHelper { get; private set; }
         private Configuration config;
