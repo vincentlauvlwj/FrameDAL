@@ -11,8 +11,6 @@ namespace FrameDAL.Dialect
     /// </summary>
     public class MySqlDialect : BaseDialect
     {
-        internal MySqlDialect() { }
-
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
         /// </summary>

@@ -28,9 +28,8 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 创建一个DbConnection对象，由子类实现
         /// </summary>
-        /// <param name="connStr">连接字符串</param>
         /// <returns>DbConnection对象</returns>
-        protected abstract DbConnection NewConnection(string connStr);
+        public abstract DbConnection NewConnection();
 
         /// <summary>
         /// 使用给定参数创建DbCommand对象，由子类实现
@@ -40,14 +39,14 @@ namespace FrameDAL.DbHelper
         /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回DbCommand对象</returns>
-        protected abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+        public abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
 
         /// <summary>
         /// 创建一个数据适配器对象，由子类实现
         /// </summary>
         /// <param name="cmd">命令对象</param>
         /// <returns>返回一个数据适配器对象</returns>
-        protected abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
+        public abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
 
         protected string connStr;
 
@@ -94,7 +93,7 @@ namespace FrameDAL.DbHelper
             if (GetTransactionTier() == 0)
             {
                 Bundle bundle = new Bundle();
-                bundle.Connection = NewConnection(connStr);
+                bundle.Connection = NewConnection();
                 bundle.Connection.Open();
                 bundle.Transaction = bundle.Connection.BeginTransaction();
                 bundle.Tier = 1;
@@ -173,7 +172,7 @@ namespace FrameDAL.DbHelper
                     // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
                 }
-                else using (DbConnection conn = NewConnection(connStr))
+                else using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         return PrepareCommand(conn, null, sqlText, parameters).ExecuteNonQuery();
@@ -202,7 +201,7 @@ namespace FrameDAL.DbHelper
                     // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteScalar();
                 }
-                else using (DbConnection conn = NewConnection(connStr))
+                else using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         return PrepareCommand(conn, null, sqlText, parameters).ExecuteScalar();
@@ -233,7 +232,7 @@ namespace FrameDAL.DbHelper
                     NewDataAdapter(PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters)).Fill(ds);
                     return ds;
                 }
-                else using (DbConnection conn = NewConnection(connStr))
+                else using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         DataSet ds = new DataSet();

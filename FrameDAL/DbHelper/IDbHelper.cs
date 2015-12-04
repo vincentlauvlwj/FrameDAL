@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.Data.Common;
 using FrameDAL.Dialect;
 
 namespace FrameDAL.DbHelper
@@ -20,6 +21,29 @@ namespace FrameDAL.DbHelper
         /// 获取数据库方言
         /// </summary>
         IDialect Dialect { get; }
+
+        /// <summary>
+        /// 创建一个DbConnection对象
+        /// </summary>
+        /// <returns>DbConnection对象</returns>
+        DbConnection NewConnection();
+
+        /// <summary>
+        /// 使用给定参数创建DbCommand对象
+        /// </summary>
+        /// <param name="conn">数据库连接</param>
+        /// <param name="trans">数据库事务</param>
+        /// <param name="sqlText">含有问号占位符的SQL命令</param>
+        /// <param name="parameters">SQL命令中的参数值</param>
+        /// <returns>返回DbCommand对象</returns>
+        DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+
+        /// <summary>
+        /// 创建一个数据适配器对象
+        /// </summary>
+        /// <param name="cmd">命令对象</param>
+        /// <returns>返回一个数据适配器对象</returns>
+        DbDataAdapter NewDataAdapter(DbCommand cmd);
 
         /// <summary>
         /// 返回一个bool值，指示当前线程是否已开启事务

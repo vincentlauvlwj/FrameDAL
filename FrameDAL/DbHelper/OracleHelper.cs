@@ -24,7 +24,7 @@ namespace FrameDAL.DbHelper
             get { return _Dialect; }
         }
 
-        internal OracleHelper(string connStr) : base(connStr) 
+        public OracleHelper(string connStr) : base(connStr) 
         {
             _Dialect = new OracleDialect();
         }
@@ -32,9 +32,8 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 创建一个DbConnection对象
         /// </summary>
-        /// <param name="connStr">连接字符串</param>
         /// <returns>DbConnection对象</returns>
-        protected override DbConnection NewConnection(string connStr)
+        public override DbConnection NewConnection()
         {
             return new OleDbConnection(connStr);
         }
@@ -47,7 +46,7 @@ namespace FrameDAL.DbHelper
         /// <param name="sqlText">含有问号占位符的SQL命令</param>
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回DbCommand对象</returns>
-        protected override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
+        public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
         {
             DbCommand cmd = new OleDbCommand();
             if (conn != null) cmd.Connection = conn;
@@ -66,7 +65,7 @@ namespace FrameDAL.DbHelper
         /// </summary>
         /// <param name="cmd">命令对象</param>
         /// <returns>返回一个数据适配器对象</returns>
-        protected override DbDataAdapter NewDataAdapter(DbCommand cmd)
+        public override DbDataAdapter NewDataAdapter(DbCommand cmd)
         {
             return new OleDbDataAdapter(cmd as OleDbCommand);
         }

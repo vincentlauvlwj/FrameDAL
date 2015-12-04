@@ -69,7 +69,10 @@ namespace FrameDAL.Core
             } 
         }
 
-        private IDbHelper db;
+        /// <summary>
+        /// 获取程序使用的DbHelper对象，利用此对象，可以进行本框架暂未支持的一些底层操作
+        /// </summary>
+        public IDbHelper DbHelper { get; private set; }
         private Configuration config;
 
         // 缓存了各种信息的Dictionary
@@ -90,11 +93,11 @@ namespace FrameDAL.Core
             switch (config.DbType)
             { 
                 case Configuration.DatabaseType.MySQL:
-                    db = new MySqlHelper(config.ConnStr);
+                    DbHelper = new MySqlHelper(config.ConnStr);
                     break;
 
                 case Configuration.DatabaseType.Oracle:
-                    db = new OracleHelper(config.ConnStr);
+                    DbHelper = new OracleHelper(config.ConnStr);
                     break;
 
                 default:
@@ -108,7 +111,7 @@ namespace FrameDAL.Core
         /// <returns>返回一个打开的Session</returns>
         public ISession OpenSession()
         {
-            return new SessionImpl(db);
+            return new SessionImpl(DbHelper);
         }
 
         /// <summary>
@@ -133,7 +136,7 @@ namespace FrameDAL.Core
             lock(idProps) idProps.Clear();
             lock(columns) columns.Clear();
             lock(ids) ids.Clear();
-            db.Dialect.ClearCache();
+            DbHelper.Dialect.ClearCache();
         }
 
         /// <summary>
