@@ -48,7 +48,7 @@ namespace FrameDAL.Core
         /// 获得AppContext的唯一实例
         /// </summary>
         /// <exception cref="FileNotFoundException">配置文件不存在</exception>
-        /// <exception cref="ConfigurationException">配置文件中没有配置数据库连接串</exception>
+        /// <exception cref="ConfigurationException">配置错误</exception>
         public static AppContext Instance
         {
             get 
@@ -88,21 +88,19 @@ namespace FrameDAL.Core
         /// </summary>
         /// <param name="config">框架配置信息</param>
         /// <exception cref="NotSupportedException">数据库不受支持</exception>
-        private AppContext(Configuration config) 
+        private AppContext(Configuration config)
         {
             this.config = config;
-            switch (config.DbType)
-            { 
-                case Configuration.DatabaseType.MySQL:
-                    DbHelper = new MySqlHelper(config.ConnStr);
-                    break;
-
-                case Configuration.DatabaseType.Oracle:
-                    DbHelper = new OracleHelper(config.ConnStr);
-                    break;
-
-                default:
-                    throw new NotSupportedException("暂不支持" + config.DbType + "数据库。");
+            try
+            {
+                DbHelper = Assembly.LoadFrom(config.DbHelperAssembly).CreateInstance(config.DbHelperClass) as IDbHelper;
+                if (DbHelper == null)
+                    throw new TypeLoadException("程序集" + config.DbHelperAssembly + "中未找到" + config.DbHelperClass + "类。");
+                DbHelper.ConnectionString = config.ConnStr;
+            }
+            catch (Exception e)
+            {
+                throw new ConfigurationException("DbHelper初始化异常，请检查配置文件中是否正确配置DbHelperAssembly和DbHelperClass属性。" + e.Message, e);
             }
         }
 

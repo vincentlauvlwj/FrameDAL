@@ -48,18 +48,14 @@ namespace FrameDAL.Config
         }
 
         /// <summary>
-        /// 保存数据库类型常量的内部类，目前支持MySql, Oracle，更多数据库支持期望日后更新。。。
+        /// 数据库访问助手所在的程序集的文件名（dll或exe）
         /// </summary>
-        public class DatabaseType
-        {
-            public const string MySQL = "MySQL";
-            public const string Oracle = "Oracle";
-        }
+        public string DbHelperAssembly { get; set; }
 
         /// <summary>
-        /// 数据库类型，不同数据具体的值参照DatabaseType类中的常量值
+        /// 数据库访问助手的命名空间限定类名
         /// </summary>
-        public string DbType { get; set; }
+        public string DbHelperClass { get; set; }
 
         /// <summary>
         /// 数据库连接串，不同数据库的连接串是不同的，具体可从数据库提供商的官网查询
@@ -81,8 +77,11 @@ namespace FrameDAL.Config
         {
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);
 
-            DbType = ConfigUtil.GetStringValue(path, "Settings", "DbType", "");
-            if (string.IsNullOrWhiteSpace(DbType)) throw new ConfigurationException("配置文件没有配置DbType属性。");
+            DbHelperAssembly = ConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");
+            if (string.IsNullOrWhiteSpace(DbHelperAssembly)) throw new ConfigurationException("配置文件没有配置DbHelperAssembly属性。");
+
+            DbHelperClass = ConfigUtil.GetStringValue(path, "Settings", "DbHelperClass", "");
+            if (string.IsNullOrWhiteSpace(DbHelperClass)) throw new ConfigurationException("配置文件没有配置DbHelperClass属性。");
 
             StringBuilder sb = new StringBuilder();
             foreach (string item in ConfigUtil.GetAllItems(path, "ConnStr"))

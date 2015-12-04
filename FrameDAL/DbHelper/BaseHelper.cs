@@ -48,11 +48,32 @@ namespace FrameDAL.DbHelper
         /// <returns>返回一个数据适配器对象</returns>
         public abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
 
-        protected string connStr;
+        private string connStr;
+
+        /// <summary>
+        /// 获取或设置数据库连接字符串
+        /// </summary>
+        public string ConnectionString 
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(connStr))
+                    throw new InvalidOperationException("ConnectionString属性尚未初始化。");
+                return connStr;
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("数据库连接串不可为null或空白字符：" + value);
+                connStr = value;
+            }
+        }
+
+        protected BaseHelper() { }
 
         protected BaseHelper(string connStr)
         {
-            this.connStr = connStr;
+            this.ConnectionString = connStr;
         }
 
         protected class Bundle

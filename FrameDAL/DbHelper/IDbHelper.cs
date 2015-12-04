@@ -18,6 +18,11 @@ namespace FrameDAL.DbHelper
     public interface IDbHelper
     {
         /// <summary>
+        /// 获取或设置数据库连接字符串
+        /// </summary>
+        string ConnectionString { get; set; }
+
+        /// <summary>
         /// 获取数据库方言
         /// </summary>
         IDialect Dialect { get; }

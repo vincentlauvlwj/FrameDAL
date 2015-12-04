@@ -1,37 +1,40 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data.Common;
-using System.Data.OleDb;
+using MySql.Data.MySqlClient;
 using FrameDAL.Dialect;
+using FrameDAL.DbHelper;
 
-namespace FrameDAL.DbHelper
+namespace FrameTest
 {
     /// <summary>
     /// Author: Vincent Lau.
-    /// Oracle数据库访问助手
+    /// MySql数据库访问助手
     /// </summary>
-    public class OracleHelper : BaseHelper
+    public class ExtendHelper : BaseHelper
     {
         private IDialect _Dialect;
 
         /// <summary>
-        /// 获取Oracle数据库方言
+        /// 获取MySql数据库方言
         /// </summary>
         public override IDialect Dialect
         {
             get { return _Dialect; }
         }
 
-        public OracleHelper()
+        public ExtendHelper() 
         {
-            _Dialect = new OracleDialect();
+            _Dialect = new MySqlDialect();
         }
 
-        public OracleHelper(string connStr) : base(connStr) 
+        public ExtendHelper(string connStr)
+            : base(connStr) 
         {
-            _Dialect = new OracleDialect();
+            _Dialect = new MySqlDialect();
         }
 
         /// <summary>
@@ -40,7 +43,7 @@ namespace FrameDAL.DbHelper
         /// <returns>DbConnection对象</returns>
         public override DbConnection NewConnection()
         {
-            return new OleDbConnection(ConnectionString);
+            return new MySqlConnection(ConnectionString);
         }
 
         /// <summary>
@@ -53,14 +56,14 @@ namespace FrameDAL.DbHelper
         /// <returns>返回DbCommand对象</returns>
         public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters)
         {
-            DbCommand cmd = new OleDbCommand();
+            DbCommand cmd = new MySqlCommand();
             if (conn != null) cmd.Connection = conn;
             if (trans != null) cmd.Transaction = trans;
 
             cmd.CommandText = sqlText;
             if (parameters != null && parameters.Length != 0)
             {
-                AddParamsToCmd(cmd as OleDbCommand, parameters);
+                AddParamsToCmd(cmd as MySqlCommand, parameters);
             }
             return cmd;
         }
@@ -72,22 +75,40 @@ namespace FrameDAL.DbHelper
         /// <returns>返回一个数据适配器对象</returns>
         public override DbDataAdapter NewDataAdapter(DbCommand cmd)
         {
-            return new OleDbDataAdapter(cmd as OleDbCommand);
+            return new MySqlDataAdapter(cmd as MySqlCommand);
         }
 
-        private void AddParamsToCmd(OleDbCommand cmd, object[] parameters)
+        private void AddParamsToList(ArrayList arr, object[] parameters)
         {
             foreach (object param in parameters)
             {
                 if (param is object[])
                 {
-                    AddParamsToCmd(cmd, param as object[]);
+                    AddParamsToList(arr, param as object[]);
                 }
                 else
                 {
-                    cmd.Parameters.AddWithValue(null, param == null ? DBNull.Value : param);
+                    arr.Add(param == null ? DBNull.Value : param);
                 }
             }
+        }
+
+        private void AddParamsToCmd(MySqlCommand cmd, object[] parameters)
+        {
+            ArrayList arr = new ArrayList();
+            AddParamsToList(arr, parameters);
+            parameters = arr.ToArray();
+
+            StringBuilder sb = new StringBuilder();
+            string[] temp = cmd.CommandText.Split('?');
+            for (int i = 0; i < temp.Length - 1; i++)
+            {
+                string paramName = "@param" + i;
+                sb.Append(temp[i] + paramName);
+                cmd.Parameters.AddWithValue(paramName, parameters[i]);
+            }
+            sb.Append(temp[temp.Length - 1]);
+            cmd.CommandText = sb.ToString();
         }
     }
 }

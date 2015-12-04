@@ -25,6 +25,11 @@ namespace FrameDAL.DbHelper
             get { return _Dialect; }
         }
 
+        public MySqlHelper() 
+        {
+            _Dialect = new MySqlDialect();
+        }
+
         public MySqlHelper(string connStr) : base(connStr) 
         {
             _Dialect = new MySqlDialect();
@@ -36,7 +41,7 @@ namespace FrameDAL.DbHelper
         /// <returns>DbConnection对象</returns>
         public override DbConnection NewConnection()
         {
-            return new MySqlConnection(connStr);
+            return new MySqlConnection(ConnectionString);
         }
 
         /// <summary>

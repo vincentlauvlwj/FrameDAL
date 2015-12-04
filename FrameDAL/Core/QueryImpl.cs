@@ -155,7 +155,7 @@ namespace FrameDAL.Core
                 DataTable dt = ExecuteGetDataTable();
                 foreach (DataRow row in dt.Rows)
                 {
-                    T entity = (T)Activator.CreateInstance<T>();
+                    T entity = Activator.CreateInstance<T>();
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
                     {
                         Column col = AppContext.Instance.GetColumn(prop);
