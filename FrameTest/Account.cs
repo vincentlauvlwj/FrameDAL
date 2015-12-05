@@ -25,4 +25,10 @@ namespace FrameTest
         [Column("balance")]
         public int? Balance { get; set; }
     }
+
+    public class ExtraAccount : Account
+    {
+        [Column("extra", ReadOnly=true)]
+        public string Extra { get; set; }
+    }
 }

@@ -20,6 +20,11 @@ namespace FrameDAL.Attributes
         /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// 表示该属性对应的字段是只读的，若设置为true，往数据库中插入或更新记录时会忽略此字段，适用于视图或查询结果中的字段
+        /// </summary>
+        public bool ReadOnly { get; set; }
+
         public Column(string name)
         {
             this.Name = name;

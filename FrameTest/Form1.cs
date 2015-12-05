@@ -25,7 +25,7 @@ namespace FrameTest
             // TestAdd();
             // TestDelete();
             // MessageBox.Show(TestGet().Name);
-            TestUpdate();
+            // TestUpdate();
             // TestFlush();
             // TestTransaction();
             // TestNonQuery();
@@ -34,6 +34,21 @@ namespace FrameTest
             // TestPageSize();
             // TestGetList();
             // TestNamedQuery();
+            TestReadOnly();
+        }
+
+        private void TestReadOnly()
+        {
+            using (ISession session = AppContext.Instance.OpenSession())
+            {
+                //string sql = "select account.*, balance * 100 as extra from account";
+                //dataGridView1.DataSource = session.CreateQuery(sql).ExecuteGetList<ExtraAccount>();
+                ExtraAccount account = new ExtraAccount();
+                account.Id = "bfec6717-7620-4327-b515-8c3789fc6594";
+                account.Name = "测试_readonly";
+                account.Extra = "test";
+                session.Update(account);
+            }
         }
 
         private void TestAdd()

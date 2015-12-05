@@ -155,7 +155,8 @@ namespace FrameDAL.Core
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
-                if (AppContext.Instance.GetColumn(prop) == null) continue;
+                Column col = AppContext.Instance.GetColumn(prop);
+                if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
             CreateQuery(db.Dialect.GetInsertSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
@@ -209,7 +210,8 @@ namespace FrameDAL.Core
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
-                if (AppContext.Instance.GetColumn(prop) == null) continue;
+                Column col = AppContext.Instance.GetColumn(prop);
+                if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
             parameters.Add(AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null));

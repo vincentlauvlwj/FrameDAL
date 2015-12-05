@@ -57,7 +57,7 @@ namespace FrameDAL.Dialect
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
                         Column col = AppContext.Instance.GetColumn(prop);
-                        if (col == null) continue;
+                        if (col == null || col.ReadOnly) continue;
                         sb.Append(col.Name + ", ");
                         count++;
                     }
@@ -132,7 +132,7 @@ namespace FrameDAL.Dialect
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
                         Column col = AppContext.Instance.GetColumn(prop);
-                        if (col == null) continue;
+                        if (col == null || col.ReadOnly) continue;
                         sb.Append(col.Name);
                         sb.Append("=?, ");
                         count++;
