@@ -223,7 +223,7 @@ namespace FrameDAL.Core
         /// </summary>
         /// <typeparam name="T">实体类型</typeparam>
         /// <param name="id">主键值</param>
-        /// <returns>返回获得的实体</returns>
+        /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public T Get<T>(object id)
         {

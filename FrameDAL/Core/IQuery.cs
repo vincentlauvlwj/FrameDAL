@@ -51,7 +51,7 @@ namespace FrameDAL.Core
         /// <summary>
         /// 获得一个标量值，即查询结果的第一行第一列的值
         /// </summary>
-        /// <returns>返回一个标量</returns>
+        /// <returns>返回一个标量，若没有结果，返回null</returns>
         object ExecuteScalar();
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace FrameDAL.Core
         /// 对象的类型，该类型既可以为实体类型，也可以是普通的VO类。当使用普通的VO类时，
         /// 需把Column特性添加到要填充的属性上，将属性与返回的数据列做一个映射
         /// </typeparam>
-        /// <returns>返回对象列表</returns>
+        /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.Column"/>
         List<T> ExecuteGetList<T>();
 
@@ -84,7 +84,7 @@ namespace FrameDAL.Core
         /// 对象的类型，该类型既可以为实体类型，也可以是普通的VO类。当使用普通的VO类时，
         /// 需把Column特性添加到要填充的属性上，将属性与返回的数据列做一个映射
         /// </typeparam>
-        /// <returns>返回一个对象</returns>
+        /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.Column"/>
         T ExecuteGetEntity<T>();
     }
