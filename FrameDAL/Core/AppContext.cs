@@ -233,7 +233,7 @@ namespace FrameDAL.Core
         {
             if (id != null && (id.GeneratorType == 0 || id.GeneratorType == GeneratorType.Sequence && string.IsNullOrWhiteSpace(id.SeqName)))
                 throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Id特性没有正确配置。");
-            if(GetColumn(prop) == null)
+            if (id != null && GetColumn(prop) == null)
                 throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
         }
 

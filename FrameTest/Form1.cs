@@ -24,8 +24,8 @@ namespace FrameTest
             Configuration.DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
             // TestAdd();
             // TestDelete();
-            MessageBox.Show(TestGet().Name);
-            // TestUpdate();
+            // MessageBox.Show(TestGet().Name);
+            TestUpdate();
             // TestFlush();
             // TestTransaction();
             // TestNonQuery();
@@ -41,7 +41,7 @@ namespace FrameTest
             AppContext context = AppContext.Instance;
             Account account = new Account();
             account.UserId = "123";
-            account.Name = "test";
+            account.Name = "testtttttt";
             account.Password = "pwd";
             account.Balance = 10;
             using (ISession session = context.OpenSession())
@@ -54,7 +54,7 @@ namespace FrameTest
         {
             AppContext context = AppContext.Instance;
             Account account = new Account();
-            account.Id = "f3fc1f11-7d32-4f52-88ee-ecda3dee0aa6";
+            account.Id = "dc4ae9f5-6d2d-4b14-8557-ac93552a715d";
             ISession session = context.OpenSession();
             session.Delete(account);
             session.Close();
@@ -71,7 +71,8 @@ namespace FrameTest
         private void TestUpdate()
         {
             Account account = TestGet();
-            account.Name = "哈哈哈哈哈";
+            account.Name = "啊啊啊1";
+            account.Password = "111";
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 session.Update(account);
