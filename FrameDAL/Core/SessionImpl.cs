@@ -225,7 +225,7 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public T Get<T>(object id)
+        public T Get<T>(object id) where T : new()
         {
             if (IsClosed) throw new InvalidOperationException("Session已关闭。");
             if (threadId != Thread.CurrentThread.ManagedThreadId)

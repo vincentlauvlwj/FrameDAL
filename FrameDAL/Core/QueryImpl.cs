@@ -147,7 +147,7 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.Column"/>
-        public List<T> ExecuteGetList<T>()
+        public List<T> ExecuteGetList<T>() where T : new()
         {
             try
             {
@@ -155,7 +155,7 @@ namespace FrameDAL.Core
                 DataTable dt = ExecuteGetDataTable();
                 foreach (DataRow row in dt.Rows)
                 {
-                    T entity = Activator.CreateInstance<T>();
+                    T entity = new T();
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
                     {
                         Column col = AppContext.Instance.GetColumn(prop);
@@ -181,7 +181,7 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.Column"/>
-        public T ExecuteGetEntity<T>()
+        public T ExecuteGetEntity<T>() where T : new()
         {
             List<T> results = ExecuteGetList<T>();
             if (results.Count > 0)

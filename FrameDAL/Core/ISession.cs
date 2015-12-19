@@ -81,7 +81,7 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        T Get<T>(object id);
+        T Get<T>(object id) where T : new();
 
         /// <summary>
         /// 刷新缓存，把缓存中的非查询操作全部送到数据库中执行
