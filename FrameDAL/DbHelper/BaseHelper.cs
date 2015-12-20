@@ -100,7 +100,7 @@ namespace FrameDAL.DbHelper
         /// 返回一个bool值，指示当前线程是否已开启事务
         /// </summary>
         /// <returns>事务已开启返回true，否则返回false</returns>
-        public bool InTransaction()
+        public virtual bool InTransaction()
         {
             return local.IsValueCreated && local.Value != null;
             // return dict.ContainsKey(Thread.CurrentThread.ManagedThreadId);
@@ -109,7 +109,7 @@ namespace FrameDAL.DbHelper
         /// <summary>
         /// 在当前线程开启事务，当多次调用此方法时，只有第一次会生效
         /// </summary>
-        public void BeginTransaction()
+        public virtual void BeginTransaction()
         {
             if (GetTransactionTier() == 0)
             {
@@ -132,7 +132,7 @@ namespace FrameDAL.DbHelper
         /// 提交当前线程上的事务，当嵌套打开事务时，只有与第一次BeginTransaction对应的那次
         /// CommitTransaction或RollbackTransaction调用会生效
         /// </summary>
-        public void CommitTransaction()
+        public virtual void CommitTransaction()
         {
             int tier = GetTransactionTier();
             if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
@@ -156,7 +156,7 @@ namespace FrameDAL.DbHelper
         /// 回滚当前线程上的事务，当嵌套打开事务时，只有与第一次BeginTransaction对应的那次
         /// CommitTransaction或RollbackTransaction调用会生效
         /// </summary>
-        public void RollbackTransaction()
+        public virtual void RollbackTransaction()
         {
             int tier = GetTransactionTier();
             if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
@@ -183,7 +183,7 @@ namespace FrameDAL.DbHelper
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>受影响的记录数</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
-        public int ExecuteNonQuery(string sqlText, params object[] parameters)
+        public virtual int ExecuteNonQuery(string sqlText, params object[] parameters)
         {
             try
             {
@@ -212,7 +212,7 @@ namespace FrameDAL.DbHelper
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回一个标量值</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
-        public object ExecuteScalar(string sqlText, params object[] parameters)
+        public virtual object ExecuteScalar(string sqlText, params object[] parameters)
         {
             try
             {
@@ -241,7 +241,7 @@ namespace FrameDAL.DbHelper
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回数据集</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
-        public DataSet ExecuteGetDataSet(string sqlText, params object[] parameters)
+        public virtual DataSet ExecuteGetDataSet(string sqlText, params object[] parameters)
         {
             try
             {
@@ -274,7 +274,7 @@ namespace FrameDAL.DbHelper
         /// <param name="parameters">SQL命令中的参数值</param>
         /// <returns>返回数据表</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
-        public DataTable ExecuteGetDataTable(string sqlText, params object[] parameters)
+        public virtual DataTable ExecuteGetDataTable(string sqlText, params object[] parameters)
         {
             DataSet ds = ExecuteGetDataSet(sqlText, parameters);
 

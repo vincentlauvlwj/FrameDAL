@@ -39,7 +39,7 @@ namespace FrameDAL.Dialect
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
-        public string GetInsertSql(Type type)
+        public virtual string GetInsertSql(Type type)
         {
             lock (inserts)
             {
@@ -84,7 +84,7 @@ namespace FrameDAL.Dialect
         /// <returns>delete sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
-        public string GetDeleteSql(Type type)
+        public virtual string GetDeleteSql(Type type)
         {
             lock (deletes)
             {
@@ -114,7 +114,7 @@ namespace FrameDAL.Dialect
         /// <returns>update sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public string GetUpdateSql(Type type)
+        public virtual string GetUpdateSql(Type type)
         {
             lock (updates)
             {
@@ -156,7 +156,7 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public string GetSelectSql(Type type)
+        public virtual string GetSelectSql(Type type)
         {
             lock (selects)
             {
@@ -194,7 +194,7 @@ namespace FrameDAL.Dialect
         /// <summary>
         /// 清除缓存的SQL
         /// </summary>
-        public void ClearCache()
+        public virtual void ClearCache()
         {
             lock (inserts) inserts.Clear();
             lock (deletes) deletes.Clear();
