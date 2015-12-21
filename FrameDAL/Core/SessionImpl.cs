@@ -163,7 +163,7 @@ namespace FrameDAL.Core
 
             if (id.GeneratorType == GeneratorType.Identity)
             {
-                object pk = CreateQuery("select @@Identity from dual").ExecuteScalar();
+                object pk = CreateQuery(db.Dialect.GetGeneratedKeySql(id.SeqName)).ExecuteScalar();
                 AppContext.Instance.SetPropertyValue(entity, idProp, pk);
             }
             return idProp.GetValue(entity, null);

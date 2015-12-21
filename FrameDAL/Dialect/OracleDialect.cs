@@ -12,6 +12,16 @@ namespace FrameDAL.Dialect
     public class OracleDialect : BaseDialect
     {
         /// <summary>
+        /// 获得一条SQL，该SQL从数据库中查询最近一次插入操作生成的主键
+        /// </summary>
+        /// <param name="seqName">生成主键的序列，如果此方法的实现不需要此参数，可忽略</param>
+        /// <returns>SQL</returns>
+        public override string GetGeneratedKeySql(string seqName)
+        {
+            return "SELECT " + seqName + ".CURRVAL FROM DUAL";
+        }
+
+        /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
         /// </summary>
         /// <param name="sqlText">要进行预处理的SQL</param>

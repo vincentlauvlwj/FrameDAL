@@ -24,7 +24,7 @@ namespace FrameTest
             Configuration.DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
             // TestAdd();
             // TestDelete();
-            MessageBox.Show(TestGet().Name);
+            // MessageBox.Show(TestGet().Name);
             // TestUpdate();
             // TestFlush();
             // TestTransaction();
@@ -32,7 +32,7 @@ namespace FrameTest
             // TestScalar();
             // TestDataTable();
             // TestPageSize();
-            // TestGetList();
+            TestGetList();
             // TestNamedQuery();
             // TestReadOnly();
         }

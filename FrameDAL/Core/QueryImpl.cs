@@ -138,6 +138,21 @@ namespace FrameDAL.Core
             }
         }
 
+        private void CheckRepeatColumnName(DataTable dt)
+        {
+            foreach (DataColumn col1 in dt.Columns)
+            {
+                if (col1.ColumnName.EndsWith("1"))
+                {
+                    foreach (DataColumn col2 in dt.Columns)
+                    {
+                        if (col1.ColumnName.ToUpper() == col2.ColumnName.ToUpper() + "1")
+                            throw new FrameDALException("查询返回的结果中有重复的列名，请去除SQL中的重复列名或者使用别名避免此异常。");
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// 执行查询，获得对象列表
         /// </summary>
@@ -153,6 +168,7 @@ namespace FrameDAL.Core
             {
                 List<T> results = new List<T>();
                 DataTable dt = ExecuteGetDataTable();
+                CheckRepeatColumnName(dt);
                 foreach (DataRow row in dt.Rows)
                 {
                     T entity = new T();

@@ -119,7 +119,6 @@ namespace FrameDAL.Core
             lock(idProps) idProps.Clear();
             lock(columns) columns.Clear();
             lock(ids) ids.Clear();
-            DbHelper.Dialect.ClearCache();
         }
 
         /// <summary>
