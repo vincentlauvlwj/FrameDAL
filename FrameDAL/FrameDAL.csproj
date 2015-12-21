@@ -46,10 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attributes\Column.cs" />
+    <Compile Include="Attributes\ColumnAttribute.cs" />
     <Compile Include="Attributes\GeneratorType.cs" />
-    <Compile Include="Attributes\Id.cs" />
-    <Compile Include="Attributes\Table.cs" />
+    <Compile Include="Attributes\IdAttribute.cs" />
+    <Compile Include="Attributes\TableAttribute.cs" />
     <Compile Include="Config\Configuration.cs" />
     <Compile Include="Config\ConfigUtil.cs" />
     <Compile Include="Core\AppContext.cs" />

@@ -13,7 +13,7 @@ namespace FrameDAL.Attributes
     /// 这时，Column特性表示了从属性到查询返回的数据列之间的映射关系。
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class Column : Attribute
+    public class ColumnAttribute : Attribute
     {
         /// <summary>
         /// 表示属性对应的数据库字段的字段名，或者查询返回的数据列的列名（当有别名时，使用别名）
@@ -25,7 +25,7 @@ namespace FrameDAL.Attributes
         /// </summary>
         public bool ReadOnly { get; set; }
 
-        public Column(string name)
+        public ColumnAttribute(string name)
         {
             this.Name = name;
         }

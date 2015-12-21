@@ -61,11 +61,11 @@ namespace FrameDAL.Core
         private Configuration config;
 
         // 缓存了各种信息的Dictionary
-        private Dictionary<Type, Table> tables = new Dictionary<Type,Table>();
+        private Dictionary<Type, TableAttribute> tables = new Dictionary<Type,TableAttribute>();
         private Dictionary<Type, PropertyInfo[]> props = new Dictionary<Type,PropertyInfo[]>();
         private Dictionary<Type, PropertyInfo> idProps = new Dictionary<Type,PropertyInfo>();
-        private Dictionary<PropertyInfo, Column> columns = new Dictionary<PropertyInfo,Column>();
-        private Dictionary<PropertyInfo, Id> ids = new Dictionary<PropertyInfo,Id>();
+        private Dictionary<PropertyInfo, ColumnAttribute> columns = new Dictionary<PropertyInfo,ColumnAttribute>();
+        private Dictionary<PropertyInfo, IdAttribute> ids = new Dictionary<PropertyInfo,IdAttribute>();
 
         /// <summary>
         /// 私有构造方法，通过配置信息获得数据库访问助手，不同的数据库使用不同的访问助手
@@ -129,7 +129,7 @@ namespace FrameDAL.Core
         /// <returns>返回Table特性</returns>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         /// <exception cref="ArgumentNullException">type为null</exception>
-        public Table GetTable(Type type)
+        public TableAttribute GetTableAttribute(Type type)
         {
             lock (tables)
             {
@@ -139,7 +139,7 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    Table table = Attribute.GetCustomAttribute(type, typeof(Table)) as Table;
+                    TableAttribute table = Attribute.GetCustomAttribute(type, typeof(TableAttribute)) as TableAttribute;
                     if (table == null || string.IsNullOrWhiteSpace(table.Name)) 
                         throw new EntityMappingException(type.FullName + "类没有映射到数据库中的表。");
                     tables.Add(type, table);
@@ -193,7 +193,7 @@ namespace FrameDAL.Core
                 {
                     foreach (PropertyInfo prop in GetProperties(type))
                     {
-                        Id id = GetId(prop);
+                        IdAttribute id = GetIdAttribute(prop);
                         if (id == null) continue;
                         idProps.Add(type, prop);
                         return prop;
@@ -210,7 +210,7 @@ namespace FrameDAL.Core
         /// <returns>返回Column特性类对象，若该属性没有添加Column特性，返回null</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该属性的Column特性没有正确配置</exception>
-        public Column GetColumn(PropertyInfo prop)
+        public ColumnAttribute GetColumnAttribute(PropertyInfo prop)
         {
             lock (columns)
             {
@@ -220,7 +220,7 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    Column col = Attribute.GetCustomAttribute(prop, typeof(Column)) as Column;
+                    ColumnAttribute col = Attribute.GetCustomAttribute(prop, typeof(ColumnAttribute)) as ColumnAttribute;
                     if (col != null && string.IsNullOrWhiteSpace(col.Name))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置。");
                     columns.Add(prop, col);
@@ -229,11 +229,11 @@ namespace FrameDAL.Core
             }
         }
 
-        private void CheckId(PropertyInfo prop, Id id)
+        private void CheckId(PropertyInfo prop, IdAttribute id)
         {
             if (id != null && (id.GeneratorType == 0 || id.GeneratorType == GeneratorType.Sequence && string.IsNullOrWhiteSpace(id.SeqName)))
                 throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Id特性没有正确配置。");
-            if (id != null && GetColumn(prop) == null)
+            if (id != null && GetColumnAttribute(prop) == null)
                 throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
         }
 
@@ -244,7 +244,7 @@ namespace FrameDAL.Core
         /// <returns>返回Id特性类对象，若该属性没有添加Id特性，返回null</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该属性的Id特性没有正确配置</exception>
-        public Id GetId(PropertyInfo prop)
+        public IdAttribute GetIdAttribute(PropertyInfo prop)
         {
             lock (ids)
             {
@@ -254,7 +254,7 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    Id id = Attribute.GetCustomAttribute(prop, typeof(Id)) as Id;
+                    IdAttribute id = Attribute.GetCustomAttribute(prop, typeof(IdAttribute)) as IdAttribute;
                     CheckId(prop, id);
                     ids.Add(prop, id);
                     return id;

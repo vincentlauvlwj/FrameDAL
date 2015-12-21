@@ -146,7 +146,7 @@ namespace FrameDAL.Core
         /// 需把Column特性添加到要填充的属性上，将属性与返回的数据列做一个映射
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
-        /// <see cref="FrameDAL.Attributes.Column"/>
+        /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
         public List<T> ExecuteGetList<T>() where T : new()
         {
             try
@@ -158,7 +158,7 @@ namespace FrameDAL.Core
                     T entity = new T();
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
                     {
-                        Column col = AppContext.Instance.GetColumn(prop);
+                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                         if (col == null) continue;
                         AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
                     }
@@ -180,7 +180,7 @@ namespace FrameDAL.Core
         /// 需把Column特性添加到要填充的属性上，将属性与返回的数据列做一个映射
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
-        /// <see cref="FrameDAL.Attributes.Column"/>
+        /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
         public T ExecuteGetEntity<T>() where T : new()
         {
             List<T> results = ExecuteGetList<T>();

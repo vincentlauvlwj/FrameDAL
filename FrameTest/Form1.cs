@@ -167,10 +167,10 @@ namespace FrameTest
 
         public class AccountOwner
         {
-            [Column("account_name")]
+            [ColumnAttribute("account_name")]
             public string AccountName { get; set; }
 
-            [Column("user_name")]
+            [ColumnAttribute("user_name")]
             public string Owner { get; set; }
         }
 

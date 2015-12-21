@@ -13,7 +13,7 @@ namespace FrameDAL.Attributes
     /// 即主键仅用于表示数据记录的唯一性，不具有具体的含义
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    public class Id : Attribute
+    public class IdAttribute : Attribute
     {
         /// <summary>
         /// 主键生成策略
@@ -25,7 +25,7 @@ namespace FrameDAL.Attributes
         /// </summary>
         public string SeqName { get; set; }
 
-        public Id(GeneratorType type)
+        public IdAttribute(GeneratorType type)
         {
             GeneratorType = type;
         }

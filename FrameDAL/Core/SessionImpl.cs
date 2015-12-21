@@ -136,7 +136,7 @@ namespace FrameDAL.Core
             if (threadId != Thread.CurrentThread.ManagedThreadId)
                 throw new InvalidOperationException("在其他的线程中使用此Session。");
             PropertyInfo idProp = AppContext.Instance.GetIdProperty(entity.GetType());
-            Id id = AppContext.Instance.GetId(idProp);
+            IdAttribute id = AppContext.Instance.GetIdAttribute(idProp);
             switch (id.GeneratorType)
             {
                 case GeneratorType.Uuid:
@@ -155,7 +155,7 @@ namespace FrameDAL.Core
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
-                Column col = AppContext.Instance.GetColumn(prop);
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                 if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
@@ -210,7 +210,7 @@ namespace FrameDAL.Core
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
-                Column col = AppContext.Instance.GetColumn(prop);
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                 if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }

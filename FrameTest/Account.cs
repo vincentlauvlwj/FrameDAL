@@ -28,7 +28,7 @@ namespace FrameTest
 
     public class ExtraAccount : Account
     {
-        [Column("extra", ReadOnly=true)]
+        [Column("extra", ReadOnly = true)]
         public string Extra { get; set; }
     }
 }

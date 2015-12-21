@@ -6,14 +6,14 @@ using FrameDAL.Attributes;
 
 namespace FrameTest
 {
-    [Table("test")]
+    [TableAttribute("test")]
     public class Test
     {
-        [Id(GeneratorType.Identity)]
-        [Column("id")]
+        [IdAttribute(GeneratorType.Identity)]
+        [ColumnAttribute("id")]
         public int? Id { get; set; }
 
-        [Column("name")]
+        [ColumnAttribute("name")]
         public string Name { get; set; }
     }
 }

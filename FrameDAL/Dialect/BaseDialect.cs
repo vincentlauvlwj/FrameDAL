@@ -51,12 +51,12 @@ namespace FrameDAL.Dialect
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append("insert into ");
-                    sb.Append(AppContext.Instance.GetTable(type).Name);
+                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
                     sb.Append(" (");
                     int count = 0;
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
-                        Column col = AppContext.Instance.GetColumn(prop);
+                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                         if (col == null || col.ReadOnly) continue;
                         sb.Append(col.Name + ", ");
                         count++;
@@ -96,9 +96,9 @@ namespace FrameDAL.Dialect
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append("delete from ");
-                    sb.Append(AppContext.Instance.GetTable(type).Name);
+                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
                     sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumn(AppContext.Instance.GetIdProperty(type)).Name);
+                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
                     sb.Append("=?");
                     string sql = sb.ToString();
                     deletes.Add(type, sql);
@@ -126,12 +126,12 @@ namespace FrameDAL.Dialect
                 {
                     StringBuilder sb = new StringBuilder();
                     sb.Append("update ");
-                    sb.Append(AppContext.Instance.GetTable(type).Name);
+                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
                     sb.Append(" set ");
                     int count = 0;
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
-                        Column col = AppContext.Instance.GetColumn(prop);
+                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                         if (col == null || col.ReadOnly) continue;
                         sb.Append(col.Name);
                         sb.Append("=?, ");
@@ -140,7 +140,7 @@ namespace FrameDAL.Dialect
                     if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
                     sb.Remove(sb.Length - 2, 2);
                     sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumn(AppContext.Instance.GetIdProperty(type)).Name);
+                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
                     sb.Append("=?");
                     string sql = sb.ToString();
                     updates.Add(type, sql);
@@ -171,7 +171,7 @@ namespace FrameDAL.Dialect
                     int count = 0;
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
-                        Column col = AppContext.Instance.GetColumn(prop);
+                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                         if (col == null) continue;
                         sb.Append(col.Name);
                         sb.Append(", ");
@@ -180,9 +180,9 @@ namespace FrameDAL.Dialect
                     if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
                     sb.Remove(sb.Length - 2, 2);
                     sb.Append(" from ");
-                    sb.Append(AppContext.Instance.GetTable(type).Name);
+                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
                     sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumn(AppContext.Instance.GetIdProperty(type)).Name);
+                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
                     sb.Append("=?");
                     string sql = sb.ToString();
                     selects.Add(type, sql);
