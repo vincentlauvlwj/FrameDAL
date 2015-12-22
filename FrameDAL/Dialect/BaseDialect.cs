@@ -144,7 +144,7 @@ namespace FrameDAL.Dialect
                         sb.Append("=?, ");
                         count++;
                     }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
+                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
                     sb.Remove(sb.Length - 2, 2);
                     sb.Append(" where ");
                     sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);

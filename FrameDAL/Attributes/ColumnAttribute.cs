@@ -25,9 +25,15 @@ namespace FrameDAL.Attributes
         /// </summary>
         public bool ReadOnly { get; set; }
 
+        public string SQL { get; set; }
+
+        public bool LazyLoad { get; set; }
+
         public ColumnAttribute(string name)
         {
             this.Name = name;
+            ReadOnly = false;
+            LazyLoad = false;
         }
     }
 }

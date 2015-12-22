@@ -46,9 +46,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\CascadeType.cs" />
     <Compile Include="Attributes\ColumnAttribute.cs" />
     <Compile Include="Attributes\GeneratorType.cs" />
     <Compile Include="Attributes\IdAttribute.cs" />
+    <Compile Include="Attributes\ManyToManyAttribute.cs" />
+    <Compile Include="Attributes\ManyToOneAttribute.cs" />
+    <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\TableAttribute.cs" />
     <Compile Include="Config\Configuration.cs" />
     <Compile Include="Config\ConfigUtil.cs" />

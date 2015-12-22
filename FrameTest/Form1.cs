@@ -32,9 +32,9 @@ namespace FrameTest
             // TestScalar();
             // TestDataTable();
             // TestPageSize();
-            TestGetList();
+            // TestGetList();
             // TestNamedQuery();
-            // TestReadOnly();
+            TestReadOnly();
         }
 
         private void TestReadOnly()
