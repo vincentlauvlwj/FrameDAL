@@ -162,13 +162,27 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public List<T> ExecuteGetList<T>() where T : new()
+        public List<T> ExecuteGetList<T>(bool enableLazy = true) where T : class, new()
         {
-            try
+            List<T> results = new List<T>();
+            DataTable dt = ExecuteGetDataTable();
+            CheckRepeatColumnName(dt);
+            if (enableLazy)
             {
-                List<T> results = new List<T>();
-                DataTable dt = ExecuteGetDataTable();
-                CheckRepeatColumnName(dt);
+                foreach (DataRow row in dt.Rows)
+                {
+                    T entity = EntityProxy<T>.Get();
+                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
+                    {
+                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                        if (col == null || col.LazyLoad) continue;
+                        AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
+                    }
+                    results.Add(entity);
+                }
+            }
+            else
+            {
                 foreach (DataRow row in dt.Rows)
                 {
                     T entity = new T();
@@ -180,12 +194,8 @@ namespace FrameDAL.Core
                     }
                     results.Add(entity);
                 }
-                return results;
             }
-            catch (MissingMethodException e)
-            {
-                throw new EntityMappingException(typeof(T).FullName + "类中没有公共的无参构造方法。", e);
-            }
+            return results;
         }
 
         /// <summary>
@@ -197,9 +207,9 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public T ExecuteGetEntity<T>() where T : new()
+        public T ExecuteGetEntity<T>(bool enableLazy = true) where T : new()
         {
-            List<T> results = ExecuteGetList<T>();
+            List<T> results = ExecuteGetList<T>(enableLazy);
             if (results.Count > 0)
                 return results[0];
             else

@@ -38,9 +38,7 @@ namespace FrameDAL.Core
         {
             get
             {
-                if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-                if (threadId != Thread.CurrentThread.ManagedThreadId)
-                    throw new InvalidOperationException("在其他的线程中使用此Session。");
+                CheckSessionStatus();
                 return db;
             }
         }
@@ -69,9 +67,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         internal virtual void AddToCache(string sqlText, object[] parameters)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             Bundle bundle = new Bundle();
             bundle.SqlText = sqlText;
             bundle.Parameters = parameters;
@@ -93,9 +89,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void BeginTransaction()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             DbHelper.BeginTransaction();
             Flush();
         }
@@ -106,9 +100,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void CommitTransaction()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             DbHelper.CommitTransaction();
         }
 
@@ -118,9 +110,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void RollbackTransaction()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             DbHelper.RollbackTransaction();
         }
 
@@ -132,9 +122,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public object Add(object entity)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             PropertyInfo idProp = AppContext.Instance.GetIdProperty(entity.GetType());
             IdAttribute id = AppContext.Instance.GetIdAttribute(idProp);
             switch (id.GeneratorType)
@@ -176,9 +164,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Delete(object entity)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             object id = AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null);
             CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), id).ExecuteNonQuery();
         }
@@ -191,9 +177,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void DeleteById<T>(object id)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             CreateQuery(db.Dialect.GetDeleteSql(typeof(T)), id).ExecuteNonQuery();
         }
 
@@ -204,9 +188,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Update(object entity)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
             {
@@ -225,12 +207,10 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public T Get<T>(object id) where T : new()
+        public T Get<T>(object id, bool enableLazy = true) where T : new()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
-            return CreateQuery(db.Dialect.GetSelectSql(typeof(T)), id).ExecuteGetEntity<T>();
+            CheckSessionStatus();
+            return CreateQuery(db.Dialect.GetSelectSql(typeof(T), enableLazy), id).ExecuteGetEntity<T>(enableLazy);
         }
 
         /// <summary>
@@ -239,9 +219,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Flush()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             if (cache.Count == 0) return;
             if (db.InTransaction())
             {
@@ -273,9 +251,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public IQuery CreateQuery()
         {
-            if (IsClosed) throw new ApplicationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             return new QueryImpl(this);
         }
 
@@ -288,9 +264,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public IQuery CreateQuery(string sqlText, params object[] parameters)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             IQuery query = CreateQuery();
             query.SqlText = sqlText;
             query.Parameters = parameters;
@@ -306,9 +280,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public IQuery CreateNamedQuery(string name, params object[] parameters)
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             IQuery query = CreateQuery();
             query.SqlText = AppContext.Instance.GetNamedSql(name);
             query.Parameters = parameters;
@@ -330,9 +302,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Close()
         {
-            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
-            if (threadId != Thread.CurrentThread.ManagedThreadId)
-                throw new InvalidOperationException("在其他的线程中使用此Session。");
+            CheckSessionStatus();
             if (db.InTransaction())
             {
                 db.RollbackTransaction();
@@ -343,6 +313,13 @@ namespace FrameDAL.Core
                 Flush();
             }
             IsClosed = true;
+        }
+
+        private void CheckSessionStatus()
+        {
+            if (IsClosed) throw new InvalidOperationException("Session已关闭。");
+            if (threadId != Thread.CurrentThread.ManagedThreadId)
+                throw new InvalidOperationException("在其他的线程中使用此Session。");
         }
     }
 }

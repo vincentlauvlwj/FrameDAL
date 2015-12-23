@@ -1,0 +1,352 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{6965B718-5449-4755-8294-D1F7545CAC79}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>IntegrationTest</RootNamespace>
+    <AssemblyName>IntegrationTest</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FastReport, Version=2013.2.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\FastReport.dll</HintPath>
+    </Reference>
+    <Reference Include="FastReport.Bars, Version=2013.2.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\FastReport.Bars.dll</HintPath>
+    </Reference>
+    <Reference Include="FastReport.Editor, Version=2013.2.5.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\FastReport.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="IrisSkin4, Version=2006.3.22.45, Culture=neutral, PublicKeyToken=127be25a6db25e07, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\IrisSkin4.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualBasic.PowerPacks.Vs, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\Config.cs" />
+    <Compile Include="Common\ControlHelper.cs" />
+    <Compile Include="Common\DataTypeConverter.cs" />
+    <Compile Include="Common\FormPopListBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Common\FormPopListBox.designer.cs">
+      <DependentUpon>FormPopListBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Common\IRefreshable.cs" />
+    <Compile Include="Common\PopListBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Common\ResumeItemPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Common\StringUtil.cs" />
+    <Compile Include="Entity\AdditionalInfo.cs" />
+    <Compile Include="Entity\AreaDict.cs" />
+    <Compile Include="Entity\Award.cs" />
+    <Compile Include="Entity\Certificate.cs" />
+    <Compile Include="Entity\CertificateDict.cs" />
+    <Compile Include="Entity\CoverLetter.cs" />
+    <Compile Include="Entity\EducationBackground.cs" />
+    <Compile Include="Entity\Expect.cs" />
+    <Compile Include="Entity\Experience.cs" />
+    <Compile Include="Entity\IdentityTypeDict.cs" />
+    <Compile Include="Entity\IndustryDict.cs" />
+    <Compile Include="Entity\JobDict.cs" />
+    <Compile Include="Entity\LanguageAbility.cs" />
+    <Compile Include="Entity\PersonInfo.cs" />
+    <Compile Include="Entity\ProfessionalSkill.cs" />
+    <Compile Include="Entity\ProfessionalSkillDict.cs" />
+    <Compile Include="Entity\ProjectExperience.cs" />
+    <Compile Include="Entity\Resume.cs" />
+    <Compile Include="Entity\ResumeScores.cs" />
+    <Compile Include="Entity\ResumeTemplate.cs" />
+    <Compile Include="Entity\Scholarship.cs" />
+    <Compile Include="Entity\SchoolActivity.cs" />
+    <Compile Include="Entity\SelfEvaluation.cs" />
+    <Compile Include="Entity\SocialPractice.cs" />
+    <Compile Include="Entity\TrainExperience.cs" />
+    <Compile Include="Entity\User.cs" />
+    <Compile Include="Forms\AboutBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AboutBox.designer.cs">
+      <DependentUpon>AboutBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormCertificate.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormCertificate.designer.cs">
+      <DependentUpon>FormCertificate.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormCoverLetter.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormCoverLetter.designer.cs">
+      <DependentUpon>FormCoverLetter.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormCoverLetterAdd.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormCoverLetterAdd.designer.cs">
+      <DependentUpon>FormCoverLetterAdd.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormEduBackground.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormEduBackground.designer.cs">
+      <DependentUpon>FormEduBackground.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormExpectation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormExpectation.designer.cs">
+      <DependentUpon>FormExpectation.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormLanguageSkill.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormLanguageSkill.designer.cs">
+      <DependentUpon>FormLanguageSkill.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormLearningSituation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormLearningSituation.designer.cs">
+      <DependentUpon>FormLearningSituation.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Details\FormOtherInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormOtherInfo.Designer.cs" />
+    <Compile Include="Forms\Details\FormPersonalInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormPersonalInfo.Designer.cs" />
+    <Compile Include="Forms\Details\FormProfessionalSkills.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormProfessionalSkills.Designer.cs" />
+    <Compile Include="Forms\Details\FormProjectExperience.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormProjectExperience.Designer.cs" />
+    <Compile Include="Forms\Details\FormSelfEvaluation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormSelfEvaluation.Designer.cs" />
+    <Compile Include="Forms\Details\FormSocialPractice.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormSocialPractice.Designer.cs" />
+    <Compile Include="Forms\Details\FormTrainExp.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormTrainExp.Designer.cs" />
+    <Compile Include="Forms\Details\FormWorkExperience.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Details\FormWorkExperience.Designer.cs" />
+    <Compile Include="Forms\FormDetails.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormDetails.designer.cs">
+      <DependentUpon>FormDetails.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormFriends.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormFriends.designer.cs">
+      <DependentUpon>FormFriends.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormLogin.designer.cs">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormMain.designer.cs">
+      <DependentUpon>FormMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormMine.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormMine.designer.cs">
+      <DependentUpon>FormMine.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormRegister.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormRegister.designer.cs">
+      <DependentUpon>FormRegister.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\FormReportPreview.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormReportPreview.Designer.cs" />
+    <Compile Include="Forms\FormResumeSetting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FormResumeSetting.Designer.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Service\BaseService.cs" />
+    <Compile Include="Service\DetailsService.cs" />
+    <Compile Include="Service\Details\CertificateService.cs" />
+    <Compile Include="Service\Details\CoverLetterService.cs" />
+    <Compile Include="Service\Details\EduBackgroundService.cs" />
+    <Compile Include="Service\Details\ExpectationService.cs" />
+    <Compile Include="Service\Details\IFinishStatusAccessable.cs" />
+    <Compile Include="Service\Details\LanguageSkillService.cs" />
+    <Compile Include="Service\Details\LearningSituationService.cs" />
+    <Compile Include="Service\Details\OtherInfoService.cs" />
+    <Compile Include="Service\Details\PersonalInfoService.cs" />
+    <Compile Include="Service\Details\ProfessionalSkillsService.cs" />
+    <Compile Include="Service\Details\ProjectExperienceService.cs" />
+    <Compile Include="Service\Details\SelfEvaluationService.cs" />
+    <Compile Include="Service\Details\SocialPracticeService.cs" />
+    <Compile Include="Service\Details\TrainExpService.cs" />
+    <Compile Include="Service\Details\WorkExperienceService.cs" />
+    <Compile Include="Service\FriendsService.cs" />
+    <Compile Include="Service\LoginService.cs" />
+    <Compile Include="Service\MineService.cs" />
+    <Compile Include="Service\ReportGenerator\AboutReportGenerator.cs" />
+    <Compile Include="Service\ReportGenerator\CommonTemplate.cs" />
+    <Compile Include="Service\ReportGenerator\ConciseReportGenerator.cs" />
+    <Compile Include="Service\ReportGenerator\IReportGenerator.cs" />
+    <EmbeddedResource Include="Common\FormPopListBox.resx">
+      <DependentUpon>FormPopListBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AboutBox.resx">
+      <DependentUpon>AboutBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormCertificate.resx">
+      <DependentUpon>FormCertificate.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormCoverLetter.resx">
+      <DependentUpon>FormCoverLetter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormCoverLetterAdd.resx">
+      <DependentUpon>FormCoverLetterAdd.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormEduBackground.resx">
+      <DependentUpon>FormEduBackground.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormExpectation.resx">
+      <DependentUpon>FormExpectation.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormLanguageSkill.resx">
+      <DependentUpon>FormLanguageSkill.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormLearningSituation.resx">
+      <DependentUpon>FormLearningSituation.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormOtherInfo.resx" />
+    <EmbeddedResource Include="Forms\Details\FormPersonalInfo.resx" />
+    <EmbeddedResource Include="Forms\Details\FormProfessionalSkills.resx" />
+    <EmbeddedResource Include="Forms\Details\FormProjectExperience.resx" />
+    <EmbeddedResource Include="Forms\Details\FormSelfEvaluation.resx" />
+    <EmbeddedResource Include="Forms\Details\FormSocialPractice.resx" />
+    <EmbeddedResource Include="Forms\Details\FormTrainExp.resx" />
+    <EmbeddedResource Include="Forms\Details\FormWorkExperience.resx" />
+    <EmbeddedResource Include="Forms\FormDetails.resx">
+      <DependentUpon>FormDetails.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormFriends.resx">
+      <DependentUpon>FormFriends.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormLogin.resx">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormMain.resx">
+      <DependentUpon>FormMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormMine.resx">
+      <DependentUpon>FormMine.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormRegister.resx">
+      <DependentUpon>FormRegister.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormReportPreview.resx" />
+    <EmbeddedResource Include="Forms\FormResumeSetting.resx" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FrameDAL\FrameDAL.csproj">
+      <Project>{7D412D25-6B9A-4248-A8F2-501ADB8DB25B}</Project>
+      <Name>FrameDAL</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ResumeFactory.ico" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

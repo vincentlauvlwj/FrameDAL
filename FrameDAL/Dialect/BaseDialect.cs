@@ -163,7 +163,7 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public virtual string GetSelectSql(Type type)
+        public virtual string GetSelectSql(Type type, bool enableLazy)
         {
             lock (selects)
             {
@@ -179,12 +179,19 @@ namespace FrameDAL.Dialect
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
                     {
                         ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null) continue;
-                        sb.Append(col.Name);
+                        if (col == null || col.LazyLoad && enableLazy) continue;
+                        if (string.IsNullOrWhiteSpace(col.SQL))
+                        {
+                            sb.Append(col.Name);
+                        }
+                        else
+                        {
+                            sb.Append("(" + col.SQL + ") as " + col.Name);
+                        }
                         sb.Append(", ");
                         count++;
                     }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
+                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且LazyLoad为false的字段。");
                     sb.Remove(sb.Length - 2, 2);
                     sb.Append(" from ");
                     sb.Append(AppContext.Instance.GetTableAttribute(type).Name);

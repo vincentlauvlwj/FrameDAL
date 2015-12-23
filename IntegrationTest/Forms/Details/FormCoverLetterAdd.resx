@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <metadata name="lineShape1.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 61, 611, 0</value>
+  </metadata>
+  <metadata name="lineShape1.Location" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 61</value>
+  </metadata>
+  <metadata name="lineShape1.Size" type="System.Drawing.Size, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>611, 0</value>
+  </metadata>
+  <metadata name="lineShape1.Bounds" type="System.Drawing.Rectangle, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 61, 611, 0</value>
+  </metadata>
+  <metadata name="lineShape1.Location" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>0, 61</value>
+  </metadata>
+  <metadata name="lineShape1.Size" type="System.Drawing.Size, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+    <value>611, 0</value>
+  </metadata>
+  <data name="richTextBox3.Text" xml:space="preserve">
+    <value>Respect leadership: Hello!
+
+First please allow me to extend the sincere regards and the good wish to you! In spite of being very busy heartfelt thanks you in to glance through my this material, and wishes the expensive unit enterprise to be prosperous, progresses day by day! I am electronic information project specialized 2007 sessions of graduates, learned in the near future your firm is advertising for the talented person, I hoped can arrive has the opportunity to your firm work.
+
+In school period, I study the specialized knowledge diligently, and invested the huge enthusiasm and the energy for it.While studies the textbook knowledge earnestly, I participate in school inside and outside practice positively, and has obtained some result. If monolithic integrated circuit development design, aspects and so on PCB Layout as well as homepage design. The university four years let my English proficiency have progress,And smooth passed the national English six levels of tests,Had certainly certainly has listened to, to say, to read, writes ability,Has the reading specialized literature English foundation of basic skills.
+
+I have the good computer knowledge and application ability, can grasp the basic application software skilled the use, and can use languages and so on C, assembly, VB, HTML carries on the programming. Moreover I also can using Multisim, Protel, Pspice, Auto CAD and so on the specialized software carry on the correlation work,And many times participated in the project practice which in the school organizes.I have studied some knowledge using after school which the related homepage design, the plane design as well as the video frequency pick arrange,Can skilled manufacture the homepage using the homepage three swordsmen,And can use imagery processing softwares and so on the photoshop, ACDSee to carry on the related design work,Has uses Adobe premiere the pro software editor complete video frequency plan the experience.I longed for study has uses, to long for own knowledge can obtain the practice examination, looked forward to the practice will be able to enrich my work experience and the ability glorious future.http://zs.9787.com
+
+“The great ambition can sometimes, directly link up the cloud sail to aid the sea”, I hope alliance your firm sincerely, I can surely by full warm and the tenacious disposition diligent work, with colleague absolute sincerity cooperation, for expensive unit's development own one's pygmy effort.
+
+Along with letter enclosed resume and other material, if must a deeper understanding, hope for your interviewing!</value>
+  </data>
+  <data name="richTextBox2.Text" xml:space="preserve">
+    <value>您好!非常感谢您在百忙之中批阅我的材料，谢谢!
+
+     我是东北电力大学国际经济与贸易专业20XX届应届毕业生。我渴望能在贵公司找到一份合适的工作，为贵公司贡献一份力量。恳请您给我加入贵公司的机会。我有信心、有能力成为一名出色的员工。自从考上大学以后我“自信、自立、自强”，不但努力学习专业知识，而且主动参与各种社会实践，经过大学三年的学习和社会锻炼，我具备了以下几个方面的能力：
+
+一、扎实的专业基础知识和先进的思想观念。
+
+二、丰富的社会实践和突出的工作能力。
+
+三、强烈的品牌理念和合作的团队精神。
+
+诚实正直、勤劳务实是我的原则，多年来的求学生涯使我形成了优良的处事作风和先进的思想观念，并有了独特的思维方式、和谐的人际关系。因我设法让自己变得出色，因此，我时刻注意抓住机会锻炼自己，并时刻思索做好工作的方法。我是一个有能力而且有团队精神的人，我能很快地适应一个新的工作环境，并能在新环境既定的团队环境下做好工作。
+
+期望我能适合您的要求，也期望您选择我，您的选择就是我的希望。为了方便您更详细地了解我的情况，请审阅我呈上的简历以及相关材料。给我一个机会还您一个奇迹，期待您的回复。祝贵企业事业蒸蒸日上、硕果累累!
+
+此致 敬礼
+
+XXX
+
+xxxx年xx</value>
+  </data>
+</root>

@@ -75,7 +75,7 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        List<T> ExecuteGetList<T>() where T : new();
+        List<T> ExecuteGetList<T>(bool enableLazy = true) where T : new();
 
         /// <summary>
         /// 执行查询，获得一个对象
@@ -86,6 +86,6 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        T ExecuteGetEntity<T>() where T : new();
+        T ExecuteGetEntity<T>(bool enableLazy = true) where T : new();
     }
 }

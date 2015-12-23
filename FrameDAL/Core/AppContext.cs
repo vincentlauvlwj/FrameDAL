@@ -222,6 +222,8 @@ namespace FrameDAL.Core
                     ColumnAttribute col = Attribute.GetCustomAttribute(prop, typeof(ColumnAttribute)) as ColumnAttribute;
                     if (col != null && string.IsNullOrWhiteSpace(col.Name))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置。");
+                    if (col != null && col.LazyLoad && GetIdAttribute(prop) != null)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置。Id字段不可使用LazyLoad。");
                     columns.Add(prop, col);
                     return col;
                 }
