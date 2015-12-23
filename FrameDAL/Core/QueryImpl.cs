@@ -207,7 +207,7 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public T ExecuteGetEntity<T>(bool enableLazy = true) where T : new()
+        public T ExecuteGetEntity<T>(bool enableLazy = true) where T : class, new()
         {
             List<T> results = ExecuteGetList<T>(enableLazy);
             if (results.Count > 0)

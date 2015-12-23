@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
 namespace FrameDAL.Dialect
 {
@@ -64,5 +65,7 @@ namespace FrameDAL.Dialect
         /// <param name="pageSize">返回的结果数量，若为0，则返回所有结果，不进行分页查询</param>
         /// <returns>返回预处理后的SQL命令</returns>
         string GetPagingSql(string sqlText, int firstResult, int pageSize);
+
+        string GetLoadPropertySql(PropertyInfo prop);
     }
 }

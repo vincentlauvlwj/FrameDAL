@@ -33,13 +33,8 @@ namespace FrameDAL.Dialect
         /// <returns>返回预处理后的SQL命令</returns>
         public abstract string GetPagingSql(string sqlText, int firstResult, int pageSize);
 
-        private Dictionary<Type, string> inserts = new Dictionary<Type, string>();
-        private Dictionary<Type, string> deletes = new Dictionary<Type, string>();
-        private Dictionary<Type, string> updates = new Dictionary<Type, string>();
-        private Dictionary<Type, string> selects = new Dictionary<Type, string>();
-
         /// <summary>
-        /// 从缓存中获得实体类对应的表的insert sql
+        /// 获得实体类对应的表的insert sql
         /// </summary>
         /// <param name="type">实体类</param>
         /// <returns>insert sql</returns>
@@ -48,44 +43,32 @@ namespace FrameDAL.Dialect
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
         public virtual string GetInsertSql(Type type)
         {
-            lock (inserts)
+            StringBuilder sb = new StringBuilder();
+            sb.Append("insert into ");
+            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(" (");
+            int count = 0;
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
             {
-                if (inserts.ContainsKey(type))
-                {
-                    return inserts[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("insert into ");
-                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
-                    sb.Append(" (");
-                    int count = 0;
-                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
-                    {
-                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null || col.ReadOnly) continue;
-                        sb.Append(col.Name + ", ");
-                        count++;
-                    }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(") values (");
-                    for (int i = 0; i < count; i++)
-                    {
-                        sb.Append("?, ");
-                    }
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(")");
-                    string sql = sb.ToString();
-                    inserts.Add(type, sql);
-                    return sql;
-                }
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                if (col == null || col.ReadOnly) continue;
+                sb.Append(col.Name + ", ");
+                count++;
             }
+            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(") values (");
+            for (int i = 0; i < count; i++)
+            {
+                sb.Append("?, ");
+            }
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(")");
+            return sb.ToString();
         }
 
         /// <summary>
-        /// 从缓存中获得实体类对应的delete sql
+        /// 获得实体类对应的delete sql
         /// </summary>
         /// <param name="type">实体类</param>
         /// <returns>delete sql</returns>
@@ -93,29 +76,17 @@ namespace FrameDAL.Dialect
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         public virtual string GetDeleteSql(Type type)
         {
-            lock (deletes)
-            {
-                if (deletes.ContainsKey(type))
-                {
-                    return deletes[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("delete from ");
-                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
-                    sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    deletes.Add(type, sql);
-                    return sql;
-                }
-            }
+            StringBuilder sb = new StringBuilder();
+            sb.Append("delete from ");
+            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(" where ");
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            sb.Append("=?");
+            return sb.ToString();
         }
 
         /// <summary>
-        /// 从缓存中获得实体类对应的update sql
+        /// 获得实体类对应的update sql
         /// </summary>
         /// <param name="type">实体类</param>
         /// <returns>update sql</returns>
@@ -123,41 +94,29 @@ namespace FrameDAL.Dialect
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
         public virtual string GetUpdateSql(Type type)
         {
-            lock (updates)
+            StringBuilder sb = new StringBuilder();
+            sb.Append("update ");
+            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(" set ");
+            int count = 0;
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
             {
-                if (updates.ContainsKey(type))
-                {
-                    return updates[type];
-                }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("update ");
-                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
-                    sb.Append(" set ");
-                    int count = 0;
-                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
-                    {
-                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null || col.ReadOnly) continue;
-                        sb.Append(col.Name);
-                        sb.Append("=?, ");
-                        count++;
-                    }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    updates.Add(type, sql);
-                    return sql;
-                }
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                if (col == null || col.ReadOnly) continue;
+                sb.Append(col.Name);
+                sb.Append("=?, ");
+                count++;
             }
+            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(" where ");
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            sb.Append("=?");
+            return sb.ToString();
         }
 
         /// <summary>
-        /// 从缓存中获得实体类对应的select sql
+        /// 获得实体类对应的select sql
         /// </summary>
         /// <param name="type">实体类</param>
         /// <returns>select sql</returns>
@@ -165,55 +124,47 @@ namespace FrameDAL.Dialect
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
         public virtual string GetSelectSql(Type type, bool enableLazy)
         {
-            lock (selects)
+            StringBuilder sb = new StringBuilder();
+            sb.Append("select ");
+            int count = 0;
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
             {
-                if (selects.ContainsKey(type))
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                if (col == null || col.LazyLoad && enableLazy) continue;
+                if (!string.IsNullOrWhiteSpace(col.SQL))
                 {
-                    return selects[type];
+                    sb.Append("(" + col.SQL + ") as ");
                 }
-                else
-                {
-                    StringBuilder sb = new StringBuilder();
-                    sb.Append("select ");
-                    int count = 0;
-                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
-                    {
-                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null || col.LazyLoad && enableLazy) continue;
-                        if (string.IsNullOrWhiteSpace(col.SQL))
-                        {
-                            sb.Append(col.Name);
-                        }
-                        else
-                        {
-                            sb.Append("(" + col.SQL + ") as " + col.Name);
-                        }
-                        sb.Append(", ");
-                        count++;
-                    }
-                    if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且LazyLoad为false的字段。");
-                    sb.Remove(sb.Length - 2, 2);
-                    sb.Append(" from ");
-                    sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
-                    sb.Append(" where ");
-                    sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
-                    sb.Append("=?");
-                    string sql = sb.ToString();
-                    selects.Add(type, sql);
-                    return sql;
-                }
+                sb.Append(col.Name);
+                sb.Append(", ");
+                count++;
             }
+            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且LazyLoad为false的字段。");
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(" from ");
+            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(" where ");
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            sb.Append("=?");
+            return sb.ToString();
         }
 
-        /// <summary>
-        /// 清除缓存的SQL
-        /// </summary>
-        public virtual void ClearCache()
+        public virtual string GetLoadPropertySql(PropertyInfo prop)
         {
-            lock (inserts) inserts.Clear();
-            lock (deletes) deletes.Clear();
-            lock (updates) updates.Clear();
-            lock (selects) selects.Clear();
+            StringBuilder sb = new StringBuilder();
+            ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+            sb.Append("select ");
+            if (!string.IsNullOrWhiteSpace(col.SQL))
+            {
+                sb.Append("(" + col.SQL + ") as ");
+            }
+            sb.Append(col.Name);
+            sb.Append(" from ");
+            sb.Append(AppContext.Instance.GetTableAttribute(prop.DeclaringType).Name);
+            sb.Append(" where ");
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.DeclaringType)).Name);
+            sb.Append("=?");
+            return sb.ToString();
         }
     }
 }
