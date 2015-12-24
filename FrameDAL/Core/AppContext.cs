@@ -58,7 +58,7 @@ namespace FrameDAL.Core
         /// 推荐使用此属性获得DbHelper而不是自己创建，因为此属性获得的是IDbHelper接口，通过面向接口编程，可避免代码与具体数据库耦合。
         /// </summary>
         public IDbHelper DbHelper { get; private set; }
-        private Configuration config;
+        public Configuration Configuration { get; private set; }
 
         // 缓存了各种信息的Dictionary
         private Dictionary<Type, TableAttribute> tables = new Dictionary<Type,TableAttribute>();
@@ -74,7 +74,7 @@ namespace FrameDAL.Core
         /// <exception cref="NotSupportedException">数据库不受支持</exception>
         private AppContext(Configuration config)
         {
-            this.config = config;
+            this.Configuration = config;
             try
             {
                 DbHelper = Assembly.LoadFrom(config.DbHelperAssembly).CreateInstance(config.DbHelperClass) as IDbHelper;
@@ -95,18 +95,6 @@ namespace FrameDAL.Core
         public ISession OpenSession()
         {
             return new SessionImpl(DbHelper);
-        }
-
-        /// <summary>
-        /// 获得配置文件中的命名SQL
-        /// </summary>
-        /// <param name="name">要获得的SQL的名称</param>
-        /// <returns>SQL字符串</returns>
-        /// <exception cref="ArgumentNullException">name为null</exception>
-        /// <exception cref="KeyNotFoundException">不存在该名称的SQL</exception>
-        public string GetNamedSql(string name)
-        {
-            return config.NamedSql[name];
         }
 
         /// <summary>
@@ -221,9 +209,11 @@ namespace FrameDAL.Core
                 {
                     ColumnAttribute col = Attribute.GetCustomAttribute(prop, typeof(ColumnAttribute)) as ColumnAttribute;
                     if (col != null && string.IsNullOrWhiteSpace(col.Name))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置。");
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：Name属性不能为空。");
                     if (col != null && col.LazyLoad && GetIdAttribute(prop) != null)
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置。Id字段不可使用LazyLoad。");
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：Id字段不可使用LazyLoad。");
+                    if (col != null && col.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
                     columns.Add(prop, col);
                     return col;
                 }

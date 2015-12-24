@@ -282,7 +282,7 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             IQuery query = CreateQuery();
-            query.SqlText = AppContext.Instance.GetNamedSql(name);
+            query.SqlText = AppContext.Instance.Configuration.GetNamedSql(name);
             query.Parameters = parameters;
             return query;
         }
