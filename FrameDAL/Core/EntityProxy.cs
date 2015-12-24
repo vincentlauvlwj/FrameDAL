@@ -15,20 +15,33 @@ namespace FrameDAL.Core
 
         public static T Get() 
         {
-            return generator.CreateClassProxy<T>(new EntityProxy<T>());
+            if (AppContext.Instance.GetProperties(typeof(T))
+                .Count(p =>
+                {
+                    ColumnAttribute col = AppContext.Instance.GetColumnAttribute(p);
+                    return col != null && col.LazyLoad;
+                }) == 0)
+            {
+                return new T();
+            }
+            else
+            {
+                return generator.CreateClassProxy<T>(new EntityProxy<T>());
+            }
         }
 
 
-        private Dictionary<string, bool> initialized = new Dictionary<string, bool>();
+        private Dictionary<string, bool> initialized;
 
         public EntityProxy()
         {
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
-            {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                if (col == null || !col.LazyLoad) continue;
-                initialized[prop.Name] = false;
-            }
+            initialized = AppContext.Instance.GetProperties(typeof(T))
+                .Where(p =>
+                {
+                    ColumnAttribute col = AppContext.Instance.GetColumnAttribute(p);
+                    return col != null && col.LazyLoad;
+                })
+                .ToDictionary(p => p.Name, p => false);
         }
 
         public void Intercept(IInvocation invocation)

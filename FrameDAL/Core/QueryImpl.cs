@@ -162,7 +162,12 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public List<T> ExecuteGetList<T>(bool enableLazy = true) where T : class, new()
+        public List<T> ExecuteGetList<T>() where T : class, new()
+        {
+            return ExecuteGetList<T>(AppContext.Instance.Configuration.EnableLazy);
+        }
+
+        public List<T> ExecuteGetList<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = new List<T>();
             DataTable dt = ExecuteGetDataTable();
@@ -207,7 +212,12 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public T ExecuteGetEntity<T>(bool enableLazy = true) where T : class, new()
+        public T ExecuteGetEntity<T>() where T : class, new()
+        {
+            return ExecuteGetEntity<T>(AppContext.Instance.Configuration.EnableLazy);
+        }
+
+        public T ExecuteGetEntity<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = ExecuteGetList<T>(enableLazy);
             if (results.Count > 0)

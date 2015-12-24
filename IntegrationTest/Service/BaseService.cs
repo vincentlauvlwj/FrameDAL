@@ -12,7 +12,7 @@ namespace ResumeFactory.Service
     /// 业务逻辑类的基类，实现了一些基本的业务方法，子类可以重写这些方法以实现自己的特殊需求
     /// </summary>
     /// <typeparam name="T">该业务逻辑类主要操作的实体类型</typeparam>
-    public class BaseService<T> where T : new()
+    public class BaseService<T> where T : class, new()
     {
         protected AppContext context = AppContext.Instance;
 

@@ -75,7 +75,7 @@ namespace FrameDAL.Config
 
             string enable = ConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
             if (string.IsNullOrWhiteSpace(enable)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
-            if (enable != "true" || enable != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
+            if (enable != "true" && enable != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
             EnableLazy = enable == "true";
 
             DbHelperAssembly = ConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");

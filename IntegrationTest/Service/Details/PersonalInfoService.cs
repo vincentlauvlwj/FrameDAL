@@ -31,7 +31,7 @@ namespace ResumeFactory.Service.Details
         {
             using (ISession session = context.OpenSession())
             {
-                string sql = "select * from person_info where resume_id = ?";
+                string sql = @"select id,resume_id,person_name,person_gender,person_birthday,person_workdate,person_born_area,person_living_area,person_tel,person_email,person_qq,person_marriage,person_identity_type,person_identity_code,person_abroad,person_party from person_info where resume_id = ?";
                 return session.CreateQuery(sql, resume.Id).ExecuteGetEntity<PersonInfo>();
             }
         }

@@ -157,35 +157,51 @@
     <Compile Include="Forms\Details\FormOtherInfo.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormOtherInfo.Designer.cs" />
+    <Compile Include="Forms\Details\FormOtherInfo.Designer.cs">
+      <DependentUpon>FormOtherInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormPersonalInfo.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormPersonalInfo.Designer.cs" />
+    <Compile Include="Forms\Details\FormPersonalInfo.Designer.cs">
+      <DependentUpon>FormPersonalInfo.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormProfessionalSkills.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormProfessionalSkills.Designer.cs" />
+    <Compile Include="Forms\Details\FormProfessionalSkills.Designer.cs">
+      <DependentUpon>FormProfessionalSkills.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormProjectExperience.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormProjectExperience.Designer.cs" />
+    <Compile Include="Forms\Details\FormProjectExperience.Designer.cs">
+      <DependentUpon>FormProjectExperience.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormSelfEvaluation.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormSelfEvaluation.Designer.cs" />
+    <Compile Include="Forms\Details\FormSelfEvaluation.Designer.cs">
+      <DependentUpon>FormSelfEvaluation.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormSocialPractice.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormSocialPractice.Designer.cs" />
+    <Compile Include="Forms\Details\FormSocialPractice.Designer.cs">
+      <DependentUpon>FormSocialPractice.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormTrainExp.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormTrainExp.Designer.cs" />
+    <Compile Include="Forms\Details\FormTrainExp.Designer.cs">
+      <DependentUpon>FormTrainExp.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\Details\FormWorkExperience.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\Details\FormWorkExperience.Designer.cs" />
+    <Compile Include="Forms\Details\FormWorkExperience.Designer.cs">
+      <DependentUpon>FormWorkExperience.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FormDetails.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -225,11 +241,15 @@
     <Compile Include="Forms\FormReportPreview.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\FormReportPreview.Designer.cs" />
+    <Compile Include="Forms\FormReportPreview.Designer.cs">
+      <DependentUpon>FormReportPreview.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\FormResumeSetting.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\FormResumeSetting.Designer.cs" />
+    <Compile Include="Forms\FormResumeSetting.Designer.cs">
+      <DependentUpon>FormResumeSetting.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -288,14 +308,30 @@
     <EmbeddedResource Include="Forms\Details\FormLearningSituation.resx">
       <DependentUpon>FormLearningSituation.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\Details\FormOtherInfo.resx" />
-    <EmbeddedResource Include="Forms\Details\FormPersonalInfo.resx" />
-    <EmbeddedResource Include="Forms\Details\FormProfessionalSkills.resx" />
-    <EmbeddedResource Include="Forms\Details\FormProjectExperience.resx" />
-    <EmbeddedResource Include="Forms\Details\FormSelfEvaluation.resx" />
-    <EmbeddedResource Include="Forms\Details\FormSocialPractice.resx" />
-    <EmbeddedResource Include="Forms\Details\FormTrainExp.resx" />
-    <EmbeddedResource Include="Forms\Details\FormWorkExperience.resx" />
+    <EmbeddedResource Include="Forms\Details\FormOtherInfo.resx">
+      <DependentUpon>FormOtherInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormPersonalInfo.resx">
+      <DependentUpon>FormPersonalInfo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormProfessionalSkills.resx">
+      <DependentUpon>FormProfessionalSkills.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormProjectExperience.resx">
+      <DependentUpon>FormProjectExperience.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormSelfEvaluation.resx">
+      <DependentUpon>FormSelfEvaluation.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormSocialPractice.resx">
+      <DependentUpon>FormSocialPractice.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormTrainExp.resx">
+      <DependentUpon>FormTrainExp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Details\FormWorkExperience.resx">
+      <DependentUpon>FormWorkExperience.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\FormDetails.resx">
       <DependentUpon>FormDetails.cs</DependentUpon>
     </EmbeddedResource>
@@ -314,8 +350,12 @@
     <EmbeddedResource Include="Forms\FormRegister.resx">
       <DependentUpon>FormRegister.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\FormReportPreview.resx" />
-    <EmbeddedResource Include="Forms\FormResumeSetting.resx" />
+    <EmbeddedResource Include="Forms\FormReportPreview.resx">
+      <DependentUpon>FormReportPreview.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FormResumeSetting.resx">
+      <DependentUpon>FormResumeSetting.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <SubType>Designer</SubType>

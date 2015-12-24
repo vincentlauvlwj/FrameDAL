@@ -77,6 +77,8 @@ namespace ResumeFactory.Forms.Details
                 (personInfo.HasBeenAbroad ? radioAbroad : radioNoAbrod).Checked = true;
                 SetPoliticalStatus(personInfo.PersonParty);
                 pictureBox.Image = personInfo.PersonAvatar;
+                pictureBox.Image = personInfo.PersonAvatar;
+                pictureBox.Image = personInfo.PersonAvatar;
             }
             catch (Exception e)
             {

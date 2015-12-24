@@ -261,13 +261,30 @@ namespace FrameDAL.Core
         /// <param name="value">值</param>
         public void SetPropertyValue(object entity, PropertyInfo prop, object value)
         {
-            if (!(value is DBNull))
+            try
             {
                 Type t = prop.PropertyType;
-                prop.SetValue(
-                    entity,
-                    Convert.ChangeType(value, t.IsGenericType ? t.GetGenericArguments()[0] : t),
-                    null);
+
+                if (value is DBNull)
+                {
+                    value = t.IsValueType ? Activator.CreateInstance(t) : null;
+                }
+                if (value == null)
+                {
+                    prop.SetValue(entity, null, null);
+                    return;
+                }
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    t = t.GetGenericArguments()[0];
+                }
+
+                prop.SetValue(entity, Convert.ChangeType(value, t), null);
+            }
+            catch (Exception e)
+            {
+                throw new FrameDALException("将值" + (value == null ? "null" : value.ToString()) + "赋给属性" 
+                    + prop.DeclaringType.FullName + "." + prop.Name + "时发生异常。错误信息：" + e.Message, e);
             }
         }
     }

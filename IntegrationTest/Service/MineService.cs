@@ -36,8 +36,8 @@ namespace ResumeFactory.Service
 
             public string ResumeShareStr { get { return ResumeShare == 1 ? "是" : "否"; } }
 
-            [Column("avg_score", ReadOnly=true)]
-            public int AvgScore { get; set; }
+            [Column("avg_score", ReadOnly = true, LazyLoad=true, SQL = "select round(avg(score), 0) from resume_scores where resume_id=resume.id")]
+            public virtual int AvgScore { get; set; }
 
             public string ScoreStars { get { return "★★★★★☆☆☆☆☆".Substring(5 - AvgScore, 5); } }
         }
@@ -52,8 +52,7 @@ namespace ResumeFactory.Service
             using (ISession session = context.OpenSession())
             {
                 string sql = @"
-                    select resume.*, template_name, template_generator_class, 
-                        (select round(avg(score), 0) from resume_scores where resume_id=resume.id) as avg_score
+                    select resume.*, template_name, template_generator_class
                     from resume join resume_template on (resume.template_id = resume_template.id)
                     where user_id = ?
                     order by resume_create_time";

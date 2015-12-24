@@ -82,8 +82,8 @@ namespace ResumeFactory.Entity
         [Column("person_party")]
         public string PersonParty { get; set; }
 
-        [Column("person_avatar")]
-        public byte[] PersonAvatarBytes { get; set; }
+        [Column("person_avatar", LazyLoad=true)]
+        public virtual byte[] PersonAvatarBytes { get; set; }
 
         public Image PersonAvatar
         {

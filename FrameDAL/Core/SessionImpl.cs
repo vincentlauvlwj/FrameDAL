@@ -207,7 +207,12 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public T Get<T>(object id, bool enableLazy = true) where T : new()
+        public T Get<T>(object id) where T : class, new()
+        {
+            return Get<T>(id, AppContext.Instance.Configuration.EnableLazy);
+        }
+
+        public T Get<T>(object id, bool enableLazy) where T : class, new()
         {
             CheckSessionStatus();
             return CreateQuery(db.Dialect.GetSelectSql(typeof(T), enableLazy), id).ExecuteGetEntity<T>(enableLazy);
