@@ -59,8 +59,10 @@ namespace FrameDAL.Core
                 {
                     PropertyInfo prop = AppContext.Instance.GetProperties(invocation.TargetType).Where(p => p.Name == propName).First();
                     PropertyInfo idProp = AppContext.Instance.GetIdProperty(invocation.TargetType);
+
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadPropertySql(prop);
                     object result = session.CreateQuery(sql, idProp.GetValue(invocation.InvocationTarget, null)).ExecuteScalar();
+
                     AppContext.Instance.SetPropertyValue(invocation.InvocationTarget, prop, result);
                     invocation.ReturnValue = prop.GetValue(invocation.InvocationTarget, null);
                 }

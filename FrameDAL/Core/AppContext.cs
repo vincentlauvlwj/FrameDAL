@@ -66,6 +66,9 @@ namespace FrameDAL.Core
         private Dictionary<Type, PropertyInfo> idProps = new Dictionary<Type,PropertyInfo>();
         private Dictionary<PropertyInfo, ColumnAttribute> columns = new Dictionary<PropertyInfo,ColumnAttribute>();
         private Dictionary<PropertyInfo, IdAttribute> ids = new Dictionary<PropertyInfo,IdAttribute>();
+        private Dictionary<PropertyInfo, ManyToOneAttribute> manyToOnes = new Dictionary<PropertyInfo, ManyToOneAttribute>();
+        private Dictionary<PropertyInfo, OneToManyAttribute> oneToManies = new Dictionary<PropertyInfo, OneToManyAttribute>();
+        private Dictionary<PropertyInfo, ManyToManyAttribute> manyToManies = new Dictionary<PropertyInfo, ManyToManyAttribute>();
 
         /// <summary>
         /// 私有构造方法，通过配置信息获得数据库访问助手，不同的数据库使用不同的访问助手
@@ -102,11 +105,14 @@ namespace FrameDAL.Core
         /// </summary>
         public void ClearCache()
         {
-            lock(tables) tables.Clear();
-            lock(props) props.Clear();
-            lock(idProps) idProps.Clear();
-            lock(columns) columns.Clear();
-            lock(ids) ids.Clear();
+            lock (tables) tables.Clear();
+            lock (props) props.Clear();
+            lock (idProps) idProps.Clear();
+            lock (columns) columns.Clear();
+            lock (ids) ids.Clear();
+            lock (manyToOnes) manyToOnes.Clear();
+            lock (oneToManies) oneToManies.Clear();
+            lock (manyToManies) manyToManies.Clear();
         }
 
         /// <summary>
@@ -154,8 +160,26 @@ namespace FrameDAL.Core
                 {
                     PropertyInfo[] properties = type.GetProperties();
                     if (properties.Length == 0) throw new EntityMappingException(type.FullName + "类中没有任何公开属性");
+                    CheckExclusiveAttributes(properties);
                     props.Add(type, properties);
                     return properties;
+                }
+            }
+        }
+
+        private void CheckExclusiveAttributes(PropertyInfo[] properties)
+        {
+            foreach (PropertyInfo prop in properties)
+            {
+                int i = 0;
+                if (GetColumnAttribute(prop) != null) i++;
+                if (GetManyToOneAttribute(prop) != null) i++;
+                if (GetOneToManyAttribute(prop) != null) i++;
+                if (GetManyToManyAttribute(prop) != null) i++;
+                if (i > 1)
+                {
+                    throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                        + prop.Name + "的Column特性没有正确配置：Column, ManyToOne, OneToMany, ManyToMany四个特性在一个属性上只能有一个。");
                 }
             }
         }
@@ -178,14 +202,20 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    foreach (PropertyInfo prop in GetProperties(type))
+                    var result = GetProperties(type).Where(p => GetIdAttribute(p) != null).ToList();
+                    if (result.Count == 0)
                     {
-                        IdAttribute id = GetIdAttribute(prop);
-                        if (id == null) continue;
-                        idProps.Add(type, prop);
-                        return prop;
+                        throw new EntityMappingException(type.FullName + "类中没有配置Id属性。");
                     }
-                    throw new EntityMappingException(type.FullName + "类中没有配置Id属性。");
+                    else if (result.Count > 1)
+                    {
+                        throw new EntityMappingException(type.FullName + "类Id特性配置错误：本框架暂不支持类中有一个以上的Id属性，请期待日后扩展。");
+                    }
+                    else
+                    {
+                        idProps.Add(type, result[0]);
+                        return result[0];
+                    }
                 }
             }
         }
@@ -208,24 +238,19 @@ namespace FrameDAL.Core
                 else
                 {
                     ColumnAttribute col = Attribute.GetCustomAttribute(prop, typeof(ColumnAttribute)) as ColumnAttribute;
+
                     if (col != null && string.IsNullOrWhiteSpace(col.Name))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：Name属性不能为空。");
-                    if (col != null && col.LazyLoad && GetIdAttribute(prop) != null)
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：Id字段不可使用LazyLoad。");
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的Column特性没有正确配置：Name属性不能为空。");
+
                     if (col != null && col.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Column特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的Column特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+
                     columns.Add(prop, col);
                     return col;
                 }
             }
-        }
-
-        private void CheckId(PropertyInfo prop, IdAttribute id)
-        {
-            if (id != null && (id.GeneratorType == 0 || id.GeneratorType == GeneratorType.Sequence && string.IsNullOrWhiteSpace(id.SeqName)))
-                throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "的Id特性没有正确配置。");
-            if (id != null && GetColumnAttribute(prop) == null)
-                throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
         }
 
         /// <summary>
@@ -246,9 +271,119 @@ namespace FrameDAL.Core
                 else
                 {
                     IdAttribute id = Attribute.GetCustomAttribute(prop, typeof(IdAttribute)) as IdAttribute;
-                    CheckId(prop, id);
+
+                    if (id != null && id.GeneratorType == 0)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的Id特性没有正确配置：请提供GeneratorType。");
+
+                    if (id != null && id.GeneratorType == GeneratorType.Sequence && string.IsNullOrWhiteSpace(id.SeqName))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的Id特性没有正确配置：当使用GeneratorType.Sequence时，必须提供SeqName。");
+
+                    ColumnAttribute col = GetColumnAttribute(prop);
+                    if (id != null && col == null)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
+
+                    if (id != null && col.ReadOnly)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的Column特性没有正确配置：Id字段不可为ReadOnly。");
+
+                    if (id != null && col.LazyLoad)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的Column特性没有正确配置：Id字段不可使用LazyLoad。");
+
+                    if (id != null && ! string.IsNullOrWhiteSpace(col.SQL))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的Column特性没有正确配置：Id字段的Column特性不可使用SQL。");
+
                     ids.Add(prop, id);
                     return id;
+                }
+            }
+        }
+
+        public ManyToOneAttribute GetManyToOneAttribute(PropertyInfo prop)
+        {
+            lock (manyToOnes)
+            {
+                if (manyToOnes.ContainsKey(prop))
+                {
+                    return manyToOnes[prop];
+                }
+                else
+                {
+                    ManyToOneAttribute manyToOne = Attribute.GetCustomAttribute(prop, typeof(ManyToOneAttribute)) as ManyToOneAttribute;
+                    
+                    if (manyToOne != null && string.IsNullOrWhiteSpace(manyToOne.ForeignKey))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的ManyToOne特性没有正确配置：ForeignKey属性不能为空。");
+
+                    if (manyToOne != null && manyToOne.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                            + prop.Name + "的ManyToOne特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+
+                    manyToOnes.Add(prop, manyToOne);
+                    return manyToOne;
+                }
+            }
+        }
+
+        public OneToManyAttribute GetOneToManyAttribute(PropertyInfo prop)
+        {
+            lock (oneToManies)
+            {
+                if (oneToManies.ContainsKey(prop))
+                {
+                    return oneToManies[prop];
+                }
+                else
+                {
+                    OneToManyAttribute oneToMany = Attribute.GetCustomAttribute(prop, typeof(OneToManyAttribute)) as OneToManyAttribute;
+
+                    if (oneToMany != null && string.IsNullOrWhiteSpace(oneToMany.InverseForeignKey))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的OneToMany特性没有正确配置：InverseForeignKey属性不能为空。");
+
+                    if (oneToMany != null && oneToMany.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的OneToMany特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+
+                    oneToManies.Add(prop, oneToMany);
+                    return oneToMany;
+                }
+            }
+        }
+
+        public ManyToManyAttribute GetManyToManyAttribute(PropertyInfo prop)
+        {
+            lock (manyToManies)
+            {
+                if (manyToManies.ContainsKey(prop))
+                {
+                    return manyToManies[prop];
+                }
+                else
+                {
+                    ManyToManyAttribute manyToMany = Attribute.GetCustomAttribute(prop, typeof(ManyToManyAttribute)) as ManyToManyAttribute;
+
+                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.JoinTable))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：JoinTable属性不能为空。");
+
+                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.ForeignKey))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：ForeignKey属性不能为空。");
+
+                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.InverseForeignKey))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：InverseForeignKey属性不能为空。");
+
+                    if (manyToMany != null && manyToMany.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+
+                    manyToManies.Add(prop, manyToMany);
+                    return manyToMany;
                 }
             }
         }
