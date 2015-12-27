@@ -202,12 +202,12 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    var result = GetProperties(type).Where(p => GetIdAttribute(p) != null).ToList();
-                    if (result.Count == 0)
+                    var result = GetProperties(type).Where(p => GetIdAttribute(p) != null).ToArray();
+                    if (result.Length == 0)
                     {
                         throw new EntityMappingException(type.FullName + "类中没有配置Id属性。");
                     }
-                    else if (result.Count > 1)
+                    else if (result.Length > 1)
                     {
                         throw new EntityMappingException(type.FullName + "类Id特性配置错误：本框架暂不支持类中有一个以上的Id属性，请期待日后扩展。");
                     }
@@ -370,13 +370,13 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToMany特性没有正确配置：JoinTable属性不能为空。");
 
-                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.ForeignKey))
+                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.JoinColumn))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
-                            + prop.Name + "的ManyToMany特性没有正确配置：ForeignKey属性不能为空。");
+                            + prop.Name + "的ManyToMany特性没有正确配置：JoinColumn属性不能为空。");
 
-                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.InverseForeignKey))
+                    if (manyToMany != null && string.IsNullOrWhiteSpace(manyToMany.InverseJoinColumn))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
-                            + prop.Name + "的ManyToMany特性没有正确配置：InverseForeignKey属性不能为空。");
+                            + prop.Name + "的ManyToMany特性没有正确配置：InverseJoinColumn属性不能为空。");
 
                     if (manyToMany != null && manyToMany.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."

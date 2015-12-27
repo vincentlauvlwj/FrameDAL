@@ -115,6 +115,31 @@ namespace FrameDAL.Dialect
             return sb.ToString();
         }
 
+
+        protected void AppendSelectedColumns(StringBuilder sb, Type type, bool enableLazy, Dictionary<string, string> resultMap, string prefix)
+        {
+            int count = 0;
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+            {
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+
+                if (col != null && (!col.LazyLoad || !enableLazy))
+                {
+                    sb.Append(string.IsNullOrWhiteSpace(col.SQL) ? col.Name + " as " : "(" + col.SQL + ") as ");
+                }
+                else if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
+                {
+                    sb.Append(manyToOne.ForeignKey + " as ");
+                }
+
+                sb.Append(resultMap[prefix + "." + prop.Name] = prefix + "_" + prop.Name).Append(", ");
+                count++;
+            }
+            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column或ManyToOne特性并且LazyLoad为false的字段。");
+            sb.Remove(sb.Length - 2, 2);
+        }
+
         /// <summary>
         /// 获得实体类对应的select sql
         /// </summary>
@@ -122,31 +147,54 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public virtual string GetSelectSql(Type type, bool enableLazy)
+        public virtual string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap)
         {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("select ");
-            int count = 0;
+            resultMap = new Dictionary<string, string>();
+            StringBuilder resultSql = new StringBuilder();
+            resultSql.Append("select ");
+            AppendSelectedColumns(resultSql, type, enableLazy, resultMap, "this");
+            resultSql.Append(" from ");
+            resultSql.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            resultSql.Append(" where ");
+            resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            resultSql.Append("=?");
+
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                if (col == null || col.LazyLoad && enableLazy) continue;
-                if (!string.IsNullOrWhiteSpace(col.SQL))
+                ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+                OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
+                ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+                if (manyToOne == null && oneToMany == null && manyToMany == null) continue;
+
+                StringBuilder tmp = new StringBuilder();
+                tmp.Append("select a.*, ");
+                AppendSelectedColumns(tmp, prop.PropertyType, true, resultMap, prop.Name);
+                tmp.Append(" from (");
+                resultSql.Insert(0, tmp.ToString()).Append(") a left join ");
+
+                if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
                 {
-                    sb.Append("(" + col.SQL + ") as ");
+                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Append(" b on a.this_" + prop.Name + "=b.");
+                    resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
                 }
-                sb.Append(col.Name);
-                sb.Append(", ");
-                count++;
+                else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy))
+                {
+                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Append(" b on a.this_" + AppContext.Instance.GetIdProperty(type).Name + "=b." + oneToMany.InverseForeignKey);
+                }
+                else if (manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
+                {
+                    resultSql.Append(manyToMany.JoinTable);
+                    resultSql.Append(" j on a.this_" + AppContext.Instance.GetIdProperty(type).Name);
+                    resultSql.Append("=j." + manyToMany.JoinColumn + " left join ");
+                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Append(" b on j." + manyToMany.InverseJoinColumn + "=b.");
+                    resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+                }
             }
-            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且LazyLoad为false的字段。");
-            sb.Remove(sb.Length - 2, 2);
-            sb.Append(" from ");
-            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
-            sb.Append(" where ");
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
-            sb.Append("=?");
-            return sb.ToString();
+
+            return resultSql.ToString();
         }
 
         public virtual string GetLoadPropertySql(PropertyInfo prop)

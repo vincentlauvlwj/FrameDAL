@@ -55,7 +55,7 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        string GetSelectSql(Type type, bool enableLazy);
+        string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap);
 
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理

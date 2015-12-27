@@ -10,9 +10,9 @@ namespace FrameDAL.Attributes
     {
         public string JoinTable { get; set; }
 
-        public string ForeignKey { get; set; }
+        public string JoinColumn { get; set; }
 
-        public string InverseForeignKey { get; set; }
+        public string InverseJoinColumn { get; set; }
 
         public bool LazyLoad { get; set; }
 
