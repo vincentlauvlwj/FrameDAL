@@ -140,6 +140,15 @@ namespace FrameDAL.Dialect
             sb.Remove(sb.Length - 2, 2);
         }
 
+        private string GetSelectFromPart(PropertyInfo prop, Dictionary<string,string> resultMap)
+        {
+            StringBuilder tmp = new StringBuilder();
+            tmp.Append("select a.*, ");
+            AppendSelectedColumns(tmp, prop.PropertyType, true, resultMap, prop.Name);
+            tmp.Append(" from (");
+            return tmp.ToString();
+        }
+
         /// <summary>
         /// 获得实体类对应的select sql
         /// </summary>
@@ -164,27 +173,23 @@ namespace FrameDAL.Dialect
                 ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
                 OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
                 ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
-                if (manyToOne == null && oneToMany == null && manyToMany == null) continue;
-
-                StringBuilder tmp = new StringBuilder();
-                tmp.Append("select a.*, ");
-                AppendSelectedColumns(tmp, prop.PropertyType, true, resultMap, prop.Name);
-                tmp.Append(" from (");
-                resultSql.Insert(0, tmp.ToString()).Append(") a left join ");
 
                 if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
                 {
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
                     resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
                     resultSql.Append(" b on a.this_" + prop.Name + "=b.");
                     resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
                 }
                 else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy))
                 {
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
                     resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
                     resultSql.Append(" b on a.this_" + AppContext.Instance.GetIdProperty(type).Name + "=b." + oneToMany.InverseForeignKey);
                 }
                 else if (manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
                 {
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
                     resultSql.Append(manyToMany.JoinTable);
                     resultSql.Append(" j on a.this_" + AppContext.Instance.GetIdProperty(type).Name);
                     resultSql.Append("=j." + manyToMany.JoinColumn + " left join ");

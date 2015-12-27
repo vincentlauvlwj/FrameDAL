@@ -215,7 +215,12 @@ namespace FrameDAL.Core
         public T Get<T>(object id, bool enableLazy) where T : class, new()
         {
             CheckSessionStatus();
-            return CreateQuery(db.Dialect.GetSelectSql(typeof(T), enableLazy), id).ExecuteGetEntity<T>(enableLazy);
+            Dictionary<string, string> resultMap;
+            IQuery query = CreateQuery();
+            query.SqlText = db.Dialect.GetSelectSql(typeof(T), enableLazy, out resultMap);
+            query.Parameters = new object[] { id };
+            query.ResultMap = resultMap;
+            return query.ExecuteGetEntity<T>(enableLazy);
         }
 
         /// <summary>

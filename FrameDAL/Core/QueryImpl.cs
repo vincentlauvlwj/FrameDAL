@@ -49,6 +49,8 @@ namespace FrameDAL.Core
         /// </summary>
         public object[] Parameters { get; set; }
 
+        public Dictionary<string, string> ResultMap { get; set; }
+
         /// <summary>
         /// 当进行分页查询时，获得或设置返回的第一条结果的索引，该索引从0开始
         /// </summary>
