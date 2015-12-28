@@ -169,37 +169,47 @@ namespace FrameDAL.Core
             return ExecuteGetList<T>(AppContext.Instance.Configuration.EnableLazy);
         }
 
+        private string GetAlias(PropertyInfo prop, PropertyInfo subProp)
+        {
+            try
+            {
+                return ResultMap[subProp == null ? prop.Name : prop.Name + "." + subProp.Name];
+            }
+            catch (KeyNotFoundException)
+            {
+                return AppContext.Instance.GetColumnAttribute(subProp == null ? prop : subProp).Name;
+            }
+        }
+
+        private T GetElementById<T>(List<T> list, object id) where T : class
+        {
+            T[] result = list.Where(e => AppContext.Instance.GetIdProperty(typeof(T)).GetValue(e, null).Equals(id)).ToArray();
+            return result.Length > 0 ? result[0] : null;
+        }
+
         public List<T> ExecuteGetList<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = new List<T>();
             DataTable dt = ExecuteGetDataTable();
             CheckRepeatColumnName(dt);
-            if (enableLazy)
-            {
-                foreach (DataRow row in dt.Rows)
+            foreach (DataRow row in dt.Rows)
+            { 
+                T entity = GetElementById<T>(results, row[GetAlias(AppContext.Instance.GetIdProperty(typeof(T)), null)]);
+                if (entity == null)
                 {
-                    T entity = EntityProxy<T>.Get();
+                    entity = EntityProxy<T>.Get(enableLazy);
                     foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
                     {
                         ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null || col.LazyLoad) continue;
-                        AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
+                        if (col == null || col.LazyLoad && enableLazy) continue;
+                        AppContext.Instance.SetPropertyValue(entity, prop, row[GetAlias(prop, null)]);
                     }
                     results.Add(entity);
                 }
-            }
-            else
-            {
-                foreach (DataRow row in dt.Rows)
-                {
-                    T entity = new T();
-                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
-                    {
-                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null) continue;
-                        AppContext.Instance.SetPropertyValue(entity, prop, row[col.Name]);
-                    }
-                    results.Add(entity);
+
+                foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
+                { 
+                    
                 }
             }
             return results;
@@ -222,10 +232,7 @@ namespace FrameDAL.Core
         public T ExecuteGetEntity<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = ExecuteGetList<T>(enableLazy);
-            if (results.Count > 0)
-                return results[0];
-            else
-                return default(T);
+            return results.Count > 0 ? results[0] : null;
         }
     }
 }

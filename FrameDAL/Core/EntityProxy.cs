@@ -13,34 +13,50 @@ namespace FrameDAL.Core
     {
         private static ProxyGenerator generator = new ProxyGenerator();
 
-        public static T Get() 
+        public static T Get(bool enableLazy) 
         {
-            if (AppContext.Instance.GetProperties(typeof(T))
-                .Count(p =>
-                {
-                    ColumnAttribute col = AppContext.Instance.GetColumnAttribute(p);
-                    return col != null && col.LazyLoad;
-                }) == 0)
+            if (AppContext.Instance.GetProperties(typeof(T)).Count(p => NeedProxy(p, enableLazy)) == 0)
             {
                 return new T();
             }
             else
             {
-                return generator.CreateClassProxy<T>(new EntityProxy<T>());
+                return generator.CreateClassProxy<T>(new EntityProxy<T>(enableLazy));
             }
         }
 
+        private static bool NeedProxy(PropertyInfo prop, bool enableLazy)
+        {
+            if (!enableLazy) return false;
+            ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+            if (col != null && col.LazyLoad)
+            {
+                return true;
+            }
+            ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+            if (manyToOne != null && manyToOne.LazyLoad)
+            {
+                return true;
+            }
+            OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
+            if (oneToMany != null && oneToMany.LazyLoad)
+            {
+                return true;
+            }
+            ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+            if (manyToMany != null && manyToMany.LazyLoad)
+            {
+                return true;
+            }
+            return false;
+        }
 
         private Dictionary<string, bool> initialized;
 
-        public EntityProxy()
+        public EntityProxy(bool enableLazy)
         {
             initialized = AppContext.Instance.GetProperties(typeof(T))
-                .Where(p =>
-                {
-                    ColumnAttribute col = AppContext.Instance.GetColumnAttribute(p);
-                    return col != null && col.LazyLoad;
-                })
+                .Where(p => NeedProxy(p, enableLazy))
                 .ToDictionary(p => p.Name, p => false);
         }
 
