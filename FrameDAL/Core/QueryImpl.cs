@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -169,22 +170,37 @@ namespace FrameDAL.Core
             return ExecuteGetList<T>(AppContext.Instance.Configuration.EnableLazy);
         }
 
-        private string GetAlias(PropertyInfo prop, PropertyInfo subProp)
+        private string GetAlias(PropertyInfo prefixProp, PropertyInfo prop)
         {
             try
             {
-                return ResultMap[subProp == null ? prop.Name : prop.Name + "." + subProp.Name];
+                return ResultMap[prefixProp == null ? prop.Name : prefixProp.Name + "." + prop.Name];
             }
             catch (KeyNotFoundException)
             {
-                return AppContext.Instance.GetColumnAttribute(subProp == null ? prop : subProp).Name;
+                return AppContext.Instance.GetColumnAttribute(prop).Name;
             }
         }
 
-        private T GetElementById<T>(List<T> list, object id) where T : class
+        private object GetElementById(IList list, Type elementType, object id)
         {
-            T[] result = list.Where(e => AppContext.Instance.GetIdProperty(typeof(T)).GetValue(e, null).Equals(id)).ToArray();
-            return result.Length > 0 ? result[0] : null;
+            PropertyInfo idProp = AppContext.Instance.GetIdProperty(elementType);
+            foreach (object o in list)
+            {
+                if (idProp.GetValue(o, null).Equals(id))
+                    return o;
+            }
+            return null;
+        }
+
+        private void FillEntityWithRow(object entity, DataRow row, Type entityType, PropertyInfo prefixProp, bool enableLazy)
+        {
+            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entityType))
+            {
+                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                if (col == null || col.LazyLoad && enableLazy) continue;
+                AppContext.Instance.SetPropertyValue(entity, prop, row[GetAlias(prefixProp, prop)]);
+            }
         }
 
         public List<T> ExecuteGetList<T>(bool enableLazy) where T : class, new()
@@ -194,22 +210,48 @@ namespace FrameDAL.Core
             CheckRepeatColumnName(dt);
             foreach (DataRow row in dt.Rows)
             { 
-                T entity = GetElementById<T>(results, row[GetAlias(AppContext.Instance.GetIdProperty(typeof(T)), null)]);
+                T entity = GetElementById(results, typeof(T), row[GetAlias(null, AppContext.Instance.GetIdProperty(typeof(T)))]) as T;
                 if (entity == null)
                 {
                     entity = EntityProxy<T>.Get(enableLazy);
-                    foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
-                    {
-                        ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                        if (col == null || col.LazyLoad && enableLazy) continue;
-                        AppContext.Instance.SetPropertyValue(entity, prop, row[GetAlias(prop, null)]);
-                    }
+                    FillEntityWithRow(entity, row, typeof(T), null, enableLazy);
                     results.Add(entity);
                 }
 
                 foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
-                { 
-                    
+                {
+                    ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+                    OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
+                    ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+
+                    if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
+                    {
+                        if (prop.GetValue(entity, null) == null)
+                        {
+                            object propValue = Activator.CreateInstance(prop.PropertyType);
+                            FillEntityWithRow(propValue, row, prop.PropertyType, prop, true);
+                            AppContext.Instance.SetPropertyValue(entity, prop, propValue);
+                        }
+                    }
+                    else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy)
+                        || manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
+                    {
+                        IList propValue = prop.GetValue(entity, null) as IList;
+                        if (propValue == null)
+                        {
+                            propValue = Activator.CreateInstance(prop.PropertyType) as IList;
+                            AppContext.Instance.SetPropertyValue(entity, prop, propValue);
+                        }
+                        Type elementType = prop.PropertyType.GetGenericArguments()[0];
+                        object id = row[GetAlias(prop, AppContext.Instance.GetIdProperty(elementType))];
+                        object elem = GetElementById(propValue, elementType, id);
+                        if (elem == null)
+                        {
+                            // create an element object here...
+                            FillEntityWithRow(elem, row, elementType, prop, true);
+                            propValue.Add(elem);
+                        }
+                    }
                 }
             }
             return results;
