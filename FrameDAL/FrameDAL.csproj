@@ -61,7 +61,7 @@
     <Compile Include="Config\Configuration.cs" />
     <Compile Include="Config\ConfigUtil.cs" />
     <Compile Include="Core\AppContext.cs" />
-    <Compile Include="Core\EntityProxy.cs" />
+    <Compile Include="Core\EntityFactory.cs" />
     <Compile Include="Core\SessionImpl.cs" />
     <Compile Include="DbHelper\OracleHelper.cs" />
     <Compile Include="Dialect\BaseDialect.cs" />

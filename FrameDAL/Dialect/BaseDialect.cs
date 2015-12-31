@@ -157,8 +157,12 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public virtual string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap)
+        public virtual string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap, string where = null)
         {
+            if (string.IsNullOrWhiteSpace(where))
+            {
+                where = AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name + "=?";
+            }
             resultMap = new Dictionary<string, string>();
             StringBuilder resultSql = new StringBuilder();
             resultSql.Append("select ");
@@ -166,8 +170,7 @@ namespace FrameDAL.Dialect
             resultSql.Append(" from ");
             resultSql.Append(AppContext.Instance.GetTableAttribute(type).Name);
             resultSql.Append(" where ");
-            resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
-            resultSql.Append("=?");
+            resultSql.Append(where);
 
             foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
             {
@@ -203,7 +206,7 @@ namespace FrameDAL.Dialect
             return resultSql.ToString();
         }
 
-        public virtual string GetLoadPropertySql(PropertyInfo prop)
+        public virtual string GetLoadColumnPropertySql(PropertyInfo prop)
         {
             StringBuilder sb = new StringBuilder();
             ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
@@ -219,6 +222,43 @@ namespace FrameDAL.Dialect
             sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.DeclaringType)).Name);
             sb.Append("=?");
             return sb.ToString();
+        }
+
+        public virtual string GetLoadManyToOnePropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+            sb.Append("=(select ");
+            sb.Append(AppContext.Instance.GetManyToOneAttribute(prop).ForeignKey);
+            sb.Append(" from ");
+            sb.Append(AppContext.Instance.GetTableAttribute(prop.DeclaringType).Name);
+            sb.Append(" where ");
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.DeclaringType)).Name);
+            sb.Append("=?)");
+            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+        }
+
+        public virtual string GetLoadOneToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(AppContext.Instance.GetOneToManyAttribute(prop).InverseForeignKey);
+            sb.Append("=?");
+            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+        }
+
+        public virtual string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        {
+            ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+            StringBuilder sb = new StringBuilder();
+            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+            sb.Append("=(select ");
+            sb.Append(manyToMany.InverseJoinColumn);
+            sb.Append(" from ");
+            sb.Append(manyToMany.JoinTable);
+            sb.Append(" where ");
+            sb.Append(manyToMany.JoinColumn);
+            sb.Append("=?)");
+            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
         }
     }
 }

@@ -55,7 +55,7 @@ namespace FrameDAL.Dialect
         /// <returns>select sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap);
+        string GetSelectSql(Type type, bool enableLazy, out Dictionary<string, string> resultMap, string where = null);
 
         /// <summary>
         /// 执行查询之前，对SQL命令进行预处理
@@ -66,6 +66,12 @@ namespace FrameDAL.Dialect
         /// <returns>返回预处理后的SQL命令</returns>
         string GetPagingSql(string sqlText, int firstResult, int pageSize);
 
-        string GetLoadPropertySql(PropertyInfo prop);
+        string GetLoadColumnPropertySql(PropertyInfo prop);
+
+        string GetLoadManyToOnePropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
+
+        string GetLoadOneToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
+
+        string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
     }
 }
