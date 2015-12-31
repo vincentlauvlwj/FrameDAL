@@ -53,7 +53,8 @@ namespace FrameDAL.Core
             return false;
         }
 
-
+        private static MethodInfo executeGetList = typeof(IQuery).GetMethod("ExecuteGetList");
+        private static MethodInfo executeGetEntity = typeof(IQuery).GetMethod("ExecuteGetEntity");
 
         private Dictionary<string, bool> initialized;
 
@@ -66,41 +67,51 @@ namespace FrameDAL.Core
         {
             string propName = invocation.Method.Name.Substring(4);
 
-            if (!invocation.Method.Name.StartsWith("get_") || !initialized.ContainsKey(propName) || initialized[propName])
-            {
-                invocation.Proceed();
-                if (invocation.Method.Name.StartsWith("set_") && initialized.ContainsKey(propName)) initialized[propName] = true;
-            }
-            else
+            if (invocation.Method.Name.StartsWith("get_") && initialized.ContainsKey(propName) && !initialized[propName])
             {
                 PropertyInfo prop = AppContext.Instance.GetProperties(invocation.TargetType).Where(p => p.Name == propName).First();
                 object id = AppContext.Instance.GetIdProperty(invocation.TargetType).GetValue(invocation.InvocationTarget, null);
-                ColumnAttribute column = AppContext.Instance.GetColumnAttribute(prop);
-                ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
-                OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
-                ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
                 ISession session = AppContext.Instance.OpenSession();
-                object result;
-                if (column != null)
+                object result = null;
+
+                if (AppContext.Instance.GetColumnAttribute(prop) != null)
                 {
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadColumnPropertySql(prop);
                     result = session.CreateQuery(sql, id).ExecuteScalar();
                 }
-                else if (manyToOne != null)
-                { 
-                    
+                else if (AppContext.Instance.GetManyToOneAttribute(prop) != null)
+                {
+                    Dictionary<string, string> resultMap;
+                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToOnePropertySql(prop, out resultMap);
+                    IQuery query = session.CreateQuery(sql, id);
+                    query.ResultMap = resultMap;
+                    result = executeGetEntity.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
                 }
-                else if (oneToMany != null)
-                { 
-                    
+                else if (AppContext.Instance.GetOneToManyAttribute(prop) != null)
+                {
+                    Dictionary<string, string> resultMap;
+                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadOneToManyPropertySql(prop, out resultMap);
+                    IQuery query = session.CreateQuery(sql, id);
+                    query.ResultMap = resultMap;
+                    result = executeGetList.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
                 }
-                else if (manyToMany != null)
-                { 
-                    
+                else if (AppContext.Instance.GetManyToManyAttribute(prop) != null)
+                {
+                    Dictionary<string, string> resultMap;
+                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToManyPropertySql(prop, out resultMap);
+                    IQuery query = session.CreateQuery(sql, id);
+                    query.ResultMap = resultMap;
+                    result = executeGetList.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
                 }
+
                 AppContext.Instance.SetPropertyValue(invocation.InvocationTarget, prop, result);
                 invocation.ReturnValue = prop.GetValue(invocation.InvocationTarget, null);
                 session.Close();
+            }
+            else
+            {
+                invocation.Proceed();
+                if (invocation.Method.Name.StartsWith("set_") && initialized.ContainsKey(propName)) initialized[propName] = true;
             }
         }
     }

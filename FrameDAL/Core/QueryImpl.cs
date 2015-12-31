@@ -213,7 +213,7 @@ namespace FrameDAL.Core
                 T entity = GetElementById(results, typeof(T), row[GetAlias(null, AppContext.Instance.GetIdProperty(typeof(T)))]) as T;
                 if (entity == null)
                 {
-                    entity = EntityProxy<T>.Get(enableLazy);
+                    entity = EntityFactory.GetEntity(typeof(T), enableLazy, false) as T;
                     FillEntityWithRow(entity, row, typeof(T), null, enableLazy);
                     results.Add(entity);
                 }
@@ -228,7 +228,7 @@ namespace FrameDAL.Core
                     {
                         if (prop.GetValue(entity, null) == null)
                         {
-                            object propValue = Activator.CreateInstance(prop.PropertyType);
+                            object propValue = EntityFactory.GetEntity(prop.PropertyType, enableLazy, true);
                             FillEntityWithRow(propValue, row, prop.PropertyType, prop, true);
                             AppContext.Instance.SetPropertyValue(entity, prop, propValue);
                         }
@@ -247,7 +247,7 @@ namespace FrameDAL.Core
                         object elem = GetElementById(propValue, elementType, id);
                         if (elem == null)
                         {
-                            // create an element object here...
+                            elem = EntityFactory.GetEntity(elementType, enableLazy, true);
                             FillEntityWithRow(elem, row, elementType, prop, true);
                             propValue.Add(elem);
                         }
