@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using ResumeFactory.Forms;
+using ResumeFactory.Entity;
+using FrameDAL.Core;
 
 namespace ResumeFactory
 {
@@ -20,7 +23,13 @@ namespace ResumeFactory
                 = FrameDAL.Config.Configuration.DefaultPath
                 = Application.StartupPath + @"\ResumeFactory.ini";
 
-            FormLogin formLogin = new FormLogin();
+            using (ISession session = AppContext.Instance.OpenSession())
+            {
+                User user = session.Get<User>("fcff2ce4-543e-431c-96f1-8fbc43ccee09");
+                MessageBox.Show(user.Resumes[0].ResumeName);
+            }
+
+            /*FormLogin formLogin = new FormLogin();
             Sunisoft.IrisSkin.SkinEngine skin = new Sunisoft.IrisSkin.SkinEngine(formLogin);
             skin.SkinFile = ResumeFactory.Common.Config.SkinFile;
             skin.TitleFont = new System.Drawing.Font("微软雅黑", 10F); 
@@ -28,7 +37,7 @@ namespace ResumeFactory
             if (formLogin.ShowDialog() == DialogResult.OK)
             {
                 Application.Run(new FormMain(formLogin.LoginUser));
-            }
+            }*/
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FrameDAL.Attributes;
 
 namespace ResumeFactory.Entity
@@ -15,5 +16,8 @@ namespace ResumeFactory.Entity
 
         [Column("user_pwd")]
         public string UserPwd { get; set; }
+
+        [OneToMany("user_id", LazyLoad = false)]
+        public virtual List<Resume> Resumes { get; set; }
     }
 }

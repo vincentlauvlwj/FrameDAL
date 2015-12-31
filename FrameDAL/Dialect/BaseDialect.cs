@@ -128,24 +128,25 @@ namespace FrameDAL.Dialect
                 if (col != null && (!col.LazyLoad || !enableLazy))
                 {
                     sb.Append(string.IsNullOrWhiteSpace(col.SQL) ? col.Name + " as " : "(" + col.SQL + ") as ");
+                    sb.Append(resultMap[keyPrefix + prop.Name] = aliasPrefix + prop.Name).Append(", ");
+                    count++;
                 }
                 else if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
                 {
                     sb.Append(manyToOne.ForeignKey + " as ");
+                    sb.Append(resultMap[keyPrefix + prop.Name] = aliasPrefix + prop.Name).Append(", ");
+                    count++;
                 }
-
-                sb.Append(resultMap[keyPrefix + prop.Name] = aliasPrefix + prop.Name).Append(", ");
-                count++;
             }
             if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column或ManyToOne特性并且LazyLoad为false的字段。");
             sb.Remove(sb.Length - 2, 2);
         }
 
-        private string GetSelectFromPart(PropertyInfo prop, Dictionary<string,string> resultMap)
+        private string GetSelectFromPart(PropertyInfo prop, Dictionary<string,string> resultMap, bool flag)
         {
             StringBuilder tmp = new StringBuilder();
             tmp.Append("select a.*, ");
-            AppendSelectedColumns(tmp, prop.PropertyType, true, resultMap, prop.Name);
+            AppendSelectedColumns(tmp, flag ? prop.PropertyType : prop.PropertyType.GetGenericArguments()[0], true, resultMap, prop.Name);
             tmp.Append(" from (");
             return tmp.ToString();
         }
@@ -180,26 +181,27 @@ namespace FrameDAL.Dialect
 
                 if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
                 {
-                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap, true)).Append(") a left join ");
                     resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
                     resultSql.Append(" b on a." + resultMap[prop.Name] + "=b.");
                     resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
                 }
                 else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy))
                 {
-                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
-                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap, false)).Append(") a left join ");
+                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType.GetGenericArguments()[0]).Name);
                     resultSql.Append(" b on a." + resultMap[AppContext.Instance.GetIdProperty(type).Name] + "=b." + oneToMany.InverseForeignKey);
                 }
                 else if (manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
                 {
-                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap)).Append(") a left join ");
+                    resultSql.Insert(0, GetSelectFromPart(prop, resultMap, false)).Append(") a left join ");
                     resultSql.Append(manyToMany.JoinTable);
                     resultSql.Append(" j on a." + resultMap[AppContext.Instance.GetIdProperty(type).Name]);
                     resultSql.Append("=j." + manyToMany.JoinColumn + " left join ");
-                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType.GetGenericArguments()[0]).Name);
                     resultSql.Append(" b on j." + manyToMany.InverseJoinColumn + "=b.");
-                    resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+                    resultSql.Append(AppContext.Instance.GetColumnAttribute(
+                        AppContext.Instance.GetIdProperty(prop.PropertyType.GetGenericArguments()[0])).Name);
                 }
             }
 
@@ -243,7 +245,7 @@ namespace FrameDAL.Dialect
             StringBuilder sb = new StringBuilder();
             sb.Append(AppContext.Instance.GetOneToManyAttribute(prop).InverseForeignKey);
             sb.Append("=?");
-            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
         }
 
         public virtual string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
@@ -258,7 +260,7 @@ namespace FrameDAL.Dialect
             sb.Append(" where ");
             sb.Append(manyToMany.JoinColumn);
             sb.Append("=?)");
-            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
         }
     }
 }

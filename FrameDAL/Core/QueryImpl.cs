@@ -170,15 +170,18 @@ namespace FrameDAL.Core
             return ExecuteGetList<T>(AppContext.Instance.Configuration.EnableLazy);
         }
 
-        private string GetAlias(PropertyInfo prefixProp, PropertyInfo prop)
+        private object GetColumnValue(DataRow row, PropertyInfo prefixProp, PropertyInfo prop)
         {
+            string key = prefixProp == null ? prop.Name : prefixProp.Name + "." + prop.Name;
+            string alias = ResultMap != null && ResultMap.ContainsKey(key) 
+                ? ResultMap[key] : AppContext.Instance.GetColumnAttribute(prop).Name;
             try
             {
-                return ResultMap[prefixProp == null ? prop.Name : prefixProp.Name + "." + prop.Name];
+                return row[alias];
             }
-            catch (KeyNotFoundException)
+            catch (Exception e)
             {
-                return AppContext.Instance.GetColumnAttribute(prop).Name;
+                throw new FrameDALException("获取" + key + "属性的值发生异常，错误信息：" + e.Message, e);
             }
         }
 
@@ -199,7 +202,7 @@ namespace FrameDAL.Core
             {
                 ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
                 if (col == null || col.LazyLoad && enableLazy) continue;
-                AppContext.Instance.SetPropertyValue(entity, prop, row[GetAlias(prefixProp, prop)]);
+                AppContext.Instance.SetPropertyValue(entity, prop, GetColumnValue(row, prefixProp, prop));
             }
         }
 
@@ -209,8 +212,8 @@ namespace FrameDAL.Core
             DataTable dt = ExecuteGetDataTable();
             CheckRepeatColumnName(dt);
             foreach (DataRow row in dt.Rows)
-            { 
-                T entity = GetElementById(results, typeof(T), row[GetAlias(null, AppContext.Instance.GetIdProperty(typeof(T)))]) as T;
+            {
+                T entity = GetElementById(results, typeof(T), GetColumnValue(row, null, AppContext.Instance.GetIdProperty(typeof(T)))) as T;
                 if (entity == null)
                 {
                     entity = EntityFactory.GetEntity(typeof(T), enableLazy, false) as T;
@@ -224,14 +227,11 @@ namespace FrameDAL.Core
                     OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
                     ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
 
-                    if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
+                    if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy) && prop.GetValue(entity, null) == null)
                     {
-                        if (prop.GetValue(entity, null) == null)
-                        {
-                            object propValue = EntityFactory.GetEntity(prop.PropertyType, enableLazy, true);
-                            FillEntityWithRow(propValue, row, prop.PropertyType, prop, true);
-                            AppContext.Instance.SetPropertyValue(entity, prop, propValue);
-                        }
+                        object propValue = EntityFactory.GetEntity(prop.PropertyType, enableLazy, true);
+                        FillEntityWithRow(propValue, row, prop.PropertyType, prop, true);
+                        AppContext.Instance.SetPropertyValue(entity, prop, propValue);
                     }
                     else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy)
                         || manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
@@ -243,7 +243,7 @@ namespace FrameDAL.Core
                             AppContext.Instance.SetPropertyValue(entity, prop, propValue);
                         }
                         Type elementType = prop.PropertyType.GetGenericArguments()[0];
-                        object id = row[GetAlias(prop, AppContext.Instance.GetIdProperty(elementType))];
+                        object id = GetColumnValue(row, prop, AppContext.Instance.GetIdProperty(elementType));
                         object elem = GetElementById(propValue, elementType, id);
                         if (elem == null)
                         {

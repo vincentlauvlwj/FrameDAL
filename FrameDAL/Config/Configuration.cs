@@ -34,6 +34,10 @@ namespace FrameDAL.Config
 
         public bool EnableLazy { get; private set; }
 
+        public string LogFile { get; private set; }
+
+        public bool LogAppend { get; private set; }
+
         /// <summary>
         /// 数据库访问助手所在的程序集的文件名（dll或exe）
         /// </summary>
@@ -77,6 +81,13 @@ namespace FrameDAL.Config
             if (string.IsNullOrWhiteSpace(enable)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
             if (enable != "true" && enable != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
             EnableLazy = enable == "true";
+
+            LogFile = ConfigUtil.GetStringValue(path, "Settings", "LogFile", "");
+
+            string append = ConfigUtil.GetStringValue(path, "Settings", "LogAppend", "");
+            if (string.IsNullOrWhiteSpace(append)) throw new ConfigurationException("配置文件没有配置LogAppend属性。");
+            if (append != "true" && append != "false") throw new ConfigurationException("LogAppend属性的值只能为true或false。");
+            LogAppend = append == "true";
 
             DbHelperAssembly = ConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");
             if (string.IsNullOrWhiteSpace(DbHelperAssembly)) throw new ConfigurationException("配置文件没有配置DbHelperAssembly属性。");

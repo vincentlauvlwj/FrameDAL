@@ -53,8 +53,8 @@ namespace FrameDAL.Core
             return false;
         }
 
-        private static MethodInfo executeGetList = typeof(IQuery).GetMethod("ExecuteGetList");
-        private static MethodInfo executeGetEntity = typeof(IQuery).GetMethod("ExecuteGetEntity");
+        private static MethodInfo executeGetList = typeof(IQuery).GetMethod("ExecuteGetList", new Type[0]);
+        private static MethodInfo executeGetEntity = typeof(IQuery).GetMethod("ExecuteGetEntity", new Type[0]);
 
         private Dictionary<string, bool> initialized;
 
@@ -93,7 +93,7 @@ namespace FrameDAL.Core
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadOneToManyPropertySql(prop, out resultMap);
                     IQuery query = session.CreateQuery(sql, id);
                     query.ResultMap = resultMap;
-                    result = executeGetList.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
+                    result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
                 }
                 else if (AppContext.Instance.GetManyToManyAttribute(prop) != null)
                 {
@@ -101,7 +101,7 @@ namespace FrameDAL.Core
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToManyPropertySql(prop, out resultMap);
                     IQuery query = session.CreateQuery(sql, id);
                     query.ResultMap = resultMap;
-                    result = executeGetList.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
+                    result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
                 }
 
                 AppContext.Instance.SetPropertyValue(invocation.InvocationTarget, prop, result);

@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.Threading;
 using FrameDAL.Exceptions;
 using FrameDAL.Dialect;
+using FrameDAL.Core;
 
 namespace FrameDAL.DbHelper
 {
@@ -187,6 +188,7 @@ namespace FrameDAL.DbHelper
         {
             try
             {
+                AppContext.Instance.LogUtil.WriteLine(sqlText);
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;
@@ -216,6 +218,7 @@ namespace FrameDAL.DbHelper
         {
             try
             {
+                AppContext.Instance.LogUtil.WriteLine(sqlText);
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;
@@ -245,6 +248,7 @@ namespace FrameDAL.DbHelper
         {
             try
             {
+                AppContext.Instance.LogUtil.WriteLine(sqlText);
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;

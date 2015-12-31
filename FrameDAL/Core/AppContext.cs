@@ -8,6 +8,7 @@ using FrameDAL.DbHelper;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
 using FrameDAL.Dialect;
+using FrameDAL.Utility;
 
 namespace FrameDAL.Core
 {
@@ -59,6 +60,7 @@ namespace FrameDAL.Core
         /// </summary>
         public IDbHelper DbHelper { get; private set; }
         public Configuration Configuration { get; private set; }
+        public LogUtil LogUtil { get; private set; }
 
         // 缓存了各种信息的Dictionary
         private Dictionary<Type, TableAttribute> tables = new Dictionary<Type,TableAttribute>();
@@ -84,6 +86,7 @@ namespace FrameDAL.Core
                 if (DbHelper == null)
                     throw new TypeLoadException("程序集" + config.DbHelperAssembly + "中未找到" + config.DbHelperClass + "类。");
                 DbHelper.ConnectionString = config.ConnStr;
+                LogUtil = new LogUtil(config.LogFile, config.LogAppend);
             }
             catch (Exception e)
             {
