@@ -5,6 +5,7 @@ using System.Text;
 using System.Reflection;
 using FrameDAL.Attributes;
 using FrameDAL.Dialect;
+using FrameDAL.Utility;
 using Castle.DynamicProxy;
 
 namespace FrameDAL.Core
@@ -15,7 +16,7 @@ namespace FrameDAL.Core
 
         public static object GetEntity(Type entityType, bool enableLazy, bool enforceLazy)
         {
-            Dictionary<string, bool> initialized = AppContext.Instance.GetProperties(entityType)
+            Dictionary<string, bool> initialized = entityType.GetCachedProperties()
                 .Where(p => NeedProxy(p, enableLazy, enforceLazy))
                 .ToDictionary(p => p.Name, p => false);
             if (initialized.Count == 0)
@@ -30,22 +31,22 @@ namespace FrameDAL.Core
 
         private static bool NeedProxy(PropertyInfo prop, bool enableLazy, bool enforceLazy)
         {
-            ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+            ColumnAttribute col = prop.GetColumnAttribute();
             if (col != null && col.LazyLoad && enableLazy)
             {
                 return true;
             }
-            ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+            ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
             if (manyToOne != null && (manyToOne.LazyLoad && enableLazy || enforceLazy))
             {
                 return true;
             }
-            OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
+            OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
             if (oneToMany != null && (oneToMany.LazyLoad && enableLazy || enforceLazy))
             {
                 return true;
             }
-            ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+            ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
             if (manyToMany != null && (manyToMany.LazyLoad && enableLazy || enforceLazy))
             {
                 return true;
@@ -69,17 +70,17 @@ namespace FrameDAL.Core
 
             if (invocation.Method.Name.StartsWith("get_") && initialized.ContainsKey(propName) && !initialized[propName])
             {
-                PropertyInfo prop = AppContext.Instance.GetProperties(invocation.TargetType).Where(p => p.Name == propName).First();
-                object id = AppContext.Instance.GetIdProperty(invocation.TargetType).GetValue(invocation.InvocationTarget, null);
+                PropertyInfo prop = invocation.TargetType.GetCachedProperties().Where(p => p.Name == propName).First();
+                object id = invocation.TargetType.GetIdProperty().GetValue(invocation.InvocationTarget, null);
                 ISession session = AppContext.Instance.OpenSession();
                 object result = null;
 
-                if (AppContext.Instance.GetColumnAttribute(prop) != null)
+                if (prop.GetColumnAttribute() != null)
                 {
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadColumnPropertySql(prop);
                     result = session.CreateQuery(sql, id).ExecuteScalar();
                 }
-                else if (AppContext.Instance.GetManyToOneAttribute(prop) != null)
+                else if (prop.GetManyToOneAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToOnePropertySql(prop, out resultMap);
@@ -87,7 +88,7 @@ namespace FrameDAL.Core
                     query.ResultMap = resultMap;
                     result = executeGetEntity.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
                 }
-                else if (AppContext.Instance.GetOneToManyAttribute(prop) != null)
+                else if (prop.GetOneToManyAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadOneToManyPropertySql(prop, out resultMap);
@@ -95,7 +96,7 @@ namespace FrameDAL.Core
                     query.ResultMap = resultMap;
                     result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
                 }
-                else if (AppContext.Instance.GetManyToManyAttribute(prop) != null)
+                else if (prop.GetManyToManyAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
                     string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToManyPropertySql(prop, out resultMap);
@@ -104,7 +105,7 @@ namespace FrameDAL.Core
                     result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
                 }
 
-                AppContext.Instance.SetPropertyValue(invocation.InvocationTarget, prop, result);
+                prop.SetValueSafely(invocation.InvocationTarget, result);
                 invocation.ReturnValue = prop.GetValue(invocation.InvocationTarget, null);
                 session.Close();
             }

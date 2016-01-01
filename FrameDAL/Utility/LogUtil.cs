@@ -29,7 +29,7 @@ namespace FrameDAL.Utility
             if (string.IsNullOrWhiteSpace(logFile)) return;
             using (StreamWriter writer = new StreamWriter(logFile, true))
             {
-                writer.WriteLine(DateTime.Now.ToString("[yyyy-MM-dd hh:mm:ss]") + " Thread ID: " + Thread.CurrentThread.ManagedThreadId);
+                writer.WriteLine(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + " Thread ID: " + Thread.CurrentThread.ManagedThreadId);
                 writer.WriteLine(line);
             }
         }

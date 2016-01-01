@@ -10,8 +10,8 @@ namespace ResumeFactory.Entity
         [Column("id")]
         public string Id { get; set; }
 
-        [Column("user_id")]
-        public string UserId { get; set; }
+        [ManyToOne("user_id", LazyLoad = true)]
+        public virtual User User { get; set; }
 
         [Column("template_id")]
         public string TemplateId { get; set; }

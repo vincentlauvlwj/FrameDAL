@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
+using FrameDAL.Utility;
 
 namespace ResumeFactory.Service
 {
@@ -47,7 +48,7 @@ namespace ResumeFactory.Service
         /// <param name="entity">实体对象</param>
         public virtual void AddOrUpdate(T entity)
         {
-            if (context.GetIdProperty(typeof(T)).GetValue(entity, null) == null)
+            if (typeof(T).GetIdProperty().GetValue(entity, null) == null)
             {
                 Add(entity);
             }
@@ -102,7 +103,7 @@ namespace ResumeFactory.Service
         {
             using (ISession session = context.OpenSession())
             {
-                string tableName = context.GetTableAttribute(typeof(T)).Name;
+                string tableName = typeof(T).GetTableAttribute().Name;
                 return session.CreateQuery("select * from " + tableName).ExecuteGetList<T>();
             }
         }
@@ -118,7 +119,7 @@ namespace ResumeFactory.Service
             int firstResult = (pageNum - 1) * pageSize;
             using (ISession session = context.OpenSession())
             {
-                string tableName = context.GetTableAttribute(typeof(T)).Name;
+                string tableName = typeof(T).GetTableAttribute().Name;
                 IQuery query = session.CreateQuery("select * from " + tableName);
                 query.FirstResult = firstResult;
                 query.PageSize = pageSize;
@@ -135,7 +136,7 @@ namespace ResumeFactory.Service
         {
             using (ISession session = context.OpenSession())
             {
-                string tableName = context.GetTableAttribute(typeof(T)).Name;
+                string tableName = typeof(T).GetTableAttribute().Name;
                 object totalPage = session.CreateQuery("select count(*) from " + tableName).ExecuteScalar();
                 int i = Convert.ToInt32(totalPage);
                 return i / pageSize + (i % pageSize == 0 ? 0 : 1);

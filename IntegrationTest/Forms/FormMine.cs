@@ -63,7 +63,7 @@ namespace ResumeFactory.Forms
         private void btnAdd_Click(object sender, EventArgs e)
         {
             Resume resume = new Resume();
-            resume.UserId = loginUser.Id;
+            resume.User = loginUser;
             new FormResumeSetting(Owner, resume, mineService).ShowDialog();
             RefreshData();
         }

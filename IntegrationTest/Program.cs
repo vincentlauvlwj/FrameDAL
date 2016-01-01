@@ -25,11 +25,14 @@ namespace ResumeFactory
 
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                User user = session.Get<User>("fcff2ce4-543e-431c-96f1-8fbc43ccee09");
-                MessageBox.Show(user.Resumes[0].ResumeName);
+                // User user = session.Get<User>("fcff2ce4-543e-431c-96f1-8fbc43ccee09");
+                // MessageBox.Show(user.Resumes[0].ResumeName);
+
+                Resume resume = session.Get<Resume>("2d8eb7b1-3d2b-428a-8826-0815175d557c");
+                MessageBox.Show(resume.User.UserName);
             }
 
-            FormLogin formLogin = new FormLogin();
+            /*FormLogin formLogin = new FormLogin();
             Sunisoft.IrisSkin.SkinEngine skin = new Sunisoft.IrisSkin.SkinEngine(formLogin);
             skin.SkinFile = ResumeFactory.Common.Config.SkinFile;
             skin.TitleFont = new System.Drawing.Font("微软雅黑", 10F); 
@@ -37,7 +40,7 @@ namespace ResumeFactory
             if (formLogin.ShowDialog() == DialogResult.OK)
             {
                 Application.Run(new FormMain(formLogin.LoginUser));
-            }
+            }*/
         }
     }
 }

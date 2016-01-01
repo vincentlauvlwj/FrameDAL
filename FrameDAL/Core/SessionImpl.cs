@@ -7,6 +7,7 @@ using System.Threading;
 using FrameDAL.DbHelper;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
+using FrameDAL.Utility;
 
 namespace FrameDAL.Core
 {
@@ -123,17 +124,17 @@ namespace FrameDAL.Core
         public object Add(object entity)
         {
             CheckSessionStatus();
-            PropertyInfo idProp = AppContext.Instance.GetIdProperty(entity.GetType());
-            IdAttribute id = AppContext.Instance.GetIdAttribute(idProp);
+            PropertyInfo idProp = entity.GetType().GetIdProperty();
+            IdAttribute id = idProp.GetIdAttribute();
             switch (id.GeneratorType)
             {
                 case GeneratorType.Uuid:
-                    AppContext.Instance.SetPropertyValue(entity, idProp, Guid.NewGuid().ToString());
+                    idProp.SetValueSafely(entity, Guid.NewGuid().ToString());
                     break;
 
                 case GeneratorType.Sequence:
                     object nextval = CreateQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
-                    AppContext.Instance.SetPropertyValue(entity, idProp, nextval);
+                    idProp.SetValueSafely(entity, nextval);
                     break;
 
                 default:
@@ -141,9 +142,9 @@ namespace FrameDAL.Core
             }
 
             List<object> parameters = new List<object>();
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
                 if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
@@ -152,7 +153,7 @@ namespace FrameDAL.Core
             if (id.GeneratorType == GeneratorType.Identity)
             {
                 object pk = CreateQuery(db.Dialect.GetGeneratedKeySql(id.SeqName)).ExecuteScalar();
-                AppContext.Instance.SetPropertyValue(entity, idProp, pk);
+                idProp.SetValueSafely(entity, pk);
             }
             return idProp.GetValue(entity, null);
         }
@@ -165,7 +166,7 @@ namespace FrameDAL.Core
         public void Delete(object entity)
         {
             CheckSessionStatus();
-            object id = AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null);
+            object id = entity.GetType().GetIdProperty().GetValue(entity, null);
             CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), id).ExecuteNonQuery();
         }
 
@@ -190,13 +191,13 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             List<object> parameters = new List<object>();
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entity.GetType()))
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
                 if (col == null || col.ReadOnly) continue;
                 parameters.Add(prop.GetValue(entity, null));
             }
-            parameters.Add(AppContext.Instance.GetIdProperty(entity.GetType()).GetValue(entity, null));
+            parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
             CreateQuery(db.Dialect.GetUpdateSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
         }
 

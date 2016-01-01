@@ -105,7 +105,8 @@ namespace ResumeFactory.Entity
                 {
                     using (MemoryStream stream = new MemoryStream())
                     {
-                        value.Save(stream, ImageFormat.Jpeg);
+                        Bitmap bitMap = new Bitmap(value);
+                        bitMap.Save(stream, ImageFormat.Jpeg);
                         PersonAvatarBytes = stream.GetBuffer();
                     }
                 }

@@ -8,6 +8,7 @@ using System.Reflection;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
+using FrameDAL.Utility;
 
 namespace FrameDAL.Core
 {
@@ -173,8 +174,7 @@ namespace FrameDAL.Core
         private object GetColumnValue(DataRow row, PropertyInfo prefixProp, PropertyInfo prop)
         {
             string key = prefixProp == null ? prop.Name : prefixProp.Name + "." + prop.Name;
-            string alias = ResultMap != null && ResultMap.ContainsKey(key) 
-                ? ResultMap[key] : AppContext.Instance.GetColumnAttribute(prop).Name;
+            string alias = ResultMap != null && ResultMap.ContainsKey(key) ? ResultMap[key] : prop.GetColumnAttribute().Name;
             try
             {
                 return row[alias];
@@ -187,7 +187,7 @@ namespace FrameDAL.Core
 
         private object GetElementById(IList list, Type elementType, object id)
         {
-            PropertyInfo idProp = AppContext.Instance.GetIdProperty(elementType);
+            PropertyInfo idProp = elementType.GetIdProperty();
             foreach (object o in list)
             {
                 if (idProp.GetValue(o, null).Equals(id))
@@ -198,11 +198,11 @@ namespace FrameDAL.Core
 
         private void FillEntityWithRow(object entity, DataRow row, Type entityType, PropertyInfo prefixProp, bool enableLazy)
         {
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(entityType))
+            foreach (PropertyInfo prop in entityType.GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
                 if (col == null || col.LazyLoad && enableLazy) continue;
-                AppContext.Instance.SetPropertyValue(entity, prop, GetColumnValue(row, prefixProp, prop));
+                prop.SetValueSafely(entity, GetColumnValue(row, prefixProp, prop));
             }
         }
 
@@ -213,7 +213,7 @@ namespace FrameDAL.Core
             CheckRepeatColumnName(dt);
             foreach (DataRow row in dt.Rows)
             {
-                T entity = GetElementById(results, typeof(T), GetColumnValue(row, null, AppContext.Instance.GetIdProperty(typeof(T)))) as T;
+                T entity = GetElementById(results, typeof(T), GetColumnValue(row, null, typeof(T).GetIdProperty())) as T;
                 if (entity == null)
                 {
                     entity = EntityFactory.GetEntity(typeof(T), enableLazy, false) as T;
@@ -221,17 +221,17 @@ namespace FrameDAL.Core
                     results.Add(entity);
                 }
 
-                foreach (PropertyInfo prop in AppContext.Instance.GetProperties(typeof(T)))
+                foreach (PropertyInfo prop in typeof(T).GetCachedProperties())
                 {
-                    ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
-                    OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
-                    ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+                    ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                    OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                    ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
 
                     if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy) && prop.GetValue(entity, null) == null)
                     {
                         object propValue = EntityFactory.GetEntity(prop.PropertyType, enableLazy, true);
                         FillEntityWithRow(propValue, row, prop.PropertyType, prop, true);
-                        AppContext.Instance.SetPropertyValue(entity, prop, propValue);
+                        prop.SetValueSafely(entity, propValue);
                     }
                     else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy)
                         || manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
@@ -240,10 +240,10 @@ namespace FrameDAL.Core
                         if (propValue == null)
                         {
                             propValue = Activator.CreateInstance(prop.PropertyType) as IList;
-                            AppContext.Instance.SetPropertyValue(entity, prop, propValue);
+                            prop.SetValueSafely(entity, propValue);
                         }
                         Type elementType = prop.PropertyType.GetGenericArguments()[0];
-                        object id = GetColumnValue(row, prop, AppContext.Instance.GetIdProperty(elementType));
+                        object id = GetColumnValue(row, prop, elementType.GetIdProperty());
                         object elem = GetElementById(propValue, elementType, id);
                         if (elem == null)
                         {

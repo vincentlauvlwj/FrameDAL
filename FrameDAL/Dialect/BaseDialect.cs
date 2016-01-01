@@ -6,6 +6,7 @@ using System.Reflection;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
+using FrameDAL.Utility;
 
 namespace FrameDAL.Dialect
 {
@@ -45,12 +46,12 @@ namespace FrameDAL.Dialect
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("insert into ");
-            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(type.GetTableAttribute().Name);
             sb.Append(" (");
             int count = 0;
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+            foreach (PropertyInfo prop in type.GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
                 if (col == null || col.ReadOnly) continue;
                 sb.Append(col.Name + ", ");
                 count++;
@@ -78,9 +79,9 @@ namespace FrameDAL.Dialect
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("delete from ");
-            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(type.GetTableAttribute().Name);
             sb.Append(" where ");
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            sb.Append(type.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?");
             return sb.ToString();
         }
@@ -96,12 +97,12 @@ namespace FrameDAL.Dialect
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("update ");
-            sb.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            sb.Append(type.GetTableAttribute().Name);
             sb.Append(" set ");
             int count = 0;
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+            foreach (PropertyInfo prop in type.GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
                 if (col == null || col.ReadOnly) continue;
                 sb.Append(col.Name);
                 sb.Append("=?, ");
@@ -110,7 +111,7 @@ namespace FrameDAL.Dialect
             if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
             sb.Remove(sb.Length - 2, 2);
             sb.Append(" where ");
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name);
+            sb.Append(type.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?");
             return sb.ToString();
         }
@@ -120,10 +121,10 @@ namespace FrameDAL.Dialect
             string keyPrefix = string.IsNullOrWhiteSpace(prefix) ? "" : prefix + ".";
             string aliasPrefix = string.IsNullOrWhiteSpace(prefix) ? "this_" : prefix + "_";
             int count = 0;
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+            foreach (PropertyInfo prop in type.GetCachedProperties())
             {
-                ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
-                ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
+                ColumnAttribute col = prop.GetColumnAttribute();
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
 
                 if (col != null && (!col.LazyLoad || !enableLazy))
                 {
@@ -162,46 +163,45 @@ namespace FrameDAL.Dialect
         {
             if (string.IsNullOrWhiteSpace(where))
             {
-                where = AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(type)).Name + "=?";
+                where = type.GetIdProperty().GetColumnAttribute().Name + "=?";
             }
             resultMap = new Dictionary<string, string>();
             StringBuilder resultSql = new StringBuilder();
             resultSql.Append("select ");
             AppendSelectedColumns(resultSql, type, enableLazy, resultMap, null);
             resultSql.Append(" from ");
-            resultSql.Append(AppContext.Instance.GetTableAttribute(type).Name);
+            resultSql.Append(type.GetTableAttribute().Name);
             resultSql.Append(" where ");
             resultSql.Append(where);
 
-            foreach (PropertyInfo prop in AppContext.Instance.GetProperties(type))
+            foreach (PropertyInfo prop in type.GetCachedProperties())
             {
-                ManyToOneAttribute manyToOne = AppContext.Instance.GetManyToOneAttribute(prop);
-                OneToManyAttribute oneToMany = AppContext.Instance.GetOneToManyAttribute(prop);
-                ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
 
                 if (manyToOne != null && (!manyToOne.LazyLoad || !enableLazy))
                 {
                     resultSql.Insert(0, GetSelectFromPart(prop, resultMap, true)).Append(") a left join ");
-                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType).Name);
+                    resultSql.Append(prop.PropertyType.GetTableAttribute().Name);
                     resultSql.Append(" b on a." + resultMap[prop.Name] + "=b.");
-                    resultSql.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+                    resultSql.Append(prop.PropertyType.GetIdProperty().GetColumnAttribute().Name);
                 }
                 else if (oneToMany != null && (!oneToMany.LazyLoad || !enableLazy))
                 {
                     resultSql.Insert(0, GetSelectFromPart(prop, resultMap, false)).Append(") a left join ");
-                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType.GetGenericArguments()[0]).Name);
-                    resultSql.Append(" b on a." + resultMap[AppContext.Instance.GetIdProperty(type).Name] + "=b." + oneToMany.InverseForeignKey);
+                    resultSql.Append(prop.PropertyType.GetGenericArguments()[0].GetTableAttribute().Name);
+                    resultSql.Append(" b on a." + resultMap[type.GetIdProperty().Name] + "=b." + oneToMany.InverseForeignKey);
                 }
                 else if (manyToMany != null && (!manyToMany.LazyLoad || !enableLazy))
                 {
                     resultSql.Insert(0, GetSelectFromPart(prop, resultMap, false)).Append(") a left join ");
                     resultSql.Append(manyToMany.JoinTable);
-                    resultSql.Append(" j on a." + resultMap[AppContext.Instance.GetIdProperty(type).Name]);
+                    resultSql.Append(" j on a." + resultMap[type.GetIdProperty().Name]);
                     resultSql.Append("=j." + manyToMany.JoinColumn + " left join ");
-                    resultSql.Append(AppContext.Instance.GetTableAttribute(prop.PropertyType.GetGenericArguments()[0]).Name);
+                    resultSql.Append(prop.PropertyType.GetGenericArguments()[0].GetTableAttribute().Name);
                     resultSql.Append(" b on j." + manyToMany.InverseJoinColumn + "=b.");
-                    resultSql.Append(AppContext.Instance.GetColumnAttribute(
-                        AppContext.Instance.GetIdProperty(prop.PropertyType.GetGenericArguments()[0])).Name);
+                    resultSql.Append(prop.PropertyType.GetGenericArguments()[0].GetIdProperty().GetColumnAttribute().Name);
                 }
             }
 
@@ -211,7 +211,7 @@ namespace FrameDAL.Dialect
         public virtual string GetLoadColumnPropertySql(PropertyInfo prop)
         {
             StringBuilder sb = new StringBuilder();
-            ColumnAttribute col = AppContext.Instance.GetColumnAttribute(prop);
+            ColumnAttribute col = prop.GetColumnAttribute();
             sb.Append("select ");
             if (!string.IsNullOrWhiteSpace(col.SQL))
             {
@@ -219,9 +219,9 @@ namespace FrameDAL.Dialect
             }
             sb.Append(col.Name);
             sb.Append(" from ");
-            sb.Append(AppContext.Instance.GetTableAttribute(prop.DeclaringType).Name);
+            sb.Append(prop.DeclaringType.GetTableAttribute().Name);
             sb.Append(" where ");
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.DeclaringType)).Name);
+            sb.Append(prop.DeclaringType.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?");
             return sb.ToString();
         }
@@ -229,13 +229,13 @@ namespace FrameDAL.Dialect
         public virtual string GetLoadManyToOnePropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+            sb.Append(prop.PropertyType.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=(select ");
-            sb.Append(AppContext.Instance.GetManyToOneAttribute(prop).ForeignKey);
+            sb.Append(prop.GetManyToOneAttribute().ForeignKey);
             sb.Append(" from ");
-            sb.Append(AppContext.Instance.GetTableAttribute(prop.DeclaringType).Name);
+            sb.Append(prop.DeclaringType.GetTableAttribute().Name);
             sb.Append(" where ");
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.DeclaringType)).Name);
+            sb.Append(prop.DeclaringType.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?)");
             return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
         }
@@ -243,16 +243,16 @@ namespace FrameDAL.Dialect
         public virtual string GetLoadOneToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append(AppContext.Instance.GetOneToManyAttribute(prop).InverseForeignKey);
+            sb.Append(prop.GetOneToManyAttribute().InverseForeignKey);
             sb.Append("=?");
             return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
         }
 
         public virtual string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
         {
-            ManyToManyAttribute manyToMany = AppContext.Instance.GetManyToManyAttribute(prop);
+            ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
             StringBuilder sb = new StringBuilder();
-            sb.Append(AppContext.Instance.GetColumnAttribute(AppContext.Instance.GetIdProperty(prop.PropertyType)).Name);
+            sb.Append(prop.PropertyType.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=(select ");
             sb.Append(manyToMany.InverseJoinColumn);
             sb.Append(" from ");

@@ -80,6 +80,7 @@
     <Compile Include="Core\QueryImpl.cs" />
     <Compile Include="Core\IQuery.cs" />
     <Compile Include="Utility\LogUtil.cs" />
+    <Compile Include="Utility\ReflectionUtil.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

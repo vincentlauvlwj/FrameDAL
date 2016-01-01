@@ -175,10 +175,10 @@ namespace FrameDAL.Core
             foreach (PropertyInfo prop in properties)
             {
                 int i = 0;
-                if (GetColumnAttribute(prop) != null) i++;
-                if (GetManyToOneAttribute(prop) != null) i++;
-                if (GetOneToManyAttribute(prop) != null) i++;
-                if (GetManyToManyAttribute(prop) != null) i++;
+                if (prop.GetColumnAttribute() != null) i++;
+                if (prop.GetManyToOneAttribute() != null) i++;
+                if (prop.GetOneToManyAttribute() != null) i++;
+                if (prop.GetManyToManyAttribute() != null) i++;
                 if (i > 1)
                 {
                     throw new EntityMappingException(prop.DeclaringType.FullName + "."
@@ -205,7 +205,7 @@ namespace FrameDAL.Core
                 }
                 else
                 {
-                    var result = GetProperties(type).Where(p => GetIdAttribute(p) != null).ToArray();
+                    var result = type.GetCachedProperties().Where(p => p.GetIdAttribute() != null).ToArray();
                     if (result.Length == 0)
                     {
                         throw new EntityMappingException(type.FullName + "类中没有配置Id属性。");
@@ -283,7 +283,7 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Id特性没有正确配置：当使用GeneratorType.Sequence时，必须提供SeqName。");
 
-                    ColumnAttribute col = GetColumnAttribute(prop);
+                    ColumnAttribute col = prop.GetColumnAttribute();
                     if (id != null && col == null)
                         throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
 
@@ -388,41 +388,6 @@ namespace FrameDAL.Core
                     manyToManies.Add(prop, manyToMany);
                     return manyToMany;
                 }
-            }
-        }
-
-        /// <summary>
-        /// 安全设置实体属性的值
-        /// </summary>
-        /// <param name="entity">要设置属性值的实体</param>
-        /// <param name="prop">属性</param>
-        /// <param name="value">值</param>
-        public void SetPropertyValue(object entity, PropertyInfo prop, object value)
-        {
-            try
-            {
-                Type t = prop.PropertyType;
-
-                if (value is DBNull)
-                {
-                    value = t.IsValueType ? Activator.CreateInstance(t) : null;
-                }
-                if (value == null)
-                {
-                    prop.SetValue(entity, null, null);
-                    return;
-                }
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    t = t.GetGenericArguments()[0];
-                }
-
-                prop.SetValue(entity, Convert.ChangeType(value, t), null);
-            }
-            catch (Exception e)
-            {
-                throw new FrameDALException("将值" + (value == null ? "null" : value.ToString()) + "赋给属性" 
-                    + prop.DeclaringType.FullName + "." + prop.Name + "时发生异常。错误信息：" + e.Message, e);
             }
         }
     }
