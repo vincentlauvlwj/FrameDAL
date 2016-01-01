@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace FrameDAL.Config
+namespace FrameDAL.Utility
 {
     /// <summary>
     /// 针对INI文件的API操作方法，其中的节点（Section)、键（KEY）都不区分大小写
@@ -14,7 +14,7 @@ namespace FrameDAL.Config
     /// 例如 GetPrivateProfileSectionNames声明为CharSet.Auto,那么就应该使用 Marshal.PtrToStringAuto来读取相关内容
     /// 如果使用的是CharSet.Ansi，就应该使用Marshal.PtrToStringAnsi来读取内容
     /// </summary>
-    public class ConfigUtil
+    public class IniConfigUtil
     {
         #region API声明
 

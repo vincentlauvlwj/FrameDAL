@@ -32,7 +32,7 @@ namespace ResumeFactory.Forms
             {
                 cmbTemplate.DataSource = mineService.GetTemplates();
                 textResumeName.Text = resume.ResumeName;
-                cmbTemplate.SelectedValue = "" + resume.TemplateId;
+                cmbTemplate.SelectedValue = "" + resume.ResumeTemplate.Id;
                 checkBoxShare.Checked = resume.ResumeShare == 1 ? true : false;
             }
             catch (Exception ex)
@@ -48,7 +48,7 @@ namespace ResumeFactory.Forms
                 if (string.IsNullOrWhiteSpace(textResumeName.Text)) throw new Exception("请填写简历名称！");
                 if (string.IsNullOrWhiteSpace(cmbTemplate.SelectedValue as string)) throw new Exception("请选择模版！");
                 resume.ResumeName = textResumeName.Text;
-                resume.TemplateId = cmbTemplate.SelectedValue as string;
+                resume.ResumeTemplate = (cmbTemplate.DataSource as List<ResumeTemplate>)[cmbTemplate.SelectedIndex];
                 resume.ResumeShare = checkBoxShare.Checked ? 1 : 0;
                 if(resume.Id == null) resume.ResumeCreateTime = DateTime.Now;
                 mineService.AddOrUpdate(resume);

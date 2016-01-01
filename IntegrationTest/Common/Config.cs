@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FrameDAL.Config;
+using FrameDAL.Utility;
 
 namespace ResumeFactory.Common
 {
@@ -32,11 +33,11 @@ namespace ResumeFactory.Common
         {
             get
             {
-                return ConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "SkinFile", "");
+                return IniConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "SkinFile", "");
             }
             set
             {
-                ConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "SkinFile", value);
+                IniConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "SkinFile", value);
             }
         }
 
@@ -47,11 +48,11 @@ namespace ResumeFactory.Common
         {
             get
             {
-                return ConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "RememberPassword", "0") == "1" ? true : false;
+                return IniConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "RememberPassword", "0") == "1" ? true : false;
             }
             set
             {
-                ConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "RememberPassword", value ? "1" : "0");
+                IniConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "RememberPassword", value ? "1" : "0");
             }
         }
 
@@ -62,11 +63,11 @@ namespace ResumeFactory.Common
         {
             get
             {
-                return ConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "UserName", "");
+                return IniConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "UserName", "");
             }
             set
             {
-                ConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "UserName", value);
+                IniConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "UserName", value);
             }
         }
 
@@ -77,11 +78,11 @@ namespace ResumeFactory.Common
         {
             get
             {
-                return ConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "Password", "");
+                return IniConfigUtil.GetStringValue(DefaultPath, "ResumeFactory", "Password", "");
             }
             set
             {
-                ConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "Password", value);
+                IniConfigUtil.WriteValue(DefaultPath, "ResumeFactory", "Password", value);
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using FrameDAL.Attributes;
 
 namespace ResumeFactory.Entity
@@ -10,11 +11,11 @@ namespace ResumeFactory.Entity
         [Column("id")]
         public string Id { get; set; }
 
-        [ManyToOne("user_id", LazyLoad = true)]
+        [ManyToOne("user_id")]
         public virtual User User { get; set; }
 
-        [Column("template_id")]
-        public string TemplateId { get; set; }
+        [ManyToOne("template_id")]
+        public virtual ResumeTemplate ResumeTemplate { get; set; }
 
         [Column("resume_name")]
         public string ResumeName { get; set; }
@@ -24,5 +25,11 @@ namespace ResumeFactory.Entity
 
         [Column("resume_create_time")]
         public DateTime? ResumeCreateTime { get; set; }
+
+        [OneToMany("resume_id")]
+        public virtual List<PersonInfo> PersonInfo { get; set; }
+
+        [OneToMany("resume_id")]
+        public virtual List<EducationBackground> EducationBackgrounds { get; set; }
     }
 }

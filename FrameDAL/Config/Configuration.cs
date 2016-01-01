@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using FrameDAL.Exceptions;
+using FrameDAL.Utility;
 
 namespace FrameDAL.Config
 {
@@ -77,26 +78,26 @@ namespace FrameDAL.Config
         {
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);
 
-            string enable = ConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
+            string enable = IniConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
             if (string.IsNullOrWhiteSpace(enable)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
             if (enable != "true" && enable != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
             EnableLazy = enable == "true";
 
-            LogFile = ConfigUtil.GetStringValue(path, "Settings", "LogFile", "");
+            LogFile = IniConfigUtil.GetStringValue(path, "Settings", "LogFile", "");
 
-            string append = ConfigUtil.GetStringValue(path, "Settings", "LogAppend", "");
+            string append = IniConfigUtil.GetStringValue(path, "Settings", "LogAppend", "");
             if (string.IsNullOrWhiteSpace(append)) throw new ConfigurationException("配置文件没有配置LogAppend属性。");
             if (append != "true" && append != "false") throw new ConfigurationException("LogAppend属性的值只能为true或false。");
             LogAppend = append == "true";
 
-            DbHelperAssembly = ConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");
+            DbHelperAssembly = IniConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");
             if (string.IsNullOrWhiteSpace(DbHelperAssembly)) throw new ConfigurationException("配置文件没有配置DbHelperAssembly属性。");
 
-            DbHelperClass = ConfigUtil.GetStringValue(path, "Settings", "DbHelperClass", "");
+            DbHelperClass = IniConfigUtil.GetStringValue(path, "Settings", "DbHelperClass", "");
             if (string.IsNullOrWhiteSpace(DbHelperClass)) throw new ConfigurationException("配置文件没有配置DbHelperClass属性。");
 
             StringBuilder sb = new StringBuilder();
-            foreach (string item in ConfigUtil.GetAllItems(path, "ConnStr"))
+            foreach (string item in IniConfigUtil.GetAllItems(path, "ConnStr"))
             {
                 sb.Append(item + ";");
             }
@@ -104,7 +105,7 @@ namespace FrameDAL.Config
             ConnStr = sb.Remove(sb.Length - 1, 1).ToString();
 
             namedSql = new Dictionary<string, string>();
-            foreach (string item in ConfigUtil.GetAllItems(path, "NamedSql"))
+            foreach (string item in IniConfigUtil.GetAllItems(path, "NamedSql"))
             {
                 int index = item.IndexOf('=');
                 namedSql.Add(item.Substring(0, index), item.Substring(index + 1, item.Length - index - 1));
