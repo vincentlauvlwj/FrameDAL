@@ -29,7 +29,7 @@ namespace ResumeFactory
                 MessageBox.Show(user.Resumes[0].ResumeName);
             }
 
-            /*FormLogin formLogin = new FormLogin();
+            FormLogin formLogin = new FormLogin();
             Sunisoft.IrisSkin.SkinEngine skin = new Sunisoft.IrisSkin.SkinEngine(formLogin);
             skin.SkinFile = ResumeFactory.Common.Config.SkinFile;
             skin.TitleFont = new System.Drawing.Font("微软雅黑", 10F); 
@@ -37,7 +37,7 @@ namespace ResumeFactory
             if (formLogin.ShowDialog() == DialogResult.OK)
             {
                 Application.Run(new FormMain(formLogin.LoginUser));
-            }*/
+            }
         }
     }
 }

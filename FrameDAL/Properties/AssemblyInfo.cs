@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("刘文俊")]
 [assembly: AssemblyProduct("FrameDAL")]
-[assembly: AssemblyCopyright("Copyright ©  2015 Vincent Lau")]
+[assembly: AssemblyCopyright("Copyright © 2015 - 2016 Vincent Lau")]
 [assembly: AssemblyTrademark("刘文俊")]
 [assembly: AssemblyCulture("")]
 

@@ -17,7 +17,7 @@ namespace ResumeFactory.Entity
         [Column("user_pwd")]
         public string UserPwd { get; set; }
 
-        [OneToMany("user_id", LazyLoad = false)]
+        [OneToMany("user_id", LazyLoad = true)]
         public virtual List<Resume> Resumes { get; set; }
     }
 }
