@@ -14,7 +14,6 @@ namespace FrameDAL.Utility
         public LogUtil(string logFile, bool append)
         {
             this.logFile = logFile;
-            if (string.IsNullOrWhiteSpace(logFile)) return;
             using (StreamWriter writer = new StreamWriter(logFile, append))
             {
                 writer.WriteLine();
@@ -26,7 +25,6 @@ namespace FrameDAL.Utility
 
         public void WriteLine(string line)
         {
-            if (string.IsNullOrWhiteSpace(logFile)) return;
             using (StreamWriter writer = new StreamWriter(logFile, true))
             {
                 writer.WriteLine(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + " Thread ID: " + Thread.CurrentThread.ManagedThreadId);

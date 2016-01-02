@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using FrameDAL.Core;
 using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
 using FrameDAL.Utility;

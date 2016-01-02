@@ -9,6 +9,7 @@ using FrameDAL.Attributes;
 using FrameDAL.Exceptions;
 using FrameDAL.Dialect;
 using FrameDAL.Utility;
+using Castle.DynamicProxy;
 
 namespace FrameDAL.Core
 {
@@ -79,18 +80,49 @@ namespace FrameDAL.Core
         /// <exception cref="NotSupportedException">数据库不受支持</exception>
         private AppContext(Configuration config)
         {
-            this.Configuration = config;
             try
             {
-                DbHelper = Assembly.LoadFrom(config.DbHelperAssembly).CreateInstance(config.DbHelperClass) as IDbHelper;
-                if (DbHelper == null)
-                    throw new TypeLoadException("程序集" + config.DbHelperAssembly + "中未找到" + config.DbHelperClass + "类。");
+                this.Configuration = config;
+                Type type = Assembly.LoadFrom(config.DbHelperAssembly).GetType(config.DbHelperClass, true);
+                if (string.IsNullOrWhiteSpace(config.LogFile))
+                {
+                    DbHelper = Activator.CreateInstance(type) as IDbHelper;
+                }
+                else
+                {
+                    LogUtil = new LogUtil(config.LogFile, config.LogAppend);
+                    DbHelper = new ProxyGenerator().CreateClassProxy(type, new LogInterceptor(LogUtil)) as IDbHelper;
+                }
                 DbHelper.ConnectionString = config.ConnStr;
-                LogUtil = new LogUtil(config.LogFile, config.LogAppend);
             }
             catch (Exception e)
             {
                 throw new ConfigurationException("DbHelper初始化异常，请检查配置文件中是否正确配置DbHelperAssembly和DbHelperClass属性。" + e.Message, e);
+            }
+        }
+
+        private class LogInterceptor : IInterceptor
+        {
+            private LogUtil logUtil;
+
+            public LogInterceptor(LogUtil logUtil)
+            {
+                this.logUtil = logUtil;
+            }
+
+            public void Intercept(IInvocation invocation)
+            {
+                switch (invocation.Method.Name)
+                {
+                    case "ExecuteNonQuery":
+                    case "ExecuteScalar":
+                    case "ExecuteGetDataSet":
+                        logUtil.WriteLine(invocation.Arguments[0] as string);
+                        goto default;
+                    default:
+                        invocation.Proceed();
+                        break;
+                }
             }
         }
 
