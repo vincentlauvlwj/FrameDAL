@@ -68,10 +68,10 @@ namespace FrameDAL.Dialect
 
         string GetLoadColumnPropertySql(PropertyInfo prop);
 
-        string GetLoadManyToOnePropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
+        string GetLoadManyToOnePropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap);
 
-        string GetLoadOneToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
+        string GetLoadOneToManyPropertySql(PropertyInfo prop, bool enablelazy, out Dictionary<string, string> resultMap);
 
-        string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap);
+        string GetLoadManyToManyPropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap);
     }
 }

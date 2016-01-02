@@ -226,7 +226,7 @@ namespace FrameDAL.Dialect
             return sb.ToString();
         }
 
-        public virtual string GetLoadManyToOnePropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        public virtual string GetLoadManyToOnePropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(prop.PropertyType.GetIdProperty().GetColumnAttribute().Name);
@@ -237,18 +237,18 @@ namespace FrameDAL.Dialect
             sb.Append(" where ");
             sb.Append(prop.DeclaringType.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?)");
-            return GetSelectSql(prop.PropertyType, AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+            return GetSelectSql(prop.PropertyType, enableLazy, out resultMap, sb.ToString());
         }
 
-        public virtual string GetLoadOneToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        public virtual string GetLoadOneToManyPropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append(prop.GetOneToManyAttribute().InverseForeignKey);
             sb.Append("=?");
-            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], enableLazy, out resultMap, sb.ToString());
         }
 
-        public virtual string GetLoadManyToManyPropertySql(PropertyInfo prop, out Dictionary<string, string> resultMap)
+        public virtual string GetLoadManyToManyPropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap)
         {
             ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
             StringBuilder sb = new StringBuilder();
@@ -260,7 +260,7 @@ namespace FrameDAL.Dialect
             sb.Append(" where ");
             sb.Append(manyToMany.JoinColumn);
             sb.Append("=?)");
-            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], AppContext.Instance.Configuration.EnableLazy, out resultMap, sb.ToString());
+            return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], enableLazy, out resultMap, sb.ToString());
         }
     }
 }

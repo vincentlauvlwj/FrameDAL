@@ -85,7 +85,6 @@ namespace FrameDAL.DbHelper
         }
 
         protected ThreadLocal<Bundle> local = new ThreadLocal<Bundle>();
-        // protected Dictionary<int, Bundle> dict = new Dictionary<int, Bundle>();
 
         /// <summary>
         /// 获得事务的嵌套层级，实际上此类并不支持事务嵌套，子事务操作将被忽略
@@ -94,7 +93,6 @@ namespace FrameDAL.DbHelper
         protected int GetTransactionTier()
         {
             return InTransaction() ? local.Value.Tier : 0;
-            // return dict.ContainsKey(Thread.CurrentThread.ManagedThreadId) ? dict[Thread.CurrentThread.ManagedThreadId].Tier : 0;
         }
 
         /// <summary>
@@ -104,7 +102,6 @@ namespace FrameDAL.DbHelper
         public virtual bool InTransaction()
         {
             return local.IsValueCreated && local.Value != null;
-            // return dict.ContainsKey(Thread.CurrentThread.ManagedThreadId);
         }
 
         /// <summary>
@@ -120,12 +117,10 @@ namespace FrameDAL.DbHelper
                 bundle.Transaction = bundle.Connection.BeginTransaction();
                 bundle.Tier = 1;
                 local.Value = bundle;
-                // dict.Add(Thread.CurrentThread.ManagedThreadId, bundle);
             }
             else
             {
                 local.Value.Tier++;
-                // dict[Thread.CurrentThread.ManagedThreadId].Tier++;
             }
         }
 
@@ -141,15 +136,12 @@ namespace FrameDAL.DbHelper
             {
                 Bundle bundle = local.Value;
                 local.Value = null;
-                // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
-                // dict.Remove(Thread.CurrentThread.ManagedThreadId);
                 bundle.Transaction.Commit();
                 bundle.Connection.Close();
             }
             else
             {
                 local.Value.Tier--;
-                // dict[Thread.CurrentThread.ManagedThreadId].Tier--;
             }
         }
 
@@ -165,15 +157,12 @@ namespace FrameDAL.DbHelper
             {
                 Bundle bundle = local.Value;
                 local.Value = null;
-                // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
-                // dict.Remove(Thread.CurrentThread.ManagedThreadId);
                 bundle.Transaction.Rollback();
                 bundle.Connection.Close();
             }
             else
             {
                 local.Value.Tier--;
-                // dict[Thread.CurrentThread.ManagedThreadId].Tier--;
             }
         }
 
@@ -192,7 +181,6 @@ namespace FrameDAL.DbHelper
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;
-                    // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
                 }
                 else using (DbConnection conn = NewConnection())
@@ -222,7 +210,6 @@ namespace FrameDAL.DbHelper
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;
-                    // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteScalar();
                 }
                 else using (DbConnection conn = NewConnection())
@@ -252,7 +239,6 @@ namespace FrameDAL.DbHelper
                 if (InTransaction())
                 {
                     Bundle bundle = local.Value;
-                    // Bundle bundle = dict[Thread.CurrentThread.ManagedThreadId];
                     DataSet ds = new DataSet();
                     NewDataAdapter(PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters)).Fill(ds);
                     return ds;

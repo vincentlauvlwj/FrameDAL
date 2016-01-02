@@ -74,6 +74,7 @@ namespace FrameDAL.Core
                 object id = invocation.TargetType.GetIdProperty().GetValue(invocation.InvocationTarget, null);
                 ISession session = AppContext.Instance.OpenSession();
                 object result = null;
+                IDialect dialect = AppContext.Instance.DbHelper.Dialect;
 
                 if (prop.GetColumnAttribute() != null)
                 {
@@ -83,7 +84,7 @@ namespace FrameDAL.Core
                 else if (prop.GetManyToOneAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
-                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToOnePropertySql(prop, out resultMap);
+                    string sql = dialect.GetLoadManyToOnePropertySql(prop, AppContext.Instance.Configuration.EnableLazy, out resultMap);
                     IQuery query = session.CreateQuery(sql, id);
                     query.ResultMap = resultMap;
                     result = executeGetEntity.MakeGenericMethod(prop.PropertyType).Invoke(query, null);
@@ -91,7 +92,7 @@ namespace FrameDAL.Core
                 else if (prop.GetOneToManyAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
-                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadOneToManyPropertySql(prop, out resultMap);
+                    string sql = dialect.GetLoadOneToManyPropertySql(prop, AppContext.Instance.Configuration.EnableLazy, out resultMap);
                     IQuery query = session.CreateQuery(sql, id);
                     query.ResultMap = resultMap;
                     result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
@@ -99,7 +100,7 @@ namespace FrameDAL.Core
                 else if (prop.GetManyToManyAttribute() != null)
                 {
                     Dictionary<string, string> resultMap;
-                    string sql = AppContext.Instance.DbHelper.Dialect.GetLoadManyToManyPropertySql(prop, out resultMap);
+                    string sql = dialect.GetLoadManyToManyPropertySql(prop, AppContext.Instance.Configuration.EnableLazy, out resultMap);
                     IQuery query = session.CreateQuery(sql, id);
                     query.ResultMap = resultMap;
                     result = executeGetList.MakeGenericMethod(prop.PropertyType.GetGenericArguments()[0]).Invoke(query, null);
