@@ -351,6 +351,11 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的OneToMany特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
 
+                    if (oneToMany != null && (prop.PropertyType.IsAbstract || prop.PropertyType.GetInterfaces()
+                        .Count(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) == 0))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的OneToMany特性没有正确配置：属性类型必须为IList<T>接口的具体实现类");
+
                     oneToManies.Add(prop, oneToMany);
                     return oneToMany;
                 }
@@ -384,6 +389,11 @@ namespace FrameDAL.Core
                     if (manyToMany != null && manyToMany.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToMany特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
+
+                    if (manyToMany != null && (prop.PropertyType.IsAbstract || prop.PropertyType.GetInterfaces()
+                        .Count(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) == 0))
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：属性类型必须为IList<T>接口的具体实现类");
 
                     manyToManies.Add(prop, manyToMany);
                     return manyToMany;

@@ -252,8 +252,8 @@ namespace FrameDAL.Dialect
         {
             ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
             StringBuilder sb = new StringBuilder();
-            sb.Append(prop.PropertyType.GetIdProperty().GetColumnAttribute().Name);
-            sb.Append("=(select ");
+            sb.Append(prop.PropertyType.GetGenericArguments()[0].GetIdProperty().GetColumnAttribute().Name);
+            sb.Append(" in (select ");
             sb.Append(manyToMany.InverseJoinColumn);
             sb.Append(" from ");
             sb.Append(manyToMany.JoinTable);

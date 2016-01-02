@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using ResumeFactory.Forms;
 using ResumeFactory.Entity;
 using FrameDAL.Core;
+using FrameDAL.Attributes;
 
 namespace ResumeFactory
 {
@@ -29,7 +30,13 @@ namespace ResumeFactory
                 MessageBox.Show(user.Resumes[0].ResumeName);
 
                 Resume resume = session.Get<Resume>("2d8eb7b1-3d2b-428a-8826-0815175d557c");
-                //MessageBox.Show(resume.User.UserName);
+                MessageBox.Show(resume.User.UserName);
+
+                Student stu = session.Get<Student>(1);
+                MessageBox.Show(stu.Courses[0].CourseName);
+
+                Course course = session.Get<Course>(1);
+                MessageBox.Show(course.Students[0].StuName);
             }
 
             /*FormLogin formLogin = new FormLogin();
@@ -42,5 +49,33 @@ namespace ResumeFactory
                 Application.Run(new FormMain(formLogin.LoginUser));
             }*/
         }
+    }
+
+    [Table("student")]
+    public class Student
+    {
+        [Id(GeneratorType.Identity)]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("stu_name")]
+        public virtual string StuName { get; set; }
+
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id", LazyLoad = false)]
+        public virtual List<Course> Courses { get; set; }
+    }
+
+    [Table("course")]
+    public class Course
+    {
+        [Id(GeneratorType.Identity)]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("course_name")]
+        public virtual string CourseName { get; set; }
+
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id", LazyLoad = false)]
+        public virtual List<Student> Students { get; set; }
     }
 }
