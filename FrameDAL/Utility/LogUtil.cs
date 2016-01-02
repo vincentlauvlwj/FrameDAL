@@ -13,6 +13,12 @@ namespace FrameDAL.Utility
 
         public LogUtil(string logFile, bool append)
         {
+            logFile = logFile.Replace("\\", "/");
+            if (logFile.Contains('/') && logFile[0] != '/')
+            {
+                string dir = logFile.Substring(0, logFile.LastIndexOf("/"));
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            }
             this.logFile = logFile;
             using (StreamWriter writer = new StreamWriter(logFile, append))
             {
