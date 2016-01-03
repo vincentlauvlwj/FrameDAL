@@ -53,6 +53,13 @@ namespace FrameDAL.Core
         object Add(object entity);
 
         /// <summary>
+        /// 更新数据库中的实体
+        /// </summary>
+        /// <param name="entity">要更新的实体</param>
+        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
+        void Update(object entity);
+
+        /// <summary>
         /// 在数据库中删除实体
         /// </summary>
         /// <param name="entity">要删除的实体</param>
@@ -66,13 +73,6 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void DeleteById<T>(object id);
-
-        /// <summary>
-        /// 更新数据库中的实体
-        /// </summary>
-        /// <param name="entity">要更新的实体</param>
-        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        void Update(object entity);
 
         /// <summary>
         /// 从数据库中获得实体

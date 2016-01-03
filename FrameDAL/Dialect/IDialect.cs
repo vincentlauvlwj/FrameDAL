@@ -28,7 +28,16 @@ namespace FrameDAL.Dialect
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
-        string GetInsertSql(Type type);
+        string GetInsertSql(Type type, bool enableCascade);
+
+        /// <summary>
+        /// 获得实体类对应的update sql
+        /// </summary>
+        /// <param name="type">实体类</param>
+        /// <returns>update sql</returns>
+        /// <exception cref="ArgumentNullException">type为null</exception>
+        /// <exception cref="EntityMappingException">实体类映射错误</exception>
+        string GetUpdateSql(Type type, bool enableCascade);
 
         /// <summary>
         /// 获得实体类对应的delete sql
@@ -38,15 +47,6 @@ namespace FrameDAL.Dialect
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         string GetDeleteSql(Type type);
-
-        /// <summary>
-        /// 获得实体类对应的update sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>update sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        string GetUpdateSql(Type type);
 
         /// <summary>
         /// 获得实体类对应的select sql

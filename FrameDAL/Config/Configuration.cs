@@ -35,6 +35,8 @@ namespace FrameDAL.Config
 
         public bool EnableLazy { get; private set; }
 
+        public bool EnableCascade { get; private set; }
+
         public string LogFile { get; private set; }
 
         public bool LogAppend { get; private set; }
@@ -78,10 +80,15 @@ namespace FrameDAL.Config
         {
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);
 
-            string enable = IniConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
-            if (string.IsNullOrWhiteSpace(enable)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
-            if (enable != "true" && enable != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
-            EnableLazy = enable == "true";
+            string lazy = IniConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
+            if (string.IsNullOrWhiteSpace(lazy)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
+            if (lazy != "true" && lazy != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
+            EnableLazy = lazy == "true";
+
+            string cascade = IniConfigUtil.GetStringValue(path, "Settings", "EnableCascade", "");
+            if (string.IsNullOrWhiteSpace(cascade)) throw new ConfigurationException("配置文件没有配置EnableCascade属性。");
+            if (cascade != "true" && cascade != "false") throw new ConfigurationException("EnableCascade属性的值只能为true或false。");
+            EnableCascade = cascade == "true";
 
             LogFile = IniConfigUtil.GetStringValue(path, "Settings", "LogFile", "");
 

@@ -14,5 +14,7 @@ namespace FrameDAL.Attributes
         public const int Update = 0x010;
 
         public const int Delete = 0x001;
+
+        public const int None = 0x000;
     }
 }

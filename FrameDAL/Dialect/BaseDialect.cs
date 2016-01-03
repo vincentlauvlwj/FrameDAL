@@ -41,7 +41,7 @@ namespace FrameDAL.Dialect
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
-        public virtual string GetInsertSql(Type type)
+        public virtual string GetInsertSql(Type type, bool enableCascade)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("insert into ");
@@ -51,9 +51,17 @@ namespace FrameDAL.Dialect
             foreach (PropertyInfo prop in type.GetCachedProperties())
             {
                 ColumnAttribute col = prop.GetColumnAttribute();
-                if (col == null || col.ReadOnly) continue;
-                sb.Append(col.Name + ", ");
-                count++;
+                if (col != null && !col.ReadOnly)
+                {
+                    sb.Append(col.Name + ", ");
+                    count++;
+                }
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                {
+                    sb.Append(manyToOne.ForeignKey + ", ");
+                    count++;
+                }
             }
             if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
             sb.Remove(sb.Length - 2, 2);
@@ -64,6 +72,43 @@ namespace FrameDAL.Dialect
             }
             sb.Remove(sb.Length - 2, 2);
             sb.Append(")");
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// 获得实体类对应的update sql
+        /// </summary>
+        /// <param name="type">实体类</param>
+        /// <returns>update sql</returns>
+        /// <exception cref="ArgumentNullException">type为null</exception>
+        /// <exception cref="EntityMappingException">实体类映射错误</exception>
+        public virtual string GetUpdateSql(Type type, bool enableCascade)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("update ");
+            sb.Append(type.GetTableAttribute().Name);
+            sb.Append(" set ");
+            int count = 0;
+            foreach (PropertyInfo prop in type.GetCachedProperties())
+            {
+                ColumnAttribute col = prop.GetColumnAttribute();
+                if (col != null && !col.ReadOnly)
+                {
+                    sb.Append(col.Name + "=?, ");
+                    count++;
+                }
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Update) != 0 && enableCascade)
+                {
+                    sb.Append(manyToOne.ForeignKey + "=?, ");
+                    count++;
+                }
+            }
+            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(" where ");
+            sb.Append(type.GetIdProperty().GetColumnAttribute().Name);
+            sb.Append("=?");
             return sb.ToString();
         }
 
@@ -79,36 +124,6 @@ namespace FrameDAL.Dialect
             StringBuilder sb = new StringBuilder();
             sb.Append("delete from ");
             sb.Append(type.GetTableAttribute().Name);
-            sb.Append(" where ");
-            sb.Append(type.GetIdProperty().GetColumnAttribute().Name);
-            sb.Append("=?");
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// 获得实体类对应的update sql
-        /// </summary>
-        /// <param name="type">实体类</param>
-        /// <returns>update sql</returns>
-        /// <exception cref="ArgumentNullException">type为null</exception>
-        /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public virtual string GetUpdateSql(Type type)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("update ");
-            sb.Append(type.GetTableAttribute().Name);
-            sb.Append(" set ");
-            int count = 0;
-            foreach (PropertyInfo prop in type.GetCachedProperties())
-            {
-                ColumnAttribute col = prop.GetColumnAttribute();
-                if (col == null || col.ReadOnly) continue;
-                sb.Append(col.Name);
-                sb.Append("=?, ");
-                count++;
-            }
-            if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性并且ReadOnly为false的字段。");
-            sb.Remove(sb.Length - 2, 2);
             sb.Append(" where ");
             sb.Append(type.GetIdProperty().GetColumnAttribute().Name);
             sb.Append("=?");

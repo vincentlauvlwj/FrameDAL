@@ -114,7 +114,7 @@ namespace FrameDAL.Core
             CheckSessionStatus();
             DbHelper.RollbackTransaction();
         }
-
+        
         /// <summary>
         /// 将实体对象插入数据库，当主键生成器不为Assign时，此方法会根据主键生成器的配置自动为其生成主键
         /// </summary>
@@ -122,6 +122,30 @@ namespace FrameDAL.Core
         /// <returns>插入成功后，返回主键值</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public object Add(object entity)
+        {
+            return Add(entity, AppContext.Instance.Configuration.EnableCascade);
+        }
+
+        private object[] GetInsertParameters(object entity, bool enableCascade)
+        {
+            List<object> parameters = new List<object>();
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                ColumnAttribute col = prop.GetColumnAttribute();
+                if (col != null && !col.ReadOnly)
+                {
+                    parameters.Add(prop.GetValue(entity, null));
+                }
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                {
+                    parameters.Add(prop.GetValue(entity, null));
+                }
+            }
+            return parameters.ToArray();
+        }
+
+        public object Add(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             PropertyInfo idProp = entity.GetType().GetIdProperty();
@@ -141,14 +165,33 @@ namespace FrameDAL.Core
                     break;
             }
 
-            List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
-                ColumnAttribute col = prop.GetColumnAttribute();
-                if (col == null || col.ReadOnly) continue;
-                parameters.Add(prop.GetValue(entity, null));
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                {
+                    
+                }
             }
-            CreateQuery(db.Dialect.GetInsertSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
+
+            CreateQuery(
+                db.Dialect.GetInsertSql(entity.GetType(), enableCascade), 
+                GetInsertParameters(entity, enableCascade)
+                ).ExecuteNonQuery();
+
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                {
+
+                }
+                ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
+                if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                { 
+                    
+                }
+            }
 
             if (id.GeneratorType == GeneratorType.Identity)
             {
@@ -156,6 +199,45 @@ namespace FrameDAL.Core
                 idProp.SetValueSafely(entity, pk);
             }
             return idProp.GetValue(entity, null);
+        }
+
+        /// <summary>
+        /// 更新数据库中的实体
+        /// </summary>
+        /// <param name="entity">要更新的实体</param>
+        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
+        public void Update(object entity)
+        {
+            Update(entity, AppContext.Instance.Configuration.EnableCascade;
+        }
+
+        private object[] GetUpdateParameters(object entity, bool enableCascade)
+        {
+            List<object> parameters = new List<object>();
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                ColumnAttribute col = prop.GetColumnAttribute();
+                if (col != null && !col.ReadOnly)
+                {
+                    parameters.Add(prop.GetValue(entity, null));
+                }
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Update) != 0 && enableCascade)
+                {
+                    parameters.Add(prop.GetValue(entity, null));
+                }
+            }
+            parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
+            return parameters.ToArray();
+        }
+
+        public void Update(object entity, bool enableCascade)
+        {
+            CheckSessionStatus();
+            CreateQuery(
+                db.Dialect.GetUpdateSql(entity.GetType(), enableCascade), 
+                GetUpdateParameters(entity, enableCascade)
+                ).ExecuteNonQuery();
         }
 
         /// <summary>
@@ -180,25 +262,6 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             CreateQuery(db.Dialect.GetDeleteSql(typeof(T)), id).ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// 更新数据库中的实体
-        /// </summary>
-        /// <param name="entity">要更新的实体</param>
-        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Update(object entity)
-        {
-            CheckSessionStatus();
-            List<object> parameters = new List<object>();
-            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
-            {
-                ColumnAttribute col = prop.GetColumnAttribute();
-                if (col == null || col.ReadOnly) continue;
-                parameters.Add(prop.GetValue(entity, null));
-            }
-            parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
-            CreateQuery(db.Dialect.GetUpdateSql(entity.GetType()), parameters.ToArray()).ExecuteNonQuery();
         }
 
         /// <summary>
