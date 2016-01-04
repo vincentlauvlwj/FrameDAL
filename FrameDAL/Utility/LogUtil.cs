@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading;
+using System.Diagnostics;
 
 namespace FrameDAL.Utility
 {
@@ -20,9 +21,9 @@ namespace FrameDAL.Utility
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             }
             this.logFile = logFile;
-            using (StreamWriter writer = new StreamWriter(logFile, append))
+            using (StreamWriter writer = new LogStreamWriter(logFile, append))
             {
-                writer.WriteLine();
+                writer.WriteLine("");
                 writer.WriteLine("--------------------------------------------------------------------------");
                 writer.WriteLine("|                 FrameDAL - Powered by Vincent Lau.                     |");
                 writer.WriteLine("--------------------------------------------------------------------------");
@@ -31,7 +32,7 @@ namespace FrameDAL.Utility
 
         public void WriteLine(string line)
         {
-            using (StreamWriter writer = new StreamWriter(logFile, true))
+            using (StreamWriter writer = new LogStreamWriter(logFile, true))
             {
                 writer.WriteLine(DateTime.Now.ToString("[yyyy-MM-dd HH:mm:ss]") + " Thread ID: " + Thread.CurrentThread.ManagedThreadId);
                 writer.WriteLine(line);
@@ -41,6 +42,17 @@ namespace FrameDAL.Utility
         ~LogUtil()
         {
             WriteLine("Program exit...");
+        }
+
+        private class LogStreamWriter : StreamWriter
+        {
+            public LogStreamWriter(string logFile, bool append) : base(logFile, append) { }
+
+            public override void WriteLine(string value)
+            {
+                base.WriteLine(value);
+                Debug.WriteLine(value);
+            }
         }
     }
 }

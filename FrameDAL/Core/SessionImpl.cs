@@ -208,7 +208,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Update(object entity)
         {
-            Update(entity, AppContext.Instance.Configuration.EnableCascade;
+            Update(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
         private object[] GetUpdateParameters(object entity, bool enableCascade)
