@@ -16,22 +16,15 @@ namespace FrameDAL.Config
     /// </summary>
     public class Configuration
     {
-        private static string _DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
+        static Configuration()
+        { 
+            DefaultPath = Environment.CurrentDirectory + @"\FrameDAL.ini";
+        }
 
         /// <summary>
         /// 获取或设置配置文件的默认路径
         /// </summary>
-        public static string DefaultPath 
-        {
-            get
-            {
-                return _DefaultPath;
-            }
-            set
-            {
-                _DefaultPath = value;
-            }
-        }
+        public static string DefaultPath { get; set; }
 
         public bool EnableLazy { get; private set; }
 
@@ -80,43 +73,18 @@ namespace FrameDAL.Config
         {
             if (!File.Exists(path)) throw new FileNotFoundException("配置文件不存在。", path);
 
-            string lazy = IniConfigUtil.GetStringValue(path, "Settings", "EnableLazy", "");
-            if (string.IsNullOrWhiteSpace(lazy)) throw new ConfigurationException("配置文件没有配置EnableLazy属性。");
-            if (lazy != "true" && lazy != "false") throw new ConfigurationException("EnableLazy属性的值只能为true或false。");
-            EnableLazy = lazy == "true";
-
-            string cascade = IniConfigUtil.GetStringValue(path, "Settings", "EnableCascade", "");
-            if (string.IsNullOrWhiteSpace(cascade)) throw new ConfigurationException("配置文件没有配置EnableCascade属性。");
-            if (cascade != "true" && cascade != "false") throw new ConfigurationException("EnableCascade属性的值只能为true或false。");
-            EnableCascade = cascade == "true";
-
-            LogFile = IniConfigUtil.GetStringValue(path, "Settings", "LogFile", "");
-
-            string append = IniConfigUtil.GetStringValue(path, "Settings", "LogAppend", "");
-            if (string.IsNullOrWhiteSpace(append)) throw new ConfigurationException("配置文件没有配置LogAppend属性。");
-            if (append != "true" && append != "false") throw new ConfigurationException("LogAppend属性的值只能为true或false。");
-            LogAppend = append == "true";
-
-            DbHelperAssembly = IniConfigUtil.GetStringValue(path, "Settings", "DbHelperAssembly", "");
-            if (string.IsNullOrWhiteSpace(DbHelperAssembly)) throw new ConfigurationException("配置文件没有配置DbHelperAssembly属性。");
-
-            DbHelperClass = IniConfigUtil.GetStringValue(path, "Settings", "DbHelperClass", "");
-            if (string.IsNullOrWhiteSpace(DbHelperClass)) throw new ConfigurationException("配置文件没有配置DbHelperClass属性。");
-
-            StringBuilder sb = new StringBuilder();
-            foreach (string item in IniConfigUtil.GetAllItems(path, "ConnStr"))
-            {
-                sb.Append(item + ";");
-            }
-            if (sb.Length == 0) throw new ConfigurationException("配置文件没有配置数据库连接串。");
-            ConnStr = sb.Remove(sb.Length - 1, 1).ToString();
-
-            namedSql = new Dictionary<string, string>();
-            foreach (string item in IniConfigUtil.GetAllItems(path, "NamedSql"))
-            {
-                int index = item.IndexOf('=');
-                namedSql.Add(item.Substring(0, index), item.Substring(index + 1, item.Length - index - 1));
-            }
+            EnableLazy          = IniConfigUtil.GetValidatedValue<bool>(path, "Settings", "EnableLazy", true);
+            EnableCascade       = IniConfigUtil.GetValidatedValue<bool>(path, "Settings", "EnableCascade", true);
+            LogFile             = IniConfigUtil.GetValidatedValue<string>(path, "Settings", "LogFile", false);
+            LogAppend           = IniConfigUtil.GetValidatedValue<bool>(path, "Settings", "LogAppend", true);
+            DbHelperAssembly    = IniConfigUtil.GetValidatedValue<string>(path, "Settings", "DbHelperAssembly", true);
+            DbHelperClass       = IniConfigUtil.GetValidatedValue<string>(path, "Settings", "DbHelperClass", true);
+            ConnStr             = IniConfigUtil.GetAllItems(path, "ConnStr").JoinWith(";", () =>
+                {
+                    throw new ConfigurationException("配置文件没有配置数据库连接串。");
+                });
+            namedSql            = IniConfigUtil.GetAllItems(path, "NamedSql")
+                .ToDictionary(s => s.Remove(s.IndexOf('=')), s => s.Remove(0, s.IndexOf('=') + 1));
         }
 
         /// <summary>

@@ -59,6 +59,7 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\TableAttribute.cs" />
     <Compile Include="Config\Configuration.cs" />
+    <Compile Include="Utility\CacheHelper.cs" />
     <Compile Include="Utility\IniConfigUtil.cs" />
     <Compile Include="Core\AppContext.cs" />
     <Compile Include="Core\EntityFactory.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Core\IQuery.cs" />
     <Compile Include="Utility\LogUtil.cs" />
     <Compile Include="Utility\ReflectionUtil.cs" />
+    <Compile Include="Utility\StringUtil.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

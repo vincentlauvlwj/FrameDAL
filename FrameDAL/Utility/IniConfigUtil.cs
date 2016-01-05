@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
+using FrameDAL.Exceptions;
 
 namespace FrameDAL.Utility
 {
@@ -314,6 +315,21 @@ namespace FrameDAL.Utility
             }
 
             return WritePrivateProfileSection(section, string.Empty, iniFile);
+        }
+
+        public static T GetValidatedValue<T>(string path, string section, string key, bool required)
+        {
+            try
+            {
+                string value = IniConfigUtil.GetStringValue(path, section, key, "");
+                if (required && string.IsNullOrWhiteSpace(value))
+                    throw new ConfigurationException("配置文件没有配置" + key + "属性。");
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            catch (Exception e)
+            {
+                throw new ConfigurationException("读取" + section + "节点中的" + key + "属性时发生异常：" + e.Message, e);
+            }
         }
 
         #endregion

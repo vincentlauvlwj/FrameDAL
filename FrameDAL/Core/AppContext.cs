@@ -27,33 +27,20 @@ namespace FrameDAL.Core
     /// <see cref="FrameDAL.Config.Configuration"/>
     public class AppContext
     {
-        private static AppContext _Instance;
-        private static object o = new object();
+        private static Lazy<AppContext> instance = new Lazy<AppContext>(() =>
+            {
+                Configuration config = new Configuration();
+                config.Load();
+                return new AppContext(config);
+            }, 
+            true);
 
         /// <summary>
         /// 获得AppContext的唯一实例
         /// </summary>
         /// <exception cref="FileNotFoundException">配置文件不存在</exception>
         /// <exception cref="ConfigurationException">配置错误</exception>
-        public static AppContext Instance
-        {
-            get 
-            {
-                if (_Instance == null)
-                {
-                    lock (o)
-                    {
-                        if (_Instance == null)
-                        {
-                            Configuration config = new Configuration();
-                            config.Load();
-                            _Instance = new AppContext(config);
-                        }
-                    }
-                }
-                return _Instance;
-            } 
-        }
+        public static AppContext Instance { get { return instance.Value; } }
 
         /// <summary>
         /// 获取程序使用的DbHelper对象，利用此对象，可以进行本框架暂未支持的一些底层操作。
@@ -159,21 +146,13 @@ namespace FrameDAL.Core
         /// <exception cref="ArgumentNullException">type为null</exception>
         public TableAttribute GetTableAttribute(Type type)
         {
-            lock (tables)
-            {
-                if (tables.ContainsKey(type))
-                {
-                    return tables[type];
-                }
-                else
+            return tables.TryGet(type, () =>
                 {
                     TableAttribute table = Attribute.GetCustomAttribute(type, typeof(TableAttribute)) as TableAttribute;
-                    if (table == null || string.IsNullOrWhiteSpace(table.Name)) 
+                    if (table == null || string.IsNullOrWhiteSpace(table.Name))
                         throw new EntityMappingException(type.FullName + "类没有映射到数据库中的表。");
-                    tables.Add(type, table);
                     return table;
-                }
-            }
+                });
         }
 
         /// <summary>
@@ -185,21 +164,13 @@ namespace FrameDAL.Core
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
         public PropertyInfo[] GetProperties(Type type)
         {
-            lock (props)
-            {
-                if (props.ContainsKey(type))
-                {
-                    return props[type];
-                }
-                else
+            return props.TryGet(type, () =>
                 {
                     PropertyInfo[] properties = type.GetProperties();
                     if (properties.Length == 0) throw new EntityMappingException(type.FullName + "类中没有任何公开属性");
                     CheckExclusiveAttributes(properties);
-                    props.Add(type, properties);
                     return properties;
-                }
-            }
+                });
         }
 
         private void CheckExclusiveAttributes(PropertyInfo[] properties)
@@ -229,13 +200,7 @@ namespace FrameDAL.Core
         /// <exception cref="EntityMappingException">该类的Id特性没有正确配置</exception>
         public PropertyInfo GetIdProperty(Type type)
         {
-            lock (idProps)
-            {
-                if (idProps.ContainsKey(type))
-                {
-                    return idProps[type];
-                }
-                else
+            return idProps.TryGet(type, () =>
                 {
                     var result = type.GetCachedProperties().Where(p => p.GetIdAttribute() != null).ToArray();
                     if (result.Length == 0)
@@ -248,11 +213,9 @@ namespace FrameDAL.Core
                     }
                     else
                     {
-                        idProps.Add(type, result[0]);
                         return result[0];
                     }
-                }
-            }
+                });
         }
 
         /// <summary>
@@ -264,28 +227,20 @@ namespace FrameDAL.Core
         /// <exception cref="EntityMappingException">该属性的Column特性没有正确配置</exception>
         public ColumnAttribute GetColumnAttribute(PropertyInfo prop)
         {
-            lock (columns)
-            {
-                if (columns.ContainsKey(prop))
-                {
-                    return columns[prop];
-                }
-                else
+            return columns.TryGet(prop, () =>
                 {
                     ColumnAttribute col = Attribute.GetCustomAttribute(prop, typeof(ColumnAttribute)) as ColumnAttribute;
 
                     if (col != null && string.IsNullOrWhiteSpace(col.Name))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Column特性没有正确配置：Name属性不能为空。");
 
                     if (col != null && col.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Column特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
 
-                    columns.Add(prop, col);
                     return col;
-                }
-            }
+                });
         }
 
         /// <summary>
@@ -297,18 +252,12 @@ namespace FrameDAL.Core
         /// <exception cref="EntityMappingException">该属性的Id特性没有正确配置</exception>
         public IdAttribute GetIdAttribute(PropertyInfo prop)
         {
-            lock (ids)
-            {
-                if (ids.ContainsKey(prop))
-                {
-                    return ids[prop];
-                }
-                else
+            return ids.TryGet(prop, () =>
                 {
                     IdAttribute id = Attribute.GetCustomAttribute(prop, typeof(IdAttribute)) as IdAttribute;
 
                     if (id != null && id.GeneratorType == 0)
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Id特性没有正确配置：请提供GeneratorType。");
 
                     if (id != null && id.GeneratorType == GeneratorType.Sequence && string.IsNullOrWhiteSpace(id.SeqName))
@@ -320,58 +269,42 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "." + prop.Name + "缺少Column特性。");
 
                     if (id != null && col.ReadOnly)
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Column特性没有正确配置：Id字段不可为ReadOnly。");
 
                     if (id != null && col.LazyLoad)
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Column特性没有正确配置：Id字段不可使用LazyLoad。");
 
-                    if (id != null && ! string.IsNullOrWhiteSpace(col.SQL))
+                    if (id != null && !string.IsNullOrWhiteSpace(col.SQL))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的Column特性没有正确配置：Id字段的Column特性不可使用SQL。");
 
-                    ids.Add(prop, id);
                     return id;
-                }
-            }
+                });
         }
 
         public ManyToOneAttribute GetManyToOneAttribute(PropertyInfo prop)
         {
-            lock (manyToOnes)
-            {
-                if (manyToOnes.ContainsKey(prop))
-                {
-                    return manyToOnes[prop];
-                }
-                else
+            return manyToOnes.TryGet(prop, () =>
                 {
                     ManyToOneAttribute manyToOne = Attribute.GetCustomAttribute(prop, typeof(ManyToOneAttribute)) as ManyToOneAttribute;
-                    
+
                     if (manyToOne != null && string.IsNullOrWhiteSpace(manyToOne.ForeignKey))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToOne特性没有正确配置：ForeignKey属性不能为空。");
 
                     if (manyToOne != null && manyToOne.LazyLoad && (!prop.GetGetMethod().IsVirtual || !prop.GetSetMethod().IsVirtual))
-                        throw new EntityMappingException(prop.DeclaringType.FullName + "." 
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToOne特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
 
-                    manyToOnes.Add(prop, manyToOne);
                     return manyToOne;
-                }
-            }
+                });
         }
 
         public OneToManyAttribute GetOneToManyAttribute(PropertyInfo prop)
         {
-            lock (oneToManies)
-            {
-                if (oneToManies.ContainsKey(prop))
-                {
-                    return oneToManies[prop];
-                }
-                else
+            return oneToManies.TryGet(prop, () =>
                 {
                     OneToManyAttribute oneToMany = Attribute.GetCustomAttribute(prop, typeof(OneToManyAttribute)) as OneToManyAttribute;
 
@@ -388,21 +321,13 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的OneToMany特性没有正确配置：属性类型必须为IList<T>接口的具体实现类");
 
-                    oneToManies.Add(prop, oneToMany);
                     return oneToMany;
-                }
-            }
+                });
         }
 
         public ManyToManyAttribute GetManyToManyAttribute(PropertyInfo prop)
         {
-            lock (manyToManies)
-            {
-                if (manyToManies.ContainsKey(prop))
-                {
-                    return manyToManies[prop];
-                }
-                else
+            return manyToManies.TryGet(prop, () =>
                 {
                     ManyToManyAttribute manyToMany = Attribute.GetCustomAttribute(prop, typeof(ManyToManyAttribute)) as ManyToManyAttribute;
 
@@ -427,10 +352,8 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToMany特性没有正确配置：属性类型必须为IList<T>接口的具体实现类");
 
-                    manyToManies.Add(prop, manyToMany);
                     return manyToMany;
-                }
-            }
+                });
         }
     }
 }
