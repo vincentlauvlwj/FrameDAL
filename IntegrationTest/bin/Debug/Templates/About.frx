@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ReportInfo.Created="12/10/2015 23:50:17" ReportInfo.Modified="12/17/2015 21:29:51" ReportInfo.CreatorVersion="1.2.47.0">
+  <Dictionary/>
+  <ReportPage Name="Page1">
+    <DataBand Name="Data1" Width="718.2" Height="378">
+      <PictureObject Name="Picture1" Left="47.25" Top="94.5" Width="132.3" Height="264.6"/>
+      <TextObject Name="Text1" Left="198.45" Top="94.5" Width="415.8" Height="264.6" Text="&#13;&#10;ResumeFactory&#13;&#10;&#13;&#10;版本 1.0.0.0&#13;&#10;&#13;&#10;Copyright © 2015 ResumeFactory, S.M.U.&#13;&#10;&#13;&#10;开发者：李宇涛、程慧涛、刘文俊、王瑞松、夏丽" Font="华文楷体, 11pt"/>
+      <TextObject Name="Text2" Width="718.2" Height="47.25" Text="关于ResumeFactory" HorzAlign="Center" VertAlign="Center" Font="华文楷体, 28pt, style=Bold"/>
+    </DataBand>
+  </ReportPage>
+</Report>

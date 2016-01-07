@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="12/14/2015 21:32:39" ReportInfo.Modified="12/21/2015 21:14:03" ReportInfo.CreatorVersion="2013.2.5.0">
+  <ScriptText>using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Windows.Forms;
+using System.Drawing;
+using System.Data;
+using FastReport;
+using FastReport.Data;
+using FastReport.Dialog;
+using FastReport.Barcode;
+using FastReport.Table;
+using FastReport.Utils;
+
+namespace FastReport
+{
+  public class ReportScript
+  {
+    
+  }
+}
+</ScriptText>
+  <Styles>
+    <Style Name="Title" Fill="LinearGradient" Fill.StartColor="LightSlateGray" Fill.EndColor="White" Fill.Angle="345" Fill.Focus="1" Fill.Contrast="1" Font="微软雅黑, 12pt, style=Bold"/>
+    <Style Name="contents" Font="微软雅黑, 10.5pt"/>
+    <Style Name="name" TextFill="PathGradient" TextFill.CenterColor="Black" TextFill.EdgeColor="White" TextFill.Style="Elliptic" Font="新宋体, 21.75pt, style=Bold"/>
+  </Styles>
+  <Dictionary/>
+  <ReportPage Name="Page1" Watermark.Enabled="true" Watermark.Text="MyResume" Watermark.Font="叶根友毛笔行书2.0版, 72pt" Watermark.TextFill.Color="40, 169, 169, 169" Watermark.TextRotation="Horizontal" Watermark.ShowImageOnTop="true">
+    <ReportTitleBand Name="ReportTitle1" Top="20" Width="718.2" Height="37.8">
+      <TextObject Name="txtTitle" Left="102.06" Top="9.45" Width="236.25" Height="28.35" Font="微软雅黑, 14.25pt"/>
+    </ReportTitleBand>
+    <ColumnHeaderBand Name="ColumnHeader1" Top="77.8" Width="718.2" Height="28.35" CanShrink="true">
+      <LineObject Name="Line2" Left="103.95" Top="-18.9" Width="538.65"/>
+    </ColumnHeaderBand>
+    <DataBand Name="Data2" Top="126.15" Width="718.2" Height="177.66" Style="contents" Guides="113.4,113.4,113.4,113.4,113.4,158.76">
+      <TextObject Name="Text5" Left="103.95" Top="41.58" Width="66.15" Height="18.9" Text="电话" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text9" Left="326.97" Top="41.58" Width="75.6" Height="18.9" Text="籍贯" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="tel" Left="170.1" Top="43.47" Width="151.2" Height="18.9" Text="[person_info.person_tel]" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="party" Left="168.21" Top="24.57" Width="151.2" Height="18.9" Text="[person_info.person_party]" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text4" Left="103.95" Top="24.57" Width="66.15" Height="18.9" Text="政治面貌" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text8" Left="326.97" Top="22.68" Width="75.6" Height="18.9" Text="所在地" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text3" Left="103.95" Top="5.67" Width="66.15" Height="18.9" Text="性别" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text7" Left="326.97" Top="5.67" Width="75.6" Height="18.9" Text="出生年月" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="gender" Left="170.1" Top="5.67" Width="151.2" Height="18.9" Text="gender" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="birthday" Left="396.9" Top="5.67" Width="226.8" Height="18.9" Text="birthday" Font="微软雅黑, 10.5pt"/>
+      <PictureObject Name="PictureHead" Left="7.56" Top="3.78" Width="90.72" Height="77.49" CanGrow="true" Style="contents"/>
+      <TextObject Name="Text6" Left="103.95" Top="62.37" Width="66.15" Height="18.9" Text="邮箱" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text10" Left="326.97" Top="58.59" Width="75.6" Height="18.9" Text="QQ" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="qq" Left="396.9" Top="62.37" Width="226.8" Height="18.9" Text="[person_info.person_qq]" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="living" Left="396.9" Top="22.68" Width="226.8" Height="18.9" Text="living" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text2" Left="170.1" Top="62.37" Width="151.2" Height="18.9" Text="[person_info.person_email]" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="belong" Left="396.9" Top="41.58" Width="226.8" Height="18.9" Font="微软雅黑, 10.5pt"/>
+      <TextObject Name="Text12" Left="7.56" Top="88.83" Width="701.19" Height="24.57" Fill="LinearGradient" Fill.StartColor="LightSlateGray" Fill.EndColor="White" Fill.Angle="345" Fill.Focus="1" Fill.Contrast="1" Text="求职意向" Font="微软雅黑, 12pt, style=Bold" Style="Title"/>
+      <TextObject Name="Text13" Left="73.71" Top="113.4" Width="71.82" Height="18.9" Text="期望职位:" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text14" Left="145.53" Top="113.4" Width="171.99" Height="18.9" Text="[expect.expect_job_class1]" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text15" Left="326.97" Top="113.4" Width="75.6" Height="18.9" Text="工作性质:" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text16" Left="400.68" Top="113.4" Width="100.17" Height="18.9" Text="[expect.work_status]" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text17" Left="500.85" Top="113.4" Width="75.6" Height="18.9" Text="工作地点:" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="expectarea" Left="578.34" Top="113.4" Width="113.4" Height="18.9" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text19" Left="7.56" Top="134.19" Width="703.08" Height="24.57" Fill="LinearGradient" Fill.StartColor="LightSlateGray" Fill.EndColor="White" Fill.Angle="345" Fill.Focus="1" Fill.Contrast="1" Text="教育经历" Font="微软雅黑, 12pt, style=Bold" Style="Title"/>
+      <TextObject Name="Text1" Left="75.6" Top="158.76" Width="43.47" Height="18.9" Text="学校" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text20" Left="283.5" Top="158.76" Width="43.47" Height="18.9" Text="专业" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text21" Left="502.74" Top="158.76" Width="111.51" Height="18.9" Text="取得学历/学位" Font="微软雅黑, 10.5pt" Style="contents"/>
+    </DataBand>
+    <DataBand Name="Data1" Top="323.81" Width="718.2" Height="22.68" Guides="18.9">
+      <TextObject Name="Text18" Left="75.6" Width="94.5" Height="18.9" Text="[education_background.edu_school_name]" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text22" Left="283.5" Width="94.5" Height="18.9" Text="[education_background.edu_major_name]" Font="微软雅黑, 10.5pt" Style="contents"/>
+      <TextObject Name="Text23" Left="502.74" Top="3.78" Width="94.5" Height="18.9" Text="[education_background.edu_degree]" Font="微软雅黑, 10.5pt" Style="contents"/>
+    </DataBand>
+    <DataBand Name="Data3" Top="366.49" Width="718.2" Height="32.13" KeepTogether="true">
+      <TextObject Name="Text11" Left="7.56" Top="1.89" Width="701.19" Height="26.46" Fill="LinearGradient" Fill.StartColor="LightSlateGray" Fill.EndColor="White" Fill.Angle="345" Fill.Focus="1" Fill.Contrast="1" Text="实习经历" Font="微软雅黑, 12pt, style=Bold" Style="Title"/>
+      <DataBand Name="Data5" Top="418.62" Width="718.2" Height="37.8">
+        <TextObject Name="Text24" Left="7.56" Top="-3.78" Width="701.19" Height="26.46" Fill="LinearGradient" Fill.StartColor="LightSlateGray" Fill.EndColor="White" Fill.Angle="345" Fill.Focus="1" Fill.Contrast="1" Text="项目实践" Font="微软雅黑, 12pt, style=Bold" Style="Title"/>
+      </DataBand>
+    </DataBand>
+    <DataBand Name="Data4" Top="476.42" Width="718.2" Height="22.68"/>
+    <ReportSummaryBand Name="ReportSummary1" Top="576.9" Width="718.2" Height="37.8"/>
+    <ColumnFooterBand Name="ColumnFooter1" Top="519.1" Width="718.2" Height="37.8"/>
+    <PageFooterBand Name="PageFooter1" Top="634.7" Width="718.2" Height="18.9" Guides="0"/>
+  </ReportPage>
+</Report>

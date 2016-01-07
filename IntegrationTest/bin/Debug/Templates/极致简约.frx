@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report StartReportEvent="_StartReport" ReportInfo.Created="12/13/2015 23:05:00" ReportInfo.Modified="12/20/2015 01:37:17" ReportInfo.CreatorVersion="1.2.47.0">
+  <ScriptText>using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Windows.Forms;
+using System.Drawing;
+using System.Data;
+using FastReport;
+using FastReport.Data;
+using FastReport.Dialog;
+using FastReport.Barcode;
+using FastReport.Table;
+using FastReport.Utils;
+
+namespace FastReport
+{
+  public class ReportScript
+  {
+    private void _StartReport(object sender, EventArgs e)
+    {
+      DataWorkExperience.DataSource = Report.GetDataSource(&quot;experience&quot;);
+      DataWorkExperience.Visible = (DataWorkExperience.DataSource as TableDataSource).Table.Rows.Count == 0 ? false : true;
+      DataWorkExperienceTitle.Visible = DataWorkExperience.Visible;
+      
+      DataProjectExperience.DataSource = Report.GetDataSource(&quot;project_experience&quot;);
+      DataProjectExperience.Visible = (DataProjectExperience.DataSource as TableDataSource).Table.Rows.Count == 0 ? false : true;
+      DataProjectExperienceTitle.Visible = DataProjectExperience.Visible;
+      
+      DataSkill.DataSource = Report.GetDataSource(&quot;professional_skill&quot;);
+      DataSkill.Visible = (DataSkill.DataSource as TableDataSource).Table.Rows.Count == 0 ? false : true;
+      DataSkillTitle.Visible = DataSkill.Visible;
+      
+      DataAward.DataSource = Report.GetDataSource(&quot;award&quot;);
+      DataAward.Visible = (DataAward.DataSource as TableDataSource).Table.Rows.Count == 0 ? false : true;
+      DataAwardTitle.Visible = DataAward.Visible;
+    }
+  }
+}
+</ScriptText>
+  <Dictionary/>
+  <ReportPage Name="Page1" Watermark.Enabled="true" Watermark.Text="极致简约，作者：Vincent Lau" Watermark.Font="华文行楷, 60pt" Watermark.TextFill.Color="40, 0, 0, 0">
+    <DataBand Name="Data1" Width="718.2" Height="151.2">
+      <TextObject Name="Text1" Width="718.2" Height="47.25" Text="[person_info.person_name]的个人简历" HorzAlign="Center" VertAlign="Center" Font="华文宋体, 22pt, style=Bold"/>
+      <TextObject Name="Text2" Top="56.7" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="联系方式" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+      <TextObject Name="Text3" Left="9.45" Top="94.5" Width="56.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  Tel:" VertAlign="Center" Font="华文宋体, 10pt, style=Bold"/>
+      <TextObject Name="Text4" Left="9.45" Top="113.4" Width="56.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  Email:" VertAlign="Center" Font="华文宋体, 10pt, style=Bold"/>
+      <TextObject Name="Text5" Left="9.45" Top="132.3" Width="56.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  QQ:" VertAlign="Center" Font="华文宋体, 10pt, style=Bold"/>
+      <TextObject Name="Text6" Left="66.15" Top="94.5" Width="245.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="[person_info.person_tel]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text7" Left="66.15" Top="113.4" Width="245.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="[person_info.person_email]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text8" Left="66.15" Top="132.3" Width="245.7" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="[person_info.person_qq]" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="Data2" Top="155.2" Width="718.2" Height="170.1">
+      <TextObject Name="Text9" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="个人信息" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+      <TextObject Name="Text10" Left="9.45" Top="56.7" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  [person_info.person_name] | [person_info.person_sex] | [Year([person_info.person_birthday])]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text11" Left="9.45" Top="75.6" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  [education_background.edu_degree] | [education_background.edu_school_name] | [education_background.edu_major_name]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text12" Left="9.45" Top="94.5" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  参加工作时间：[Year([person_info.person_workdate])]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text13" Left="9.45" Top="113.4" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  现居：[person_info.living_place]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <TextObject Name="Text14" Left="9.45" Top="132.3" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  [person_info.person_identity_type]：[person_info.person_identity_code]" VertAlign="Center" Font="华文宋体, 10pt"/>
+      <PictureObject Name="Picture1" Left="595.35" Top="56.7" Width="85.05" Height="113.4" SizeMode="StretchImage" DataColumn="person_info.person_avatar"/>
+      <TextObject Name="Text18" Left="9.45" Top="151.2" Width="585.9" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Text="•  政治面貌：[person_info.person_party]" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="DataWorkExperienceTitle" Top="329.3" Width="718.2" Height="47.25">
+      <TextObject Name="Text15" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="工作经历" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+    </DataBand>
+    <DataBand Name="DataWorkExperience" Top="380.55" Width="718.2" Height="66.15" CanGrow="true">
+      <TextObject Name="Text16" Left="9.45" Top="18.9" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="[experience.exp_company_name]（[Year([experience.exp_start_date])]年[Month([experience.exp_start_date])]月~[Year([experience.exp_end_date])]年[Month([experience.exp_end_date])]月）：[experience.exp_job_name]" VertAlign="Center" Font="华文宋体, 11pt, style=Bold"/>
+      <TextObject Name="Text17" Left="18.9" Top="47.25" Width="699.3" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="[experience.exp_job_desc]" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="DataProjectExperienceTitle" Top="450.7" Width="718.2" Height="47.25">
+      <TextObject Name="Text19" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="项目经历" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+    </DataBand>
+    <DataBand Name="DataProjectExperience" Top="501.95" Width="718.2" Height="66.15" CanGrow="true">
+      <TextObject Name="Text20" Left="9.45" Top="18.9" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="[project_experience.project_name]（[Year([project_experience.project_exp_start_date])]年[Month([project_experience.project_exp_start_date])]月~[Year([project_experience.project_exp_end_date])]年[Month([project_experience.project_exp_end_date])]月）" VertAlign="Center" Font="华文宋体, 11pt, style=Bold"/>
+      <TextObject Name="Text21" Left="18.9" Top="47.25" Width="699.3" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="硬件环境：[project_experience.project_hardware_env]    软件环境：[project_experience.project_software_env]    开发环境：[project_experience.project_develop_env]&#13;&#10;&#13;&#10;[project_experience.project_desc]&#13;&#10;&#13;&#10;[project_experience.project_duty]" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="DataSkillTitle" Top="572.1" Width="718.2" Height="85.05">
+      <TextObject Name="Text22" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="技能清单" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+      <TextObject Name="Text23" Left="9.45" Top="56.7" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="以下为我所掌握的技能：" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="DataSkill" Top="661.15" Width="718.2" Height="18.9">
+      <TextObject Name="Text24" Left="9.45" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="•  [professional_skill.familiarity]    [professional_skill.skill_name]" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="DataAwardTitle" Top="684.05" Width="718.2" Height="56.7">
+      <TextObject Name="Text25" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="获得荣誉" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+    </DataBand>
+    <DataBand Name="DataAward" Top="744.75" Width="718.2" Height="18.9">
+      <TextObject Name="Text26" Left="9.45" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="•  [award.award_level]：[award.award_name]，获得时间：[Year([award.award_get_date])]年[Month([award.award_get_date])]月[Day([award.award_get_date])]日" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+    <DataBand Name="Data3" Top="767.65" Width="718.2" Height="56.7">
+      <TextObject Name="Text27" Top="18.9" Width="718.2" Height="28.35" Border.ShadowWidth="3" Border.ShadowColor="LightGray" Border.Lines="Bottom" Border.BottomLine.Color="Silver" Border.BottomLine.Width="3" Text="致谢" VertAlign="Center" Font="华文宋体, 16pt, style=Bold"/>
+    </DataBand>
+    <DataBand Name="Data4" Top="828.35" Width="718.2" Height="18.9">
+      <TextObject Name="Text28" Left="9.45" Width="708.75" Height="18.9" Border.ShadowWidth="3" Border.ShadowColor="LightGray" CanGrow="true" Text="感谢您花时间阅读我的简历，期待能有机会与您共事。" VertAlign="Center" Font="华文宋体, 10pt"/>
+    </DataBand>
+  </ReportPage>
+</Report>
