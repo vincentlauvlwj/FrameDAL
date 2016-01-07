@@ -31,7 +31,7 @@ namespace FrameDAL.Core
             {
                 Configuration config = new Configuration();
                 config.Load();
-                return new AppContext(config);
+                return new AppContext(config); 
             }, 
             true);
 
