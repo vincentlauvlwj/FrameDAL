@@ -20,7 +20,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from certificate where resume_id =?";
-                object result = session.CreateQuery(sql, resume.Id).ExecuteScalar();
+                object result = session.CreateSqlQuery(sql, resume.Id).ExecuteScalar();
                 return (result == null) ? 0 : 2;
             }
         }
@@ -34,7 +34,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from certificate where resume_id=? order by certificate_get_date DESC";
-                certificateList = session.CreateQuery(sql,resume.Id).ExecuteGetList<Certificate>();
+                certificateList = session.CreateSqlQuery(sql,resume.Id).ExecuteGetList<Certificate>();
                 if (certificateList == null)
                 {
                     certificateList = new List<Certificate>();
@@ -55,7 +55,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from certificate_dict";
-                certificateDictList = session.CreateQuery(sql).ExecuteGetList<CertificateDict>();
+                certificateDictList = session.CreateSqlQuery(sql).ExecuteGetList<CertificateDict>();
                 return certificateDictList;
             }
         }

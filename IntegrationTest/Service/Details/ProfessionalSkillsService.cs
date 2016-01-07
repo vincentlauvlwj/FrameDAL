@@ -28,7 +28,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select id, skill_type_name from professional_skill_dict";
-                return session.CreateQuery(sql).ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql).ExecuteGetDataTable();
             }
         }
 
@@ -37,7 +37,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select t1.*, t2.skill_type_name from professional_skill t1, professional_skill_dict t2 where t1.resume_id = ? and t1.skill_type_id = t2.id order by skill_order";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetList <UIProfessionalSkill>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetList <UIProfessionalSkill>();
             }
         }
     }

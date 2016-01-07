@@ -19,7 +19,7 @@ namespace ResumeFactory.Service
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                List<User> result = session.CreateQuery("select * from user where user_name =?", name).ExecuteGetList<User>();
+                List<User> result = session.CreateSqlQuery("select * from user where user_name =?", name).ExecuteGetList<User>();
                 if (result.Count > 0)
                 {
                     if (result[0].UserName == name && result[0].UserPwd == pass)
@@ -74,7 +74,7 @@ namespace ResumeFactory.Service
                  User user = new User();
                  User loginUser = session.Get<User>(user.Id);
                  String sql = "select * from user where user_name = '"+ name +"'";
-                 Object result = session.CreateQuery(sql).ExecuteScalar();
+                 Object result = session.CreateSqlQuery(sql).ExecuteScalar();
                  if (result!=null)                     
                      flag = true;
             }

@@ -27,7 +27,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select t1.* from social_practice t1 where t1.resume_id = ? order by practice_order";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetList<SocialPractice>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetList<SocialPractice>();
             }
         }
     }

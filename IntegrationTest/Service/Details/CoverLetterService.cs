@@ -19,7 +19,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from cover_letter where resume_id=?";
-                object result = session.CreateQuery(sql, resume.Id).ExecuteScalar();
+                object result = session.CreateSqlQuery(sql, resume.Id).ExecuteScalar();
                 return (result == null) ? 0 : 2;
             }
         }
@@ -33,7 +33,7 @@ namespace ResumeFactory.Service.Details
             using( ISession session= AppContext.Instance.OpenSession())
             {
                 String sql = "select * from cover_letter where resume_id=? order by cover_last_modified DESC";
-                coverletterlist= session.CreateQuery(sql,resume.Id).ExecuteGetList<CoverLetter>();
+                coverletterlist= session.CreateSqlQuery(sql,resume.Id).ExecuteGetList<CoverLetter>();
                 if (coverletterlist != null)
                     return coverletterlist;
                 else coverletterlist = new List<CoverLetter>();

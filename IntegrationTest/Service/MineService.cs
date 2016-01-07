@@ -56,7 +56,7 @@ namespace ResumeFactory.Service
                     from resume join resume_template on (resume.template_id = resume_template.id)
                     where user_id = ?
                     order by resume_create_time";
-                return session.CreateQuery(sql, user.Id).ExecuteGetList<ResumeInfo>();
+                return session.CreateSqlQuery(sql, user.Id).ExecuteGetList<ResumeInfo>();
             }
         }
 
@@ -92,7 +92,7 @@ namespace ResumeFactory.Service
                     session.BeginTransaction();
                     foreach (string sql in sqls)
                     {
-                        session.CreateQuery(sql, entity.Id).ExecuteNonQuery();
+                        session.CreateSqlQuery(sql, entity.Id).ExecuteNonQuery();
                     }
                     session.Delete(entity);
                     session.CommitTransaction();

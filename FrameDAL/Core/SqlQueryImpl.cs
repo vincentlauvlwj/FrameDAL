@@ -21,22 +21,16 @@ namespace FrameDAL.Core
     /// 的缓冲区中，当调用ISession.Flush()方法时，才会将缓冲区的操作送到数据库中执行。具体可参考Session的行为。
     /// </summary>
     /// <see cref="FrameDAL.Core.ISession"/>
-    public class QueryImpl : IQuery
+    public class SqlQueryImpl : ISqlQuery
     {
         /// <summary>
         /// 获得该Query所依赖的Session对象
         /// </summary>
-        public ISession Session 
-        {
-            get
-            {
-                return session;
-            }
-        }
+        public ISession Session { get { return session; } }
 
         private SessionImpl session;
 
-        internal QueryImpl(SessionImpl session)
+        internal SqlQueryImpl(SessionImpl session)
         {
             this.session = session;
         }
@@ -69,15 +63,7 @@ namespace FrameDAL.Core
         /// <returns>当事务已开启，执行操作，返回受影响的行数。当事务未开启，将操作放入缓冲区，返回null</returns>
         public int? ExecuteNonQuery()
         {
-            if (session.DbHelper.InTransaction())
-            {
-                return session.DbHelper.ExecuteNonQuery(SqlText, Parameters);
-            }
-            else
-            {
-                session.AddToCache(SqlText, Parameters);
-                return null;
-            }
+            return session.ExecuteOrCache(SqlText, Parameters);
         }
 
         /// <summary>
@@ -86,18 +72,7 @@ namespace FrameDAL.Core
         /// <returns>返回一个标量，若没有结果，返回null</returns>
         public object ExecuteScalar()
         {
-            try
-            {
-                session.BeginTransaction();
-                object result = session.DbHelper.ExecuteScalar(SqlText, Parameters);
-                session.CommitTransaction();
-                return result;
-            }
-            catch
-            {
-                if(session.InTransaction()) session.RollbackTransaction();
-                throw;
-            }
+            return session.DbHelper.ExecuteScalar(SqlText, Parameters);
         }
 
         /// <summary>
@@ -106,19 +81,8 @@ namespace FrameDAL.Core
         /// <returns>返回数据集</returns>
         public DataSet ExecuteGetDataSet()
         {
-            try
-            {
-                session.BeginTransaction();
-                string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
-                DataSet result = session.DbHelper.ExecuteGetDataSet(sql, Parameters);
-                session.CommitTransaction();
-                return result;
-            }
-            catch
-            {
-                if(session.InTransaction()) session.RollbackTransaction();
-                throw;
-            }
+            string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+            return session.DbHelper.ExecuteGetDataSet(sql, Parameters);
         }
 
         /// <summary>
@@ -127,19 +91,8 @@ namespace FrameDAL.Core
         /// <returns>返回数据表</returns>
         public DataTable ExecuteGetDataTable()
         {
-            try
-            {
-                session.BeginTransaction();
-                string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
-                DataTable result = session.DbHelper.ExecuteGetDataTable(sql, Parameters);
-                session.CommitTransaction();
-                return result;
-            }
-            catch
-            {
-                if(session.InTransaction()) session.RollbackTransaction();
-                throw;
-            }
+            string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
+            return session.DbHelper.ExecuteGetDataTable(sql, Parameters);
         }
 
         private void CheckRepeatColumnName(DataTable dt)

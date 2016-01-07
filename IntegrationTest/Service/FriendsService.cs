@@ -21,7 +21,7 @@ namespace ResumeFactory.Service
                                 left join `user` t3 on t1.user_id = t3.id 
                                 left join resume_template t4 on t1.template_id = t4.id
                                group by t2.resume_id";
-                IQuery query = session.CreateQuery(sql, user.Id);
+                ISqlQuery query = session.CreateSqlQuery(sql, user.Id);
                 query.PageSize = size;
                 query.FirstResult = (page - 1) * size;
                 return query.ExecuteGetList<FriendsResume>();

@@ -35,7 +35,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select t1.* from award t1 where t1.resume_id = ? order by award_order asc";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetList<Award>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetList<Award>();
             }
         }
 
@@ -53,7 +53,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select * from school_activity where resume_id = ?";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetEntity<SchoolActivity>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetEntity<SchoolActivity>();
             }
         }
 
@@ -65,7 +65,7 @@ namespace ResumeFactory.Service.Details
                 {
                     session.BeginTransaction();
                     string sql = "delete from scholarship where resume_id = ?";
-                    session.CreateQuery(sql, resume.Id).ExecuteNonQuery();
+                    session.CreateSqlQuery(sql, resume.Id).ExecuteNonQuery();
                     foreach (Scholarship ss in scholarships)
                     {
                         if (string.IsNullOrEmpty(ss.Id)) session.Add(ss);
@@ -86,7 +86,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select * from scholarship where resume_id = ?";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetList<Scholarship>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetList<Scholarship>();
             }
         }
     }

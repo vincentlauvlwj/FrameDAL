@@ -15,7 +15,7 @@ namespace FrameDAL.Core
     /// 的缓冲区中，当调用Sess.Flush()方法时，才会将缓冲区的操作送到数据库中执行。具体可参考Session的行为。
     /// </summary>
     /// <see cref="FrameDAL.Core.ISession"/>
-    public interface IQuery
+    public interface ISqlQuery
     {
         /// <summary>
         /// 获得该Query所依赖的Session对象

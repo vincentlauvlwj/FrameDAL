@@ -20,7 +20,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from project_experience where resume_id=?";
-                object result = session.CreateQuery(sql, resume.Id).ExecuteScalar();
+                object result = session.CreateSqlQuery(sql, resume.Id).ExecuteScalar();
                 return (result == null) ? 0 : 2;
             }
         }
@@ -34,7 +34,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from project_experience where resume_id=?";
-                peList = session.CreateQuery(sql, resume.Id).ExecuteGetList<ProjectExperience>();
+                peList = session.CreateSqlQuery(sql, resume.Id).ExecuteGetList<ProjectExperience>();
                 if (peList != null)
                     return peList;
                 return null;

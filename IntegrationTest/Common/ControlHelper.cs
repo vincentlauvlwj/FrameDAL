@@ -112,7 +112,7 @@ namespace ResumeFactory.Common
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 string sql = "select area_code, area_name from area_dict where area_code like '__0000' order by area_code";
-                return session.CreateQuery(sql).ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql).ExecuteGetDataTable();
             }
         }
 
@@ -121,7 +121,7 @@ namespace ResumeFactory.Common
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 string sql = "select area_code, area_name from area_dict where area_code like ? order by area_code";
-                return session.CreateQuery(sql, provinceCode.Substring(0, 2) + "__00").ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql, provinceCode.Substring(0, 2) + "__00").ExecuteGetDataTable();
             }
         }
 
@@ -130,7 +130,7 @@ namespace ResumeFactory.Common
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 string sql = "select area_code, area_name from area_dict where area_code like ? order by area_code";
-                return session.CreateQuery(sql, cityCode.Substring(0, 4) + "__").ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql, cityCode.Substring(0, 4) + "__").ExecuteGetDataTable();
             }
         }
 
@@ -159,7 +159,7 @@ namespace ResumeFactory.Common
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 string sql = "select distinct job_class from job_dict";
-                return session.CreateQuery(sql).ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql).ExecuteGetDataTable();
             }
         }
 
@@ -168,7 +168,7 @@ namespace ResumeFactory.Common
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 string sql = "select job_subclass from job_dict where job_class = ?";
-                return session.CreateQuery(sql, jobClass).ExecuteGetDataTable();
+                return session.CreateSqlQuery(sql, jobClass).ExecuteGetDataTable();
             }
         }
     }

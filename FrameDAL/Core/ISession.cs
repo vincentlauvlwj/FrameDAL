@@ -52,6 +52,8 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         object Add(object entity);
 
+        object Add(object entity, bool enableCascade);
+
         /// <summary>
         /// 更新数据库中的实体
         /// </summary>
@@ -59,20 +61,14 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void Update(object entity);
 
+        void Update(object entity, bool enableCascade);
+
         /// <summary>
         /// 在数据库中删除实体
         /// </summary>
         /// <param name="entity">要删除的实体</param>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void Delete(object entity);
-
-        /// <summary>
-        /// 删除数据库中指定主键的一条记录
-        /// </summary>
-        /// <typeparam name="T">要删除的记录所属的实体类型</typeparam>
-        /// <param name="id">主键值</param>
-        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        void DeleteById<T>(object id);
 
         /// <summary>
         /// 从数据库中获得实体
@@ -89,14 +85,14 @@ namespace FrameDAL.Core
         /// 刷新缓存，把缓存中的非查询操作全部送到数据库中执行
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        void Flush();
+        void AcceptChanges();
 
         /// <summary>
         /// 创建Query对象，不同的数据库使用不同的Query对象
         /// </summary>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        IQuery CreateQuery();
+        ISqlQuery CreateSqlQuery();
 
         /// <summary>
         /// 创建Query对象，同时使用给定参数对其进行初始化
@@ -105,7 +101,7 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL命令参数</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        IQuery CreateQuery(string sqlText, params object[] parameters);
+        ISqlQuery CreateSqlQuery(string sqlText, params object[] parameters);
 
         /// <summary>
         /// 创建命名Query对象，从配置文件中读取给定名字的SQL对其进行初始化
@@ -114,7 +110,7 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL参数值</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        IQuery CreateNamedQuery(string name, params object[] parameters);
+        ISqlQuery CreateNamedSqlQuery(string name, params object[] parameters);
 
         /// <summary>
         /// 关闭Session，Session关闭时，若已开启事务但未提交，会自动回滚事务。若缓冲区不为空，会刷新缓冲区

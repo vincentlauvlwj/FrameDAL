@@ -16,7 +16,7 @@ namespace ResumeFactory.Service.Details
                                 where resume_id=?";
             using (ISession session = context.OpenSession())
             {
-                object count = session.CreateQuery(sql, resume.Id).ExecuteScalar();
+                object count = session.CreateSqlQuery(sql, resume.Id).ExecuteScalar();
                 if (Convert.ToInt32(count) == 0)
                     return 0;
                 return 2;
@@ -29,7 +29,7 @@ namespace ResumeFactory.Service.Details
                                 where resume_id=?";
             using (ISession session = context.OpenSession())
             {
-                return session.CreateQuery(sql, resume.Id).ExecuteGetList<TrainExperience>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetList<TrainExperience>();
             }
         }
     }

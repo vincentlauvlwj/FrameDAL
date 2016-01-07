@@ -22,7 +22,7 @@ namespace ResumeFactory.Service.Details
         {
             using (ISession session = context.OpenSession())
             {
-                return session.CreateQuery("select industry_type from industry_dict").ExecuteGetDataTable();
+                return session.CreateSqlQuery("select industry_type from industry_dict").ExecuteGetDataTable();
             }
         }
 
@@ -36,7 +36,7 @@ namespace ResumeFactory.Service.Details
             using (ISession session = context.OpenSession())
             {
                 string sql = "select * from expect where resume_id = ?";
-                return session.CreateQuery(sql, resume.Id).ExecuteGetEntity<Expect>();
+                return session.CreateSqlQuery(sql, resume.Id).ExecuteGetEntity<Expect>();
             }
         }
 

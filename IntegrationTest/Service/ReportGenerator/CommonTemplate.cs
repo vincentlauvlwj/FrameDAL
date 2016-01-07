@@ -61,7 +61,7 @@ namespace ResumeFactory.Service.ReportGenerator
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from area_dict where area_code = ?";
-                DataTable ad = session.CreateQuery(sql, code).ExecuteGetDataTable();
+                DataTable ad = session.CreateSqlQuery(sql, code).ExecuteGetDataTable();
                 return ad;
             }
         }
@@ -70,7 +70,7 @@ namespace ResumeFactory.Service.ReportGenerator
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from person_info where resume_id=?";
-                DataTable pi = session.CreateQuery(sql, resume.Id).ExecuteGetDataTable();
+                DataTable pi = session.CreateSqlQuery(sql, resume.Id).ExecuteGetDataTable();
                 return pi;
             }
         }
@@ -80,7 +80,7 @@ namespace ResumeFactory.Service.ReportGenerator
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from expect where resume_id=?";
-                DataTable pi = session.CreateQuery(sql, resume.Id).ExecuteGetDataTable();
+                DataTable pi = session.CreateSqlQuery(sql, resume.Id).ExecuteGetDataTable();
                 return pi;
             }
         }
@@ -89,7 +89,7 @@ namespace ResumeFactory.Service.ReportGenerator
             using (ISession session = AppContext.Instance.OpenSession())
             {
                 String sql = "select * from education_background where resume_id=?";
-                DataTable pi = session.CreateQuery(sql, resume.Id).ExecuteGetDataTable();
+                DataTable pi = session.CreateSqlQuery(sql, resume.Id).ExecuteGetDataTable();
                 return pi;
             }
         }

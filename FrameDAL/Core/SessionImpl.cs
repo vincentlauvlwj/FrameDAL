@@ -44,35 +44,57 @@ namespace FrameDAL.Core
             }
         }
 
-        private class Bundle 
+        private class CacheBundle 
         {
-            public string SqlText;
-            public object[] Parameters;
+            public string SqlText { get; set; }
+            public object[] Parameters { get; set; }
+            public object EntityRetrieveId { get; set; }
         }
 
-        private Queue<Bundle> cache;
+        private Queue<CacheBundle> cache;
 
         internal SessionImpl(IDbHelper db)
         {
             this.db = db;
             IsClosed = false;
             threadId = Thread.CurrentThread.ManagedThreadId;
-            cache = new Queue<Bundle>();
+            cache = new Queue<CacheBundle>();
         }
 
-        /// <summary>
-        /// 将一个非查询操作放入缓冲区
-        /// </summary>
-        /// <param name="sqlText">SQL命令</param>
-        /// <param name="parameters">SQL命令的参数</param>
-        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        internal virtual void AddToCache(string sqlText, object[] parameters)
+        internal virtual int? ExecuteOrCache(string sqlText, object[] parameters)
         {
             CheckSessionStatus();
-            Bundle bundle = new Bundle();
-            bundle.SqlText = sqlText;
-            bundle.Parameters = parameters;
-            cache.Enqueue(bundle);
+            return ExecuteOrCache(sqlText, parameters, null);
+        }
+
+        private int ExecuteRetrieveId(string sqlText, object[] parameters, object entityRetrieveId)
+        {
+            int count = db.ExecuteNonQuery(sqlText, parameters);
+            if(entityRetrieveId != null)
+            {
+                PropertyInfo idProp = entityRetrieveId.GetType().GetIdProperty();
+                object id = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(idProp.GetIdAttribute().SeqName));
+                idProp.SetValueSafely(entityRetrieveId, id);
+            }
+            return count;
+        }
+
+        private int? ExecuteOrCache(string sqlText, object[] parameters, object entityRetrieveId)
+        {
+            CheckSessionStatus();
+            if (db.InTransaction())
+            {
+                return ExecuteRetrieveId(sqlText, parameters, entityRetrieveId);
+            }
+            else
+            {
+                CacheBundle bundle = new CacheBundle();
+                bundle.SqlText = sqlText;
+                bundle.Parameters = parameters;
+                bundle.EntityRetrieveId = entityRetrieveId;
+                cache.Enqueue(bundle);
+                return null;
+            }
         }
 
         /// <summary>
@@ -92,7 +114,6 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             DbHelper.BeginTransaction();
-            Flush();
         }
 
         /// <summary>
@@ -157,7 +178,7 @@ namespace FrameDAL.Core
                     break;
 
                 case GeneratorType.Sequence:
-                    object nextval = CreateQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
+                    object nextval = CreateSqlQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
                     idProp.SetValueSafely(entity, nextval);
                     break;
 
@@ -174,10 +195,10 @@ namespace FrameDAL.Core
                 }
             }
 
-            CreateQuery(
-                db.Dialect.GetInsertSql(entity.GetType(), enableCascade), 
-                GetInsertParameters(entity, enableCascade)
-                ).ExecuteNonQuery();
+            ExecuteOrCache(
+                db.Dialect.GetInsertSql(entity.GetType(), enableCascade),
+                GetInsertParameters(entity, enableCascade),
+                id.GeneratorType == GeneratorType.Identity ? entity : null);
 
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
@@ -191,12 +212,6 @@ namespace FrameDAL.Core
                 { 
                     
                 }
-            }
-
-            if (id.GeneratorType == GeneratorType.Identity)
-            {
-                object pk = CreateQuery(db.Dialect.GetGeneratedKeySql(id.SeqName)).ExecuteScalar();
-                idProp.SetValueSafely(entity, pk);
             }
             return idProp.GetValue(entity, null);
         }
@@ -234,10 +249,9 @@ namespace FrameDAL.Core
         public void Update(object entity, bool enableCascade)
         {
             CheckSessionStatus();
-            CreateQuery(
-                db.Dialect.GetUpdateSql(entity.GetType(), enableCascade), 
-                GetUpdateParameters(entity, enableCascade)
-                ).ExecuteNonQuery();
+            ExecuteOrCache(
+                db.Dialect.GetUpdateSql(entity.GetType(), enableCascade),
+                GetUpdateParameters(entity, enableCascade));
         }
 
         /// <summary>
@@ -249,19 +263,7 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             object id = entity.GetType().GetIdProperty().GetValue(entity, null);
-            CreateQuery(db.Dialect.GetDeleteSql(entity.GetType()), id).ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// 删除数据库中指定主键的一条记录
-        /// </summary>
-        /// <typeparam name="T">要删除的记录所属的实体类型</typeparam>
-        /// <param name="id">主键值</param>
-        /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void DeleteById<T>(object id)
-        {
-            CheckSessionStatus();
-            CreateQuery(db.Dialect.GetDeleteSql(typeof(T)), id).ExecuteNonQuery();
+            ExecuteOrCache(db.Dialect.GetDeleteSql(entity.GetType()), new object[] { id });
         }
 
         /// <summary>
@@ -280,7 +282,7 @@ namespace FrameDAL.Core
         {
             CheckSessionStatus();
             Dictionary<string, string> resultMap;
-            IQuery query = CreateQuery();
+            ISqlQuery query = CreateSqlQuery();
             query.SqlText = db.Dialect.GetSelectSql(typeof(T), enableLazy, out resultMap);
             query.Parameters = new object[] { id };
             query.ResultMap = resultMap;
@@ -291,30 +293,24 @@ namespace FrameDAL.Core
         /// 刷新缓存，把缓存中的非查询操作全部送到数据库中执行
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Flush()
+        public void AcceptChanges()
         {
             CheckSessionStatus();
             if (cache.Count == 0) return;
-            if (db.InTransaction())
+            try
             {
+                db.BeginTransaction();
                 while (cache.Count != 0)
                 {
-                    Bundle bundle = cache.Dequeue();
-                    CreateQuery(bundle.SqlText, bundle.Parameters).ExecuteNonQuery();
+                    CacheBundle bundle = cache.Dequeue();
+                    ExecuteRetrieveId(bundle.SqlText, bundle.Parameters, bundle.EntityRetrieveId);
                 }
+                db.CommitTransaction();
             }
-            else
+            catch
             {
-                try
-                {
-                    BeginTransaction();
-                    CommitTransaction();
-                }
-                catch
-                {
-                    if(InTransaction()) RollbackTransaction();
-                    throw;
-                }
+                if (db.InTransaction()) db.RollbackTransaction();
+                throw;
             }
         }
 
@@ -323,10 +319,10 @@ namespace FrameDAL.Core
         /// </summary>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public IQuery CreateQuery()
+        public ISqlQuery CreateSqlQuery()
         {
             CheckSessionStatus();
-            return new QueryImpl(this);
+            return new SqlQueryImpl(this);
         }
 
         /// <summary>
@@ -336,10 +332,10 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL命令参数</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public IQuery CreateQuery(string sqlText, params object[] parameters)
+        public ISqlQuery CreateSqlQuery(string sqlText, params object[] parameters)
         {
             CheckSessionStatus();
-            IQuery query = CreateQuery();
+            ISqlQuery query = CreateSqlQuery();
             query.SqlText = sqlText;
             query.Parameters = parameters;
             return query;
@@ -352,10 +348,10 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL参数值</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public IQuery CreateNamedQuery(string name, params object[] parameters)
+        public ISqlQuery CreateNamedSqlQuery(string name, params object[] parameters)
         {
             CheckSessionStatus();
-            IQuery query = CreateQuery();
+            ISqlQuery query = CreateSqlQuery();
             query.SqlText = AppContext.Instance.Configuration.GetNamedSql(name);
             query.Parameters = parameters;
             return query;
@@ -384,7 +380,7 @@ namespace FrameDAL.Core
             }
             else
             {
-                Flush();
+                AcceptChanges();
             }
             IsClosed = true;
         }

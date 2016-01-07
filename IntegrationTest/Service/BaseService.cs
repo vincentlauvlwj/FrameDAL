@@ -71,18 +71,6 @@ namespace ResumeFactory.Service
         }
 
         /// <summary>
-        /// 根据主键删除记录
-        /// </summary>
-        /// <param name="id">要删除的记录的主键</param>
-        public virtual void DeleteById(object id)
-        {
-            using (ISession session = context.OpenSession())
-            {
-                session.DeleteById<T>(id);
-            }
-        }
-
-        /// <summary>
         /// 获得一条记录
         /// </summary>
         /// <param name="id">要获得的记录的主键</param>
@@ -104,7 +92,7 @@ namespace ResumeFactory.Service
             using (ISession session = context.OpenSession())
             {
                 string tableName = typeof(T).GetTableAttribute().Name;
-                return session.CreateQuery("select * from " + tableName).ExecuteGetList<T>();
+                return session.CreateSqlQuery("select * from " + tableName).ExecuteGetList<T>();
             }
         }
 
@@ -120,7 +108,7 @@ namespace ResumeFactory.Service
             using (ISession session = context.OpenSession())
             {
                 string tableName = typeof(T).GetTableAttribute().Name;
-                IQuery query = session.CreateQuery("select * from " + tableName);
+                ISqlQuery query = session.CreateSqlQuery("select * from " + tableName);
                 query.FirstResult = firstResult;
                 query.PageSize = pageSize;
                 return query.ExecuteGetList<T>();
@@ -137,7 +125,7 @@ namespace ResumeFactory.Service
             using (ISession session = context.OpenSession())
             {
                 string tableName = typeof(T).GetTableAttribute().Name;
-                object totalPage = session.CreateQuery("select count(*) from " + tableName).ExecuteScalar();
+                object totalPage = session.CreateSqlQuery("select count(*) from " + tableName).ExecuteScalar();
                 int i = Convert.ToInt32(totalPage);
                 return i / pageSize + (i % pageSize == 0 ? 0 : 1);
             }

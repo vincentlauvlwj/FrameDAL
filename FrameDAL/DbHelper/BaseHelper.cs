@@ -78,9 +78,9 @@ namespace FrameDAL.DbHelper
 
         protected class Bundle
         {
-            public DbConnection Connection;
-            public DbTransaction Transaction;
-            public int Tier;
+            public DbConnection Connection { get; set; }
+            public DbTransaction Transaction { get; set; }
+            public int Tier { get; set; }
         }
 
         protected ThreadLocal<Bundle> local = new ThreadLocal<Bundle>();
