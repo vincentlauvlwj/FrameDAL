@@ -69,7 +69,9 @@ namespace FrameDAL.Core
             }
             else
             {
-                session.AddToCache(args => (args[0] as ISqlQuery).ExecuteNonQuery(), new object[] { this });
+                session.AddToCache(
+                    args => session.DbHelper.ExecuteNonQuery(args[0] as string, args[1]), 
+                    new object[] { SqlText, Parameters });
                 return null;
             }
         }
