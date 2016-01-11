@@ -46,9 +46,8 @@ namespace FrameDAL.Core
 
         private class CacheBundle 
         {
-            public string SqlText { get; set; }
+            public Action<object[]> Action { get; set; }
             public object[] Parameters { get; set; }
-            public object EntityRetrieveId { get; set; }
         }
 
         private Queue<CacheBundle> cache;
@@ -61,40 +60,12 @@ namespace FrameDAL.Core
             cache = new Queue<CacheBundle>();
         }
 
-        internal virtual int? ExecuteOrCache(string sqlText, object[] parameters)
+        internal virtual void AddToCache(Action<object[]> action, object[] parameters)
         {
-            CheckSessionStatus();
-            return ExecuteOrCache(sqlText, parameters, null);
-        }
-
-        private int ExecuteRetrieveId(string sqlText, object[] parameters, object entityRetrieveId)
-        {
-            int count = db.ExecuteNonQuery(sqlText, parameters);
-            if(entityRetrieveId != null)
-            {
-                PropertyInfo idProp = entityRetrieveId.GetType().GetIdProperty();
-                object id = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(idProp.GetIdAttribute().SeqName));
-                idProp.SetValueSafely(entityRetrieveId, id);
-            }
-            return count;
-        }
-
-        private int? ExecuteOrCache(string sqlText, object[] parameters, object entityRetrieveId)
-        {
-            CheckSessionStatus();
-            if (db.InTransaction())
-            {
-                return ExecuteRetrieveId(sqlText, parameters, entityRetrieveId);
-            }
-            else
-            {
-                CacheBundle bundle = new CacheBundle();
-                bundle.SqlText = sqlText;
-                bundle.Parameters = parameters;
-                bundle.EntityRetrieveId = entityRetrieveId;
-                cache.Enqueue(bundle);
-                return null;
-            }
+            CacheBundle bundle = new CacheBundle();
+            bundle.Action = action;
+            bundle.Parameters = parameters;
+            cache.Enqueue(bundle);
         }
 
         /// <summary>
@@ -169,51 +140,63 @@ namespace FrameDAL.Core
         public object Add(object entity, bool enableCascade)
         {
             CheckSessionStatus();
-            PropertyInfo idProp = entity.GetType().GetIdProperty();
-            IdAttribute id = idProp.GetIdAttribute();
-            switch (id.GeneratorType)
+            if (db.InTransaction())
             {
-                case GeneratorType.Uuid:
-                    idProp.SetValueSafely(entity, Guid.NewGuid().ToString());
-                    break;
-
-                case GeneratorType.Sequence:
-                    object nextval = CreateSqlQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
-                    idProp.SetValueSafely(entity, nextval);
-                    break;
-
-                default:
-                    break;
-            }
-
-            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
-            {
-                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                PropertyInfo idProp = entity.GetType().GetIdProperty();
+                IdAttribute id = idProp.GetIdAttribute();
+                switch (id.GeneratorType)
                 {
-                    
+                    case GeneratorType.Uuid:
+                        idProp.SetValueSafely(entity, Guid.NewGuid().ToString());
+                        break;
+
+                    case GeneratorType.Sequence:
+                        object nextval = CreateSqlQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
+                        idProp.SetValueSafely(entity, nextval);
+                        break;
+
+                    default:
+                        break;
                 }
-            }
 
-            ExecuteOrCache(
-                db.Dialect.GetInsertSql(entity.GetType(), enableCascade),
-                GetInsertParameters(entity, enableCascade),
-                id.GeneratorType == GeneratorType.Identity ? entity : null);
-
-            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
-            {
-                OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
-                if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
                 {
+                    ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                    if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                    {
 
+                    }
                 }
-                ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
-                if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
-                { 
-                    
+
+                db.ExecuteNonQuery(
+                    db.Dialect.GetInsertSql(entity.GetType(), enableCascade),
+                    GetInsertParameters(entity, enableCascade));
+                if(id.GeneratorType == GeneratorType.Identity)
+                {
+                    object pk = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(id.SeqName));
+                    idProp.SetValueSafely(entity, pk);
                 }
+
+                foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+                {
+                    OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                    if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                    {
+
+                    }
+                    ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
+                    if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                    {
+
+                    }
+                }
+                return idProp.GetValue(entity, null);
             }
-            return idProp.GetValue(entity, null);
+            else
+            {
+                AddToCache(args => Add(args[0], (bool)args[1]), new object[] { entity, enableCascade });
+                return null;
+            }
         }
 
         /// <summary>
@@ -249,9 +232,16 @@ namespace FrameDAL.Core
         public void Update(object entity, bool enableCascade)
         {
             CheckSessionStatus();
-            ExecuteOrCache(
-                db.Dialect.GetUpdateSql(entity.GetType(), enableCascade),
-                GetUpdateParameters(entity, enableCascade));
+            if (db.InTransaction())
+            {
+                db.ExecuteNonQuery(
+                    db.Dialect.GetUpdateSql(entity.GetType(), enableCascade),
+                    GetUpdateParameters(entity, enableCascade));
+            }
+            else
+            {
+                AddToCache(args => Update(args[0], (bool)args[1]), new object[] { entity, enableCascade });
+            }
         }
 
         /// <summary>
@@ -261,9 +251,21 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Delete(object entity)
         {
+            Delete(entity, AppContext.Instance.Configuration.EnableCascade);
+        }
+
+        public void Delete(object entity, bool enableCascade)
+        {
             CheckSessionStatus();
-            object id = entity.GetType().GetIdProperty().GetValue(entity, null);
-            ExecuteOrCache(db.Dialect.GetDeleteSql(entity.GetType()), new object[] { id });
+            if (db.InTransaction())
+            {
+                object id = entity.GetType().GetIdProperty().GetValue(entity, null);
+                db.ExecuteNonQuery(db.Dialect.GetDeleteSql(entity.GetType()), new object[] { id });
+            }
+            else
+            {
+                AddToCache(args => Delete(args[0], (bool)args[1]), new object[] { entity, enableCascade });
+            }
         }
 
         /// <summary>
@@ -303,7 +305,7 @@ namespace FrameDAL.Core
                 while (cache.Count != 0)
                 {
                     CacheBundle bundle = cache.Dequeue();
-                    ExecuteRetrieveId(bundle.SqlText, bundle.Parameters, bundle.EntityRetrieveId);
+                    bundle.Action(bundle.Parameters);
                 }
                 db.CommitTransaction();
             }

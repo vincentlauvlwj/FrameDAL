@@ -70,6 +70,8 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void Delete(object entity);
 
+        void Delete(object entity, bool enableCascade)
+
         /// <summary>
         /// 从数据库中获得实体
         /// </summary>

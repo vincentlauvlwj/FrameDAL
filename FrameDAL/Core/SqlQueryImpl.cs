@@ -63,7 +63,15 @@ namespace FrameDAL.Core
         /// <returns>当事务已开启，执行操作，返回受影响的行数。当事务未开启，将操作放入缓冲区，返回null</returns>
         public int? ExecuteNonQuery()
         {
-            return session.ExecuteOrCache(SqlText, Parameters);
+            if(session.DbHelper.InTransaction())
+            {
+                return session.DbHelper.ExecuteNonQuery(SqlText, Parameters);
+            }
+            else
+            {
+                session.AddToCache(args => (args[0] as ISqlQuery).ExecuteNonQuery(), new object[] { this });
+                return null;
+            }
         }
 
         /// <summary>
