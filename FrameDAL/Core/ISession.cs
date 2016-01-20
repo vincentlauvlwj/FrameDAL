@@ -63,6 +63,10 @@ namespace FrameDAL.Core
 
         void Update(object entity, bool enableCascade);
 
+        void Save(object entity);
+
+        void Save(object entity, bool enableCascade);
+
         /// <summary>
         /// 在数据库中删除实体
         /// </summary>
@@ -70,7 +74,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void Delete(object entity);
 
-        void Delete(object entity, bool enableCascade)
+        void Delete(object entity, bool enableCascade);
 
         /// <summary>
         /// 从数据库中获得实体

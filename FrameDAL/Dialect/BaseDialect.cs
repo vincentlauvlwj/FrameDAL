@@ -276,5 +276,19 @@ namespace FrameDAL.Dialect
             sb.Append("=?)");
             return GetSelectSql(prop.PropertyType.GetGenericArguments()[0], enableLazy, out resultMap, sb.ToString());
         }
+
+        public virtual string GetCheckExistSql(Type type)
+        {
+            PropertyInfo idProp = type.GetIdProperty();
+            StringBuilder sb = new StringBuilder();
+            sb.Append("select count(");
+            sb.Append(idProp.GetColumnAttribute().Name);
+            sb.Append(") from ");
+            sb.Append(type.GetTableAttribute().Name);
+            sb.Append(" where ");
+            sb.Append(idProp.GetColumnAttribute().Name);
+            sb.Append("=?");
+            return sb.ToString();
+        }
     }
 }

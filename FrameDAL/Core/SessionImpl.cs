@@ -244,6 +244,32 @@ namespace FrameDAL.Core
             }
         }
 
+        public void Save(object entity)
+        {
+            Save(entity, AppContext.Instance.Configuration.EnableCascade);
+        }
+
+        public void Save(object entity, bool enableCascade)
+        {
+            CheckSessionStatus();
+            if (db.InTransaction())
+            {
+                PropertyInfo idProp = entity.GetType().GetIdProperty();
+                if ((int)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), idProp.GetValue(entity, null)) == 0)
+                {
+                    Add(entity, enableCascade);
+                }
+                else
+                {
+                    Update(entity, enableCascade);
+                }
+            }
+            else
+            {
+                AddToCache(args => Save(args[0], (bool)args[1]), new object[] { entity, enableCascade });
+            }
+        }
+
         /// <summary>
         /// 在数据库中删除实体
         /// </summary>
