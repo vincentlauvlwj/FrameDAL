@@ -290,5 +290,24 @@ namespace FrameDAL.Dialect
             sb.Append("=?");
             return sb.ToString();
         }
+
+        public virtual string GetDeleteItemSql(PropertyInfo onetToManyProp, int countLeft)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("delete from ");
+            sb.Append(onetToManyProp.PropertyType.GetTableAttribute().Name);
+            sb.Append(" where ");
+            sb.Append(onetToManyProp.GetOneToManyAttribute().InverseForeignKey);
+            sb.Append("=?");
+            if (countLeft > 0)
+            {
+                sb.Append(" and ");
+                sb.Append(onetToManyProp.PropertyType.GetIdProperty().GetColumnAttribute().Name);
+                sb.Append(" not in (" + "?, ".Repeat(countLeft));
+                sb.Remove(sb.Length - 2, 2);
+                sb.Append(")");
+            }
+            return sb.ToString();
+        }
     }
 }

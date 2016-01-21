@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -137,6 +138,16 @@ namespace FrameDAL.Core
             return parameters.ToArray();
         }
 
+        private void PreSave(object entity, bool enableCascade)
+        {
+
+        }
+
+        private void PostSave(object entity, bool enableCascade)
+        {
+
+        }
+
         public object Add(object entity, bool enableCascade)
         {
             CheckSessionStatus();
@@ -164,7 +175,7 @@ namespace FrameDAL.Core
                     ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
                     if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
                     {
-
+                        Save(prop.GetValue(entity, null), false);
                     }
                 }
 
@@ -182,7 +193,20 @@ namespace FrameDAL.Core
                     OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
                     if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
                     {
-
+                        IList list = prop.GetValue(entity, null) as IList;
+                        List<object> parameters = new List<object>();
+                        parameters.Add(idProp.GetValue(entity, null));
+                        if (list != null)
+                        {
+                            foreach (object item in list)
+                            {
+                                Save(item, false);
+                                parameters.Add(prop.PropertyType.GetIdProperty().GetValue(item, null));
+                            }
+                        }
+                        db.ExecuteNonQuery(
+                            db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count), 
+                            parameters.ToArray());
                     }
                     ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
                     if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)

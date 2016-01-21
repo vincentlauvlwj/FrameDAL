@@ -75,5 +75,7 @@ namespace FrameDAL.Dialect
         string GetLoadManyToManyPropertySql(PropertyInfo prop, bool enableLazy, out Dictionary<string, string> resultMap);
 
         string GetCheckExistSql(Type type);
+
+        string GetDeleteItemSql(PropertyInfo onetToManyProp, int countLeft);
     }
 }
