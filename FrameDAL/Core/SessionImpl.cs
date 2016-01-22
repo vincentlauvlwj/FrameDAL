@@ -274,8 +274,8 @@ namespace FrameDAL.Core
             CheckSessionStatus();
             if (db.InTransaction())
             {
-                PropertyInfo idProp = entity.GetType().GetIdProperty();
-                if ((int)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), idProp.GetValue(entity, null)) == 0)
+                object id = entity.GetType().GetIdProperty().GetValue(entity, null);
+                if (id == null || (int)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), id) == 0)
                 {
                     Add(entity, enableCascade);
                 }
