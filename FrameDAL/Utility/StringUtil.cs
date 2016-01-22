@@ -7,7 +7,7 @@ namespace FrameDAL.Utility
 {
     public static class StringUtil
     {
-        public static string Repeat(this string str, uint times)
+        public static string Repeat(this string str, int times)
         {
             StringBuilder sb = new StringBuilder();
             while (times-- > 0)

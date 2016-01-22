@@ -41,7 +41,7 @@ namespace FrameDAL.Dialect
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">该类没有添加Table特性，或者Table.Name属性为空或空白字符串</exception>
         /// <exception cref="EntityMappingException">该类中没有任何公开属性</exception>
-        public virtual string GetInsertSql(Type type, bool enableCascade)
+        public virtual string GetInsertSql(Type type)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("insert into ");
@@ -57,7 +57,7 @@ namespace FrameDAL.Dialect
                     count++;
                 }
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                if (manyToOne != null)
                 {
                     sb.Append(manyToOne.ForeignKey + ", ");
                     count++;
@@ -82,7 +82,7 @@ namespace FrameDAL.Dialect
         /// <returns>update sql</returns>
         /// <exception cref="ArgumentNullException">type为null</exception>
         /// <exception cref="EntityMappingException">实体类映射错误</exception>
-        public virtual string GetUpdateSql(Type type, bool enableCascade)
+        public virtual string GetUpdateSql(Type type)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("update ");
@@ -98,7 +98,7 @@ namespace FrameDAL.Dialect
                     count++;
                 }
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Update) != 0 && enableCascade)
+                if (manyToOne != null)
                 {
                     sb.Append(manyToOne.ForeignKey + "=?, ");
                     count++;

@@ -119,7 +119,7 @@ namespace FrameDAL.Core
             return Add(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
-        private object[] GetInsertParameters(object entity, bool enableCascade)
+        private object[] GetInsertParameters(object entity)
         {
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
@@ -130,7 +130,7 @@ namespace FrameDAL.Core
                     parameters.Add(prop.GetValue(entity, null));
                 }
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                if (manyToOne != null)
                 {
                     parameters.Add(prop.GetValue(entity, null));
                 }
@@ -179,9 +179,7 @@ namespace FrameDAL.Core
                     }
                 }
 
-                db.ExecuteNonQuery(
-                    db.Dialect.GetInsertSql(entity.GetType(), enableCascade),
-                    GetInsertParameters(entity, enableCascade));
+                db.ExecuteNonQuery(db.Dialect.GetInsertSql(entity.GetType()), GetInsertParameters(entity));
                 if(id.GeneratorType == GeneratorType.Identity)
                 {
                     object pk = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(id.SeqName));
@@ -233,7 +231,7 @@ namespace FrameDAL.Core
             Update(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
-        private object[] GetUpdateParameters(object entity, bool enableCascade)
+        private object[] GetUpdateParameters(object entity)
         {
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
@@ -244,7 +242,7 @@ namespace FrameDAL.Core
                     parameters.Add(prop.GetValue(entity, null));
                 }
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Update) != 0 && enableCascade)
+                if (manyToOne != null)
                 {
                     parameters.Add(prop.GetValue(entity, null));
                 }
@@ -258,9 +256,7 @@ namespace FrameDAL.Core
             CheckSessionStatus();
             if (db.InTransaction())
             {
-                db.ExecuteNonQuery(
-                    db.Dialect.GetUpdateSql(entity.GetType(), enableCascade),
-                    GetUpdateParameters(entity, enableCascade));
+                db.ExecuteNonQuery(db.Dialect.GetUpdateSql(entity.GetType()), GetUpdateParameters(entity));
             }
             else
             {
