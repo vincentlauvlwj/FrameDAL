@@ -138,20 +138,9 @@ namespace FrameDAL.Core
             return parameters.ToArray();
         }
 
-        private void PreSave(object entity, bool enableCascade)
+        private void PreSave(object entity, bool enableCascade, bool isInsert)
         {
-
-        }
-
-        private void PostSave(object entity, bool enableCascade)
-        {
-
-        }
-
-        public object Add(object entity, bool enableCascade)
-        {
-            CheckSessionStatus();
-            if (db.InTransaction())
+            if (isInsert)
             {
                 PropertyInfo idProp = entity.GetType().GetIdProperty();
                 IdAttribute id = idProp.GetIdAttribute();
@@ -169,50 +158,79 @@ namespace FrameDAL.Core
                     default:
                         break;
                 }
+            }
 
-                foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
+                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
                 {
-                    ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                    if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
-                    {
-                        Save(prop.GetValue(entity, null), false);
-                    }
+                    Save(prop.GetValue(entity, null), false);
                 }
+            }
+        }
 
-                db.ExecuteNonQuery(db.Dialect.GetInsertSql(entity.GetType()), GetInsertParameters(entity));
-                if(id.GeneratorType == GeneratorType.Identity)
+        private void PostSave(object entity, bool enableCascade, bool isInsert)
+        {
+            PropertyInfo idProp = entity.GetType().GetIdProperty();
+
+            if (isInsert)
+            {
+                IdAttribute id = idProp.GetIdAttribute();
+                if (id.GeneratorType == GeneratorType.Identity)
                 {
                     object pk = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(id.SeqName));
                     idProp.SetValueSafely(entity, pk);
                 }
+            }
 
-                foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
                 {
-                    OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
-                    if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                    IList list = prop.GetValue(entity, null) as IList;
+                    List<object> parameters = new List<object>();
+                    parameters.Add(idProp.GetValue(entity, null));
+                    if (list != null)
                     {
-                        IList list = prop.GetValue(entity, null) as IList;
-                        List<object> parameters = new List<object>();
-                        parameters.Add(idProp.GetValue(entity, null));
-                        if (list != null)
+                        foreach (object item in list)
                         {
-                            foreach (object item in list)
-                            {
-                                Save(item, false);
-                                parameters.Add(prop.PropertyType.GetIdProperty().GetValue(item, null));
-                            }
+                            PropertyInfo manyToOneProp = item.GetType().GetCachedProperties()
+                                .Where(p =>
+                                {
+                                    ManyToOneAttribute manyToOne = p.GetManyToOneAttribute();
+                                    return manyToOne != null
+                                    && manyToOne.ForeignKey == oneToMany.InverseForeignKey
+                                    && p.PropertyType.GetTableAttribute().Name == entity.GetType().GetTableAttribute().Name;
+                                })
+                                .First();
+                            // TODO: 若为单向映射该如何处理？
+                            Save(item, false);
+                            parameters.Add(item.GetType().GetIdProperty().GetValue(item, null));
                         }
-                        db.ExecuteNonQuery(
-                            db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count), 
-                            parameters.ToArray());
                     }
-                    ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
-                    if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
-                    {
-
-                    }
+                    db.ExecuteNonQuery(
+                        db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count),
+                        parameters.ToArray());
                 }
-                return idProp.GetValue(entity, null);
+                ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
+                if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                {
+
+                }
+            }
+        }
+
+        public object Add(object entity, bool enableCascade)
+        {
+            CheckSessionStatus();
+            if (db.InTransaction())
+            {
+                PreSave(entity, enableCascade, true);
+                db.ExecuteNonQuery(db.Dialect.GetInsertSql(entity.GetType()), GetInsertParameters(entity));
+                PostSave(entity, enableCascade, true);
+                return entity.GetType().GetIdProperty().GetValue(entity, null);
             }
             else
             {
