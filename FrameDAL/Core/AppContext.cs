@@ -355,19 +355,5 @@ namespace FrameDAL.Core
                     return manyToMany;
                 });
         }
-
-        public PropertyInfo GetManyToOneProperty(Type type, string foreignKey, string targetTable)
-        {
-            List<PropertyInfo> props = type.GetCachedProperties()
-                .Where(p =>
-                {
-                    ManyToOneAttribute manyToOne = p.GetManyToOneAttribute();
-                    return manyToOne != null
-                        && manyToOne.ForeignKey == foreignKey
-                        && p.PropertyType.GetTableAttribute().Name == targetTable;
-                })
-                .ToList();
-            return props.Count == 0 ? null : props[0];
-        }
     }
 }

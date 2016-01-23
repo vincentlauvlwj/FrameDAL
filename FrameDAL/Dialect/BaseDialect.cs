@@ -291,25 +291,37 @@ namespace FrameDAL.Dialect
             return sb.ToString();
         }
 
-        public virtual string GetUpdateForeignKeySql(PropertyInfo manyToOneProp)
+        public virtual string GetUpdateForeignKeySql(PropertyInfo oneToManyProp, int countLeft)
         {
+            if (countLeft <= 0)
+                throw new ArgumentOutOfRangeException("countLeft应大于0。", countLeft, "countLeft");
             StringBuilder sb = new StringBuilder();
-
+            Type elementType = oneToManyProp.PropertyType.GetGenericArguments()[0];
+            sb.Append("update ");
+            sb.Append(elementType.GetTableAttribute().Name);
+            sb.Append(" set ");
+            sb.Append(oneToManyProp.GetOneToManyAttribute().InverseForeignKey);
+            sb.Append("=? where ");
+            sb.Append(elementType.GetIdProperty().GetColumnAttribute().Name);
+            sb.Append(" in (" + "?, ".Repeat(countLeft));
+            sb.Remove(sb.Length - 2, 2);
+            sb.Append(")");
             return sb.ToString();
         }
 
-        public virtual string GetDeleteItemSql(PropertyInfo onetToManyProp, int countLeft)
+        public virtual string GetDeleteItemSql(PropertyInfo oneToManyProp, int countLeft)
         {
             StringBuilder sb = new StringBuilder();
+            Type elementType = oneToManyProp.PropertyType.GetGenericArguments()[0];
             sb.Append("delete from ");
-            sb.Append(onetToManyProp.PropertyType.GetTableAttribute().Name);
+            sb.Append(elementType.GetTableAttribute().Name);
             sb.Append(" where ");
-            sb.Append(onetToManyProp.GetOneToManyAttribute().InverseForeignKey);
+            sb.Append(oneToManyProp.GetOneToManyAttribute().InverseForeignKey);
             sb.Append("=?");
             if (countLeft > 0)
             {
                 sb.Append(" and ");
-                sb.Append(onetToManyProp.PropertyType.GetIdProperty().GetColumnAttribute().Name);
+                sb.Append(elementType.GetIdProperty().GetColumnAttribute().Name);
                 sb.Append(" not in (" + "?, ".Repeat(countLeft));
                 sb.Remove(sb.Length - 2, 2);
                 sb.Append(")");

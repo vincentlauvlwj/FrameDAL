@@ -76,6 +76,8 @@ namespace FrameDAL.Dialect
 
         string GetCheckExistSql(Type type);
 
+        string GetUpdateForeignKeySql(PropertyInfo oneToManyProp, int countLeft);
+
         string GetDeleteItemSql(PropertyInfo onetToManyProp, int countLeft);
     }
 }

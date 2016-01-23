@@ -192,23 +192,21 @@ namespace FrameDAL.Core
                     IList list = prop.GetValue(entity, null) as IList;
                     List<object> parameters = new List<object>();
                     parameters.Add(idProp.GetValue(entity, null));
-                    if (list != null)
+                    if (list != null && list.Count > 0)
                     {
                         foreach (object item in list)
                         {
-                            PropertyInfo manyToOneProp = item.GetType().GetManyToOneProperty(
-                                oneToMany.InverseForeignKey,
-                                entity.GetType().GetTableAttribute().Name);
-                            if(manyToOneProp != null) manyToOneProp.SetValueSafely(item, entity);
                             Save(item, false);
-                            if(manyToOneProp == null)
-                            {
-
-                            }
                             parameters.Add(item.GetType().GetIdProperty().GetValue(item, null));
                         }
+                        db.ExecuteNonQuery(db.Dialect.GetUpdateForeignKeySql(prop, list.Count), parameters);
                     }
-                    db.ExecuteNonQuery(db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count), parameters);
+                    if (!isInsert)
+                    {
+                        db.ExecuteNonQuery(
+                            db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count), 
+                            parameters);
+                    }
                 }
                 ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
                 if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)

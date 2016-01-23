@@ -87,11 +87,6 @@ namespace FrameDAL.Utility
             return AppContext.Instance.GetManyToManyAttribute(prop);
         }
 
-        public static PropertyInfo GetManyToOneProperty(this Type type, string foreignKey, string targetTable)
-        {
-            return AppContext.Instance.GetManyToOneProperty(type, foreignKey, targetTable);
-        }
-
         /// <summary>
         /// 安全设置实体属性的值
         /// </summary>
