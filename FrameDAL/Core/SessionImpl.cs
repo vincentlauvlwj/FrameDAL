@@ -196,17 +196,15 @@ namespace FrameDAL.Core
                     {
                         foreach (object item in list)
                         {
-                            PropertyInfo manyToOneProp = item.GetType().GetCachedProperties()
-                                .Where(p =>
-                                {
-                                    ManyToOneAttribute manyToOne = p.GetManyToOneAttribute();
-                                    return manyToOne != null
-                                    && manyToOne.ForeignKey == oneToMany.InverseForeignKey
-                                    && p.PropertyType.GetTableAttribute().Name == entity.GetType().GetTableAttribute().Name;
-                                })
-                                .First();
-                            // TODO: 若为单向映射该如何处理？
+                            PropertyInfo manyToOneProp = item.GetType().GetManyToOneProperty(
+                                oneToMany.InverseForeignKey,
+                                entity.GetType().GetTableAttribute().Name);
+                            if(manyToOneProp != null) manyToOneProp.SetValueSafely(item, entity);
                             Save(item, false);
+                            if(manyToOneProp == null)
+                            {
+
+                            }
                             parameters.Add(item.GetType().GetIdProperty().GetValue(item, null));
                         }
                     }

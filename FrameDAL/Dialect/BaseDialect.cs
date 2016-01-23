@@ -291,6 +291,13 @@ namespace FrameDAL.Dialect
             return sb.ToString();
         }
 
+        public virtual string GetUpdateForeignKeySql(PropertyInfo manyToOneProp)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            return sb.ToString();
+        }
+
         public virtual string GetDeleteItemSql(PropertyInfo onetToManyProp, int countLeft)
         {
             StringBuilder sb = new StringBuilder();
