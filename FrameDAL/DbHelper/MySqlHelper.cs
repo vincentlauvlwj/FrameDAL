@@ -76,13 +76,13 @@ namespace FrameDAL.DbHelper
             return new MySqlDataAdapter(cmd as MySqlCommand);
         }
 
-        private void AddParamsToList(ArrayList arr, object[] parameters)
+        private void AddParamsToList(List<object> arr, ICollection parameters)
         {
             foreach (object param in parameters)
             {
-                if (param is object[])
+                if (param is ICollection && !(param is byte[]))
                 {
-                    AddParamsToList(arr, param as object[]);
+                    AddParamsToList(arr, param as ICollection);
                 }
                 else
                 {
@@ -93,9 +93,8 @@ namespace FrameDAL.DbHelper
 
         private void AddParamsToCmd(MySqlCommand cmd, object[] parameters)
         {
-            ArrayList arr = new ArrayList();
+            List<object> arr = new List<object>();
             AddParamsToList(arr, parameters);
-            parameters = arr.ToArray();
 
             StringBuilder sb = new StringBuilder();
             string[] temp = cmd.CommandText.Split('?');
@@ -103,7 +102,7 @@ namespace FrameDAL.DbHelper
             {
                 string paramName = "@param" + i;
                 sb.Append(temp[i] + paramName);
-                cmd.Parameters.AddWithValue(paramName, parameters[i]);
+                cmd.Parameters.AddWithValue(paramName, arr[i]);
             }
             sb.Append(temp[temp.Length - 1]);
             cmd.CommandText = sb.ToString();

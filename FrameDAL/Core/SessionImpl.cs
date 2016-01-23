@@ -119,7 +119,7 @@ namespace FrameDAL.Core
             return Add(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
-        private object[] GetInsertParameters(object entity)
+        private List<object> GetInsertParameters(object entity)
         {
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
@@ -135,7 +135,7 @@ namespace FrameDAL.Core
                     parameters.Add(prop.GetValue(entity, null));
                 }
             }
-            return parameters.ToArray();
+            return parameters;
         }
 
         private void PreSave(object entity, bool enableCascade, bool isInsert)
@@ -208,9 +208,7 @@ namespace FrameDAL.Core
                             parameters.Add(item.GetType().GetIdProperty().GetValue(item, null));
                         }
                     }
-                    db.ExecuteNonQuery(
-                        db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count),
-                        parameters.ToArray());
+                    db.ExecuteNonQuery(db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count), parameters);
                 }
                 ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
                 if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
@@ -247,7 +245,7 @@ namespace FrameDAL.Core
             Update(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
-        private object[] GetUpdateParameters(object entity)
+        private List<object> GetUpdateParameters(object entity)
         {
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
@@ -264,7 +262,7 @@ namespace FrameDAL.Core
                 }
             }
             parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
-            return parameters.ToArray();
+            return parameters;
         }
 
         public void Update(object entity, bool enableCascade)

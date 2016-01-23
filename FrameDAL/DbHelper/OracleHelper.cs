@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,13 +76,13 @@ namespace FrameDAL.DbHelper
             return new OleDbDataAdapter(cmd as OleDbCommand);
         }
 
-        private void AddParamsToCmd(OleDbCommand cmd, object[] parameters)
+        private void AddParamsToCmd(OleDbCommand cmd, ICollection parameters)
         {
             foreach (object param in parameters)
             {
-                if (param is object[])
+                if (param is ICollection && !(param is byte[]))
                 {
-                    AddParamsToCmd(cmd, param as object[]);
+                    AddParamsToCmd(cmd, param as ICollection);
                 }
                 else
                 {
