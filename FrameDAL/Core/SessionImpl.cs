@@ -132,66 +132,41 @@ namespace FrameDAL.Core
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
                 if (manyToOne != null)
                 {
-                    parameters.Add(prop.GetValue(entity, null));
+                    object val = prop.GetValue(entity, null);
+                    parameters.Add(prop.PropertyType.GetIdProperty().GetValue(val, null));
                 }
             }
             return parameters;
         }
 
-        private void PreSave(object entity, bool enableCascade, bool isInsert)
+        private void SaveManyToOneProperties(object entity, bool isInsert)
         {
-            if (isInsert)
-            {
-                PropertyInfo idProp = entity.GetType().GetIdProperty();
-                IdAttribute id = idProp.GetIdAttribute();
-                switch (id.GeneratorType)
-                {
-                    case GeneratorType.Uuid:
-                        idProp.SetValueSafely(entity, Guid.NewGuid().ToString());
-                        break;
-
-                    case GeneratorType.Sequence:
-                        object nextval = CreateSqlQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
-                        idProp.SetValueSafely(entity, nextval);
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
                 ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null && (manyToOne.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                if (manyToOne != null && (
+                    (manyToOne.Cascade & CascadeType.Insert) != 0 && isInsert
+                    || (manyToOne.Cascade & CascadeType.Update) != 0 && !isInsert
+                    ))
                 {
                     Save(prop.GetValue(entity, null), false);
                 }
             }
         }
 
-        private void PostSave(object entity, bool enableCascade, bool isInsert)
+        private void SaveOneToManyProperties(object entity, bool isInsert)
         {
-            PropertyInfo idProp = entity.GetType().GetIdProperty();
-
-            if (isInsert)
-            {
-                IdAttribute id = idProp.GetIdAttribute();
-                if (id.GeneratorType == GeneratorType.Identity)
-                {
-                    object pk = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(id.SeqName));
-                    idProp.SetValueSafely(entity, pk);
-                }
-            }
-
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
                 OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
-                if (oneToMany != null && (oneToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                if (oneToMany != null && (
+                    (oneToMany.Cascade & CascadeType.Insert) != 0 && isInsert
+                    || (oneToMany.Cascade & CascadeType.Update) != 0 && !isInsert
+                    ))
                 {
                     IList list = prop.GetValue(entity, null) as IList;
                     List<object> parameters = new List<object>();
-                    parameters.Add(idProp.GetValue(entity, null));
+                    parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
                     if (list != null && list.Count > 0)
                     {
                         foreach (object item in list)
@@ -208,8 +183,18 @@ namespace FrameDAL.Core
                             parameters);
                     }
                 }
+            }
+        }
+
+        private void SaveManyToManyProperties(object entity, bool isInsert)
+        {
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
                 ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
-                if (manyToMany != null && (manyToMany.Cascade & CascadeType.Insert) != 0 && enableCascade)
+                if (manyToMany != null && (
+                    (manyToMany.Cascade & CascadeType.Insert) != 0 && isInsert
+                    || (manyToMany.Cascade & CascadeType.Update) != 0 && !isInsert
+                    ))
                 {
 
                 }
@@ -221,10 +206,32 @@ namespace FrameDAL.Core
             CheckSessionStatus();
             if (db.InTransaction())
             {
-                PreSave(entity, enableCascade, true);
+                if (enableCascade) SaveManyToOneProperties(entity, true);
+                PropertyInfo idProp = entity.GetType().GetIdProperty();
+                IdAttribute id = idProp.GetIdAttribute();
+                switch (id.GeneratorType)
+                {
+                    case GeneratorType.Uuid:
+                        idProp.SetValueSafely(entity, Guid.NewGuid().ToString());
+                        break;
+
+                    case GeneratorType.Sequence:
+                        object nextval = CreateSqlQuery("select " + id.SeqName + ".nextval from dual").ExecuteScalar();
+                        idProp.SetValueSafely(entity, nextval);
+                        break;
+
+                    default:
+                        break;
+                }
                 db.ExecuteNonQuery(db.Dialect.GetInsertSql(entity.GetType()), GetInsertParameters(entity));
-                PostSave(entity, enableCascade, true);
-                return entity.GetType().GetIdProperty().GetValue(entity, null);
+                if (id.GeneratorType == GeneratorType.Identity)
+                {
+                    object pk = db.ExecuteScalar(db.Dialect.GetGeneratedKeySql(id.SeqName));
+                    idProp.SetValueSafely(entity, pk);
+                }
+                if (enableCascade) SaveOneToManyProperties(entity, true);
+                if (enableCascade) SaveManyToManyProperties(entity, true);
+                return idProp.GetValue(entity, null);
             }
             else
             {
@@ -245,20 +252,7 @@ namespace FrameDAL.Core
 
         private List<object> GetUpdateParameters(object entity)
         {
-            List<object> parameters = new List<object>();
-            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
-            {
-                ColumnAttribute col = prop.GetColumnAttribute();
-                if (col != null && !col.ReadOnly)
-                {
-                    parameters.Add(prop.GetValue(entity, null));
-                }
-                ManyToOneAttribute manyToOne = prop.GetManyToOneAttribute();
-                if (manyToOne != null)
-                {
-                    parameters.Add(prop.GetValue(entity, null));
-                }
-            }
+            List<object> parameters = GetInsertParameters(entity);
             parameters.Add(entity.GetType().GetIdProperty().GetValue(entity, null));
             return parameters;
         }
@@ -268,7 +262,10 @@ namespace FrameDAL.Core
             CheckSessionStatus();
             if (db.InTransaction())
             {
+                if (enableCascade) SaveManyToOneProperties(entity, false);
                 db.ExecuteNonQuery(db.Dialect.GetUpdateSql(entity.GetType()), GetUpdateParameters(entity));
+                if (enableCascade) SaveOneToManyProperties(entity, false);
+                if (enableCascade) SaveManyToManyProperties(entity, false);
             }
             else
             {

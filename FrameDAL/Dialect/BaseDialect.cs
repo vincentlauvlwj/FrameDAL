@@ -65,11 +65,7 @@ namespace FrameDAL.Dialect
             }
             if (count == 0) throw new EntityMappingException(type.FullName + "类中没有添加了Column特性的字段。");
             sb.Remove(sb.Length - 2, 2);
-            sb.Append(") values (");
-            for (int i = 0; i < count; i++)
-            {
-                sb.Append("?, ");
-            }
+            sb.Append(") values (" + "?, ".Repeat(count));
             sb.Remove(sb.Length - 2, 2);
             sb.Append(")");
             return sb.ToString();
