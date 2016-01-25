@@ -5,6 +5,7 @@ using System.Text;
 using System.Data;
 using System.Data.Common;
 using FrameDAL.Dialect;
+using FrameDAL.Exceptions;
 
 namespace FrameDAL.DbHelper
 {
@@ -89,6 +90,8 @@ namespace FrameDAL.DbHelper
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
         object ExecuteScalar(string sqlText, params object[] parameters);
 
+        object ExecuteReader(string sqlText, object[] parameters, Func<DbDataReader, object> func);
+
         /// <summary>
         /// 执行查询，返回数据集
         /// </summary>
@@ -106,5 +109,7 @@ namespace FrameDAL.DbHelper
         /// <returns>返回数据表</returns>
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
         DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
+
+        object DoInCurrentTransaction(Func<DbConnection, DbTransaction, object> func);
     }
 }

@@ -103,6 +103,7 @@ namespace FrameDAL.Core
                 {
                     case "ExecuteNonQuery":
                     case "ExecuteScalar":
+                    case "ExecuteReader":
                     case "ExecuteGetDataSet":
                         logUtil.WriteLine(invocation.Arguments[0] as string);
                         goto default;

@@ -181,11 +181,14 @@ namespace FrameDAL.DbHelper
                     Bundle bundle = local.Value;
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
                 }
-                else using (DbConnection conn = NewConnection())
+                else
+                {
+                    using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         return PrepareCommand(conn, null, sqlText, parameters).ExecuteNonQuery();
                     }
+                }
             }
             catch (Exception e)
             {
@@ -209,11 +212,44 @@ namespace FrameDAL.DbHelper
                     Bundle bundle = local.Value;
                     return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteScalar();
                 }
-                else using (DbConnection conn = NewConnection())
+                else
+                {
+                    using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         return PrepareCommand(conn, null, sqlText, parameters).ExecuteScalar();
                     }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new DbAccessException("SQL执行出错：" + sqlText + "。错误信息：" + e.Message + "。更多异常信息请参考InnerException。", e);
+            }
+        }
+
+        public virtual object ExecuteReader(string sqlText, object[] parameters, Func<DbDataReader, object> func)
+        {
+            try
+            {
+                if (InTransaction())
+                {
+                    Bundle bundle = local.Value;
+                    using (DbDataReader reader = PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteReader())
+                    {
+                        return func(reader);
+                    }
+                }
+                else
+                {
+                    using (DbConnection conn = NewConnection())
+                    {
+                        conn.Open();
+                        using (DbDataReader reader = PrepareCommand(conn, null, sqlText, parameters).ExecuteReader())
+                        {
+                            return func(reader);
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -239,13 +275,16 @@ namespace FrameDAL.DbHelper
                     NewDataAdapter(PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters)).Fill(ds);
                     return ds;
                 }
-                else using (DbConnection conn = NewConnection())
+                else
+                {
+                    using (DbConnection conn = NewConnection())
                     {
                         conn.Open();
                         DataSet ds = new DataSet();
                         NewDataAdapter(PrepareCommand(conn, null, sqlText, parameters)).Fill(ds);
                         return ds;
                     }
+                }
             }
             catch (Exception e)
             {
@@ -268,6 +307,34 @@ namespace FrameDAL.DbHelper
                 return ds.Tables[0];
             else
                 return null;
+        }
+
+        public virtual object DoInCurrentTransaction(Func<DbConnection, DbTransaction, object> func)
+        {
+            if (InTransaction())
+            {
+                Bundle bundle = local.Value;
+                return func(bundle.Connection, bundle.Transaction);
+            }
+            else
+            {
+                using (DbConnection conn = NewConnection())
+                {
+                    conn.Open();
+                    DbTransaction trans = conn.BeginTransaction();
+                    try
+                    {
+                        object result = func(conn, trans);
+                        trans.Commit();
+                        return result;
+                    }
+                    catch
+                    {
+                        trans.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }
