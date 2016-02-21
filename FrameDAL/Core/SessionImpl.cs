@@ -196,7 +196,24 @@ namespace FrameDAL.Core
                     || (manyToMany.Cascade & CascadeType.Update) != 0 && !isInsert
                     ))
                 {
+                    IList list = prop.GetValue(entity, null) as IList;
 
+
+                    if (list != null && list.Count > 0)
+                    {
+                        foreach (object item in list)
+                        {
+                            Save(item, false);
+
+                        }
+
+                    }
+                    if (!isInsert)
+                    {
+                        db.ExecuteNonQuery(
+                            db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count),
+                            parameters);
+                    }
                 }
             }
         }
