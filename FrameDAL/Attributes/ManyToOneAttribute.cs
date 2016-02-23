@@ -18,7 +18,7 @@ namespace FrameDAL.Attributes
         {
             this.ForeignKey = foreignKey;
             LazyLoad = true;
-            Cascade = CascadeType.All;
+            Cascade = CascadeType.Insert | CascadeType.Update | CascadeType.Delete;
         }
     }
 }

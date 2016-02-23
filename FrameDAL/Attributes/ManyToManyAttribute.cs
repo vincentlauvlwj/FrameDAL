@@ -21,7 +21,7 @@ namespace FrameDAL.Attributes
         public ManyToManyAttribute()
         {
             LazyLoad = true;
-            Cascade = CascadeType.All;
+            Cascade = CascadeType.Insert | CascadeType.Update;
         }
     }
 }

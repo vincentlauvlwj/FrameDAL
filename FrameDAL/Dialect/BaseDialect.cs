@@ -349,5 +349,16 @@ namespace FrameDAL.Dialect
             sb.Append(" values (?, ?)");
             return sb.ToString();
         }
+
+        public virtual string GetCascadeDeleteSql(PropertyInfo oneToManyProp)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("delete from ");
+            sb.Append(oneToManyProp.PropertyType.GetGenericArguments()[0].GetTableAttribute().Name);
+            sb.Append(" where ");
+            sb.Append(oneToManyProp.GetOneToManyAttribute().InverseForeignKey);
+            sb.Append("=?");
+            return sb.ToString();
+        }
     }
 }

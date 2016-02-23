@@ -324,11 +324,25 @@ namespace FrameDAL.Core
             Delete(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
+        private void DeleteOneToManyProperties(object entity)
+        {
+            object id = entity.GetType().GetIdProperty().GetValue(entity, null);
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                OneToManyAttribute oneToMany = prop.GetOneToManyAttribute();
+                if (oneToMany != null && (oneToMany.Cascade & CascadeType.Delete) != 0)
+                {
+                    db.ExecuteNonQuery(db.Dialect.GetCascadeDeleteSql(prop), id);
+                }
+            }
+        }
+
         public void Delete(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
             {
+                if (enableCascade) DeleteOneToManyProperties(entity);
                 object id = entity.GetType().GetIdProperty().GetValue(entity, null);
                 db.ExecuteNonQuery(db.Dialect.GetDeleteSql(entity.GetType()), new object[] { id });
             }

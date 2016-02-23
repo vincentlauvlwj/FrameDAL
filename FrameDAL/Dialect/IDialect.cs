@@ -83,5 +83,7 @@ namespace FrameDAL.Dialect
         string GetDeleteRelationsSql(PropertyInfo manyToManyProp);
 
         string GetAddRelationSql(PropertyInfo manyToManyProp);
+
+        string GetCascadeDeleteSql(PropertyInfo oneToManyProp);
     }
 }

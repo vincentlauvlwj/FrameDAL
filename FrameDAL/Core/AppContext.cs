@@ -299,6 +299,10 @@ namespace FrameDAL.Core
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToOne特性没有正确配置：要使用LazyLoad的属性必须具有virtual修饰符。");
 
+                    if (manyToOne != null && (manyToOne.Cascade & CascadeType.Delete) != 0)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToOne特性没有正确配置：CascadeType.Delete不可用。");
+
                     return manyToOne;
                 });
         }
@@ -352,6 +356,10 @@ namespace FrameDAL.Core
                         .Count(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(IList<>)) == 0))
                         throw new EntityMappingException(prop.DeclaringType.FullName + "."
                             + prop.Name + "的ManyToMany特性没有正确配置：属性类型必须为IList<T>接口的具体实现类");
+                    
+                    if (manyToMany != null && (manyToMany.Cascade & CascadeType.Delete) != 0)
+                        throw new EntityMappingException(prop.DeclaringType.FullName + "."
+                            + prop.Name + "的ManyToMany特性没有正确配置：CascadeType.Delete不可用。");
 
                     return manyToMany;
                 });
