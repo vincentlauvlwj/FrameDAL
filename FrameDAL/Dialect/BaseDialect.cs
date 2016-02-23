@@ -324,5 +324,30 @@ namespace FrameDAL.Dialect
             }
             return sb.ToString();
         }
+
+        public virtual string GetDeleteRelationsSql(PropertyInfo manyToManyProp)
+        {
+            StringBuilder sb = new StringBuilder();
+            ManyToManyAttribute manyToMany = manyToManyProp.GetManyToManyAttribute();
+            sb.Append("delete from ");
+            sb.Append(manyToMany.JoinTable);
+            sb.Append(" where ");
+            sb.Append(manyToMany.JoinColumn);
+            sb.Append("=?");
+            return sb.ToString();
+        }
+
+        public virtual string GetAddRelationSql(PropertyInfo manyToManyProp)
+        {
+            StringBuilder sb = new StringBuilder();
+            ManyToManyAttribute manyToMany = manyToManyProp.GetManyToManyAttribute();
+            sb.Append("insert into ");
+            sb.Append(manyToMany.JoinTable);
+            sb.Append(" (");
+            sb.Append(manyToMany.JoinColumn).Append(", ");
+            sb.Append(manyToMany.InverseJoinColumn).Append(")");
+            sb.Append(" values (?, ?)");
+            return sb.ToString();
+        }
     }
 }

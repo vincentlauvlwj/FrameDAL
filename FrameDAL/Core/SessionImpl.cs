@@ -196,23 +196,21 @@ namespace FrameDAL.Core
                     || (manyToMany.Cascade & CascadeType.Update) != 0 && !isInsert
                     ))
                 {
+                    object id = entity.GetType().GetIdProperty().GetValue(entity, null);
+                    if(!isInsert) db.ExecuteNonQuery(db.Dialect.GetDeleteRelationsSql(prop), id);
+
+                    Type elementType = prop.PropertyType.GetGenericArguments()[0];
                     IList list = prop.GetValue(entity, null) as IList;
-
-
                     if (list != null && list.Count > 0)
                     {
                         foreach (object item in list)
                         {
                             Save(item, false);
-
+                            db.ExecuteNonQuery(
+                                db.Dialect.GetAddRelationSql(prop),
+                                id,
+                                elementType.GetIdProperty().GetValue(item, null));
                         }
-
-                    }
-                    if (!isInsert)
-                    {
-                        db.ExecuteNonQuery(
-                            db.Dialect.GetDeleteItemSql(prop, list == null ? 0 : list.Count),
-                            parameters);
                     }
                 }
             }
