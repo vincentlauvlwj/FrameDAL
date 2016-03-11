@@ -14,15 +14,37 @@ namespace FrameDAL.SqlExpressions
         Select,
         Join,
         Aggregate,
-        Exists,
+        Function,
+        Constant,
         In,
+
+        Exists,
         IsNull,
+        Negate,
+        Not,
+        UnaryPlus,
+
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+        Modulo,
+        And,
+        Or,
+        LessThan,
+        GreaterThan,
+        Equal,
+        NotEqual,
+        RightShift,
+        LeftShift,
+        ExclusiveOr,
+
         Between,
+        Conditional,
+
         Insert,
         Update,
-        Delete,
-        Function,
-        Constant
+        Delete
     }
 
     public abstract class SqlExpression
@@ -32,6 +54,78 @@ namespace FrameDAL.SqlExpressions
         protected SqlExpression(SqlExpressionType nodeType)
         {
             this.NodeType = nodeType;
+        }
+    }
+
+    public class UnaryExpression : SqlExpression
+    {
+        public SqlExpression Operand { get; private set; }
+
+        public UnaryExpression(SqlExpressionType nodeType, SqlExpression operand) : base(nodeType)
+        {
+            switch(nodeType)
+            {
+                case SqlExpressionType.Exists:
+                case SqlExpressionType.IsNull:
+                case SqlExpressionType.Negate:
+                case SqlExpressionType.Not:
+                case SqlExpressionType.UnaryPlus:
+                    this.Operand = operand;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(nodeType));
+            }
+        }
+    }
+
+    public class BinaryExpression : SqlExpression
+    {
+        public SqlExpression Left { get; private set; }
+
+        public SqlExpression Right { get; private set; }
+
+        public BinaryExpression(SqlExpressionType nodeType, SqlExpression left, SqlExpression right)
+            : base(nodeType)
+        {
+            switch(nodeType)
+            {
+                case SqlExpressionType.Add:
+                case SqlExpressionType.Subtract:
+                case SqlExpressionType.Multiply:
+                case SqlExpressionType.Divide:
+                case SqlExpressionType.Modulo:
+                case SqlExpressionType.And:
+                case SqlExpressionType.Or:
+                case SqlExpressionType.LessThan:
+                case SqlExpressionType.GreaterThan:
+                case SqlExpressionType.Equal:
+                case SqlExpressionType.NotEqual:
+                case SqlExpressionType.RightShift:
+                case SqlExpressionType.LeftShift:
+                case SqlExpressionType.ExclusiveOr:
+                    this.Left = left;
+                    this.Right = right;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(nodeType));
+            }
+        }
+    }
+
+    public class ConditionalExpression : SqlExpression
+    {
+        public SqlExpression Test { get; private set; }
+
+        public SqlExpression IfTrue { get; private set; }
+
+        public SqlExpression IfFalse { get; private set; }
+
+        public ConditionalExpression(SqlExpression test, SqlExpression ifTrue, SqlExpression ifFalse)
+            : base(SqlExpressionType.Conditional)
+        {
+            this.Test = test;
+            this.IfTrue = ifTrue;
+            this.IfFalse = ifFalse;
         }
     }
 
@@ -190,16 +284,6 @@ namespace FrameDAL.SqlExpressions
         }
     }
 
-    public class ExistsExpression : SqlExpression
-    {
-        public SelectExpression Select { get; private set; }
-
-        public ExistsExpression(SelectExpression select) : base(SqlExpressionType.Exists)
-        {
-            this.Select = select;
-        }
-    }
-
     public class InExpression : SqlExpression
     {
         public SqlExpression Expression { get; private set; }
@@ -234,16 +318,6 @@ namespace FrameDAL.SqlExpressions
             this.AggregateName = aggregateName;
             this.Argument = argument;
             this.IsDistinct = isDistinct;
-        }
-    }
-
-    public class IsNullExpression : SqlExpression
-    {
-        public SqlExpression Expression { get; private set; }
-
-        public IsNullExpression(SqlExpression expression) : base(SqlExpressionType.IsNull)
-        {
-            this.Expression = expression;
         }
     }
 
