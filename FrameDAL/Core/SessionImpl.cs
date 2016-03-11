@@ -9,6 +9,7 @@ using FrameDAL.DbHelper;
 using FrameDAL.Core;
 using FrameDAL.Attributes;
 using FrameDAL.Utility;
+using FrameDAL.Linq;
 
 namespace FrameDAL.Core
 {
@@ -398,6 +399,11 @@ namespace FrameDAL.Core
                 if (db.InTransaction()) db.RollbackTransaction();
                 throw;
             }
+        }
+
+        public LinqQuery<T> GetAll<T>()
+        {
+            return new LinqQuery<T>(new LinqQueryProvider(this));
         }
 
         /// <summary>

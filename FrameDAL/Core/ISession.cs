@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using FrameDAL.Core;
+using FrameDAL.Linq;
 
 namespace FrameDAL.Core
 {
@@ -92,6 +92,8 @@ namespace FrameDAL.Core
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         void AcceptChanges();
+
+        LinqQuery<T> GetAll<T>();
 
         /// <summary>
         /// 创建Query对象，不同的数据库使用不同的Query对象
