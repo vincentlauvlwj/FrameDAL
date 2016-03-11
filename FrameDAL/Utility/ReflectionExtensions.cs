@@ -9,7 +9,7 @@ using FrameDAL.Exceptions;
 
 namespace FrameDAL.Utility
 {
-    public static class ReflectionUtil
+    public static class ReflectionExtensions
     {
         /// <summary>
         /// 获取缓存中的Table特性类对象
