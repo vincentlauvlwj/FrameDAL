@@ -34,38 +34,315 @@ namespace FrameDAL.Linq.Translation
 
     public class ExpressionTranslator : ExpressionVisitor
     {
-        private TranslateResult currentResult;
+        private Dictionary<ParameterExpression, Expression> map;
         private int aliasCount;
         private Configuration config;
 
         private ExpressionTranslator(Configuration config)
         {
             this.config = config;
+            this.map = new Dictionary<ParameterExpression, Expression>();
         }
 
         public static TranslateResult Translate(Expression expr, Configuration config)
         {
-            return new ExpressionTranslator(config).Translate(expr);
+            return new ExpressionTranslator(config).TranslateVisit(expr).TranslateResult;
         }
 
-        private TranslateResult Translate(Expression expr)
+        private class Bundle
         {
-            TranslateResult saveCurrentResult = this.currentResult;
-            this.Visit(expr);
-            TranslateResult result = this.currentResult;
-            this.currentResult = saveCurrentResult;
+            public Expression Expression { get; private set; }
+
+            public TranslateResult TranslateResult { get; private set; }
+
+            public Bundle(Expression expression, TranslateResult translateResult)
+            {
+                this.Expression = expression;
+                this.TranslateResult = translateResult;
+            }
+        }
+
+        private TranslateResult _curResult;
+        private bool _flag;
+
+        private TranslateResult CurrentResult
+        {
+            get { return _curResult; }
+            set
+            {
+                _curResult = value;
+                _flag = !_flag;
+                if (!_flag) throw new Exception("Debug Exception!");
+            }
+        }
+
+        private class Status
+        {
+            public TranslateResult CurrentResult { get; private set; }
+
+            public bool Flag { get; private set; }
+
+            public Status(TranslateResult curResult, bool flag)
+            {
+                this.CurrentResult = curResult;
+                this.Flag = flag;
+            }
+        }
+
+        private Status PreTranslate()
+        {
+            Status status = new Status(_curResult, _flag);
+            _curResult = null;
+            _flag = false;
+            return status;
+        }
+
+        private TranslateResult PostTranslate(Status status)
+        {
+            TranslateResult result = _curResult;
+            _curResult = status.CurrentResult;
+            _flag = status.Flag;
             return result;
         }
 
+        private Bundle TranslateVisit(Expression expr)
+        {
+            Status status = PreTranslate();
+            expr = this.Visit(expr);
+            return new Bundle(expr, PostTranslate(status));
+        }
 
+        protected override Expression VisitMethodCall(MethodCallExpression m)
+        {
+            if (m.Method.DeclaringType == typeof(Queryable) || m.Method.DeclaringType == typeof(Enumerable))
+            {
+                switch (m.Method.Name)
+                {
+                    case "Where":
+                        return this.VisitWhere(m.Type, m.Arguments[0], (LambdaExpression)StripQuotes(m.Arguments[1]));
+                    case "Select":
+                        return this.VisitSelect(m.Type, m.Arguments[0], (LambdaExpression)StripQuotes(m.Arguments[1]));
+                }
+                throw new NotSupportedException("不支持的方法：" + m.Method.Name);
+            }
+            return base.VisitMethodCall(m);
+        }
+
+        private Expression VisitWhere(Type resultType, Expression source, LambdaExpression predicate)
+        {
+            Bundle bundle = this.TranslateVisit(source);
+            this.map[predicate.Parameters[0]] = bundle.TranslateResult.Projector;
+            SqlExpression where = this.TranslateVisit(predicate.Body).TranslateResult.SqlExpression;
+
+            return null;
+        }
+
+        private Expression VisitSelect(Type resultType, Expression source, LambdaExpression selector)
+        {
+            return null;
+        }
 
         protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
         {
             if(IsTable(node.Value))
             {
-                currentResult = GetDefaultProjection((IQueryable) node.Value);
+                CurrentResult = GetDefaultProjection((IQueryable) node.Value);
             }
             return node;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            Expression e;
+            if (this.map.TryGetValue(node, out e))
+            {
+                return e;
+            }
+            return node;
+        }
+
+        protected override Expression VisitMember(MemberExpression m)
+        {
+            Expression source = this.Visit(m.Expression);
+            switch(source.NodeType)
+            {
+                case ExpressionType.Call:
+                    MethodCallExpression call = (MethodCallExpression)source;
+                    if(call != null && call.Method.Name == "NewDefaultProjectedObject")
+                    {
+                        var bindings = ((System.Linq.Expressions.ConstantExpression)call.Arguments[0]).Value as List<MemberBinding>;
+                        for(int i = 0, n = bindings.Count; i < n; i++)
+                        {
+                            MemberAssignment assign = bindings[i] as MemberAssignment;
+                            if (assign != null && MembersMatch(assign.Member, m.Member))
+                            {
+                                return assign.Expression;
+                            }
+                        }
+                    }
+                    break;
+                case ExpressionType.MemberInit:
+                    MemberInitExpression min = (MemberInitExpression)source;
+                    for (int i = 0, n = min.Bindings.Count; i < n; i++)
+                    {
+                        MemberAssignment assign = min.Bindings[i] as MemberAssignment;
+                        if (assign != null && MembersMatch(assign.Member, m.Member))
+                        {
+                            return assign.Expression;
+                        }
+                    }
+                    break;
+                case ExpressionType.New:
+                    NewExpression nex = (NewExpression)source;
+                    if (nex.Members != null)
+                    {
+                        for (int i = 0, n = nex.Members.Count; i < n; i++)
+                        {
+                            if (MembersMatch(nex.Members[i], m.Member))
+                            {
+                                return nex.Arguments[i];
+                            }
+                        }
+                    }
+                    break;
+            }
+            if(source == m.Expression)
+            {
+                return m;
+            }
+            return Expression.MakeMemberAccess(source, m.Member);
+        }
+
+        protected override Expression VisitUnary(System.Linq.Expressions.UnaryExpression node)
+        {
+            SqlExpressionType? exprType = null;
+            switch(node.NodeType)
+            {
+                case ExpressionType.Negate:
+                case ExpressionType.NegateChecked:
+                    exprType = SqlExpressionType.Negate;
+                    break;
+                case ExpressionType.Not:
+                    exprType = SqlExpressionType.Not;
+                    break;
+                case ExpressionType.UnaryPlus:
+                    exprType = SqlExpressionType.UnaryPlus;
+                    break;
+            }
+            if(exprType != null)
+            {
+                Bundle bundle = this.TranslateVisit(node.Operand);
+                this.CurrentResult = new TranslateResult(
+                    new FrameDAL.SqlExpressions.UnaryExpression(
+                        exprType.Value, bundle.TranslateResult.SqlExpression));
+                if(bundle.Expression != node.Operand)
+                {
+                    return Expression.MakeUnary(node.NodeType, bundle.Expression, node.Type);
+                }
+                return node;
+            }
+            return base.VisitUnary(node);
+        }
+
+        protected override Expression VisitBinary(System.Linq.Expressions.BinaryExpression node)
+        {
+            SqlExpressionType? exprType = null;
+            switch(node.NodeType)
+            {
+                case ExpressionType.Add:
+                case ExpressionType.AddChecked:
+                    exprType = SqlExpressionType.Add;
+                    break;
+                case ExpressionType.Subtract:
+                case ExpressionType.SubtractChecked:
+                    exprType = SqlExpressionType.Subtract;
+                    break;
+                case ExpressionType.Multiply:
+                case ExpressionType.MultiplyChecked:
+                    exprType = SqlExpressionType.Multiply;
+                    break;
+                case ExpressionType.Divide:
+                    exprType = SqlExpressionType.Divide;
+                    break;
+                case ExpressionType.Modulo:
+                    exprType = SqlExpressionType.Modulo;
+                    break;
+                case ExpressionType.And:
+                case ExpressionType.AndAlso:
+                    exprType = SqlExpressionType.And;
+                    break;
+                case ExpressionType.Or:
+                case ExpressionType.OrElse:
+                    exprType = SqlExpressionType.Or;
+                    break;
+                case ExpressionType.LessThan:
+                    exprType = SqlExpressionType.LessThan;
+                    break;
+                case ExpressionType.LessThanOrEqual:
+                    exprType = SqlExpressionType.LessThanOrEqual;
+                    break;
+                case ExpressionType.GreaterThan:
+                    exprType = SqlExpressionType.GreaterThan;
+                    break;
+                case ExpressionType.GreaterThanOrEqual:
+                    exprType = SqlExpressionType.GreaterThanOrEqual;
+                    break;
+                case ExpressionType.Equal:
+                    exprType = SqlExpressionType.Equal;
+                    break;
+                case ExpressionType.NotEqual:
+                    exprType = SqlExpressionType.NotEqual;
+                    break;
+                case ExpressionType.RightShift:
+                    exprType = SqlExpressionType.RightShift;
+                    break;
+                case ExpressionType.LeftShift:
+                    exprType = SqlExpressionType.LeftShift;
+                    break;
+                case ExpressionType.ExclusiveOr:
+                    exprType = SqlExpressionType.ExclusiveOr;
+                    break;
+            }
+            if(exprType != null)
+            {
+                Bundle left = this.TranslateVisit(node.Left);
+                Bundle right = this.TranslateVisit(node.Right);
+                this.CurrentResult = new TranslateResult(
+                    new FrameDAL.SqlExpressions.BinaryExpression(
+                        exprType.Value, left.TranslateResult.SqlExpression, right.TranslateResult.SqlExpression));
+                if(left.Expression != node.Left || right.Expression != node.Right)
+                {
+                    return Expression.MakeBinary(node.NodeType, left.Expression, right.Expression);
+                }
+                return node;
+            }
+            return base.VisitBinary(node);
+        }
+
+        private bool MembersMatch(MemberInfo a, MemberInfo b)
+        {
+            if (a == b)
+            {
+                return true;
+            }
+            if (a is MethodInfo && b is PropertyInfo)
+            {
+                return a == ((PropertyInfo)b).GetGetMethod();
+            }
+            else if (a is PropertyInfo && b is MethodInfo)
+            {
+                return ((PropertyInfo)a).GetGetMethod() == b;
+            }
+            return false;
+        }
+
+        private static Expression StripQuotes(Expression e)
+        {
+            while (e.NodeType == ExpressionType.Quote)
+            {
+                e = ((System.Linq.Expressions.UnaryExpression)e).Operand;
+            }
+            return e;
         }
 
         private ProjectedColumns ProjectColumns(Expression expression, string newAlias, params string[] existingAliases)
