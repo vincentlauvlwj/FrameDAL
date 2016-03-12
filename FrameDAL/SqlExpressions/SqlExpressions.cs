@@ -17,6 +17,7 @@ namespace FrameDAL.SqlExpressions
         Function,
         Constant,
         In,
+        Literal,
 
         Exists,
         IsNull,
@@ -54,6 +55,18 @@ namespace FrameDAL.SqlExpressions
         protected SqlExpression(SqlExpressionType nodeType)
         {
             this.NodeType = nodeType;
+        }
+    }
+
+    public class LiteralExpression : SqlExpression
+    {
+        public string SqlText { get; private set; }
+
+        // public ReadOnlyCollection<object> Arguments { get; private set; }
+
+        public LiteralExpression(string sqlText) : base(SqlExpressionType.Literal)
+        {
+            this.SqlText = sqlText;
         }
     }
 
@@ -157,13 +170,13 @@ namespace FrameDAL.SqlExpressions
 
     public class ColumnDeclaration
     {
-        public string ColumnAlias { get; private set; }
+        public string DeclaredName { get; private set; }
 
         public SqlExpression Expression { get; private set; }
 
-        public ColumnDeclaration(string columnAlias, SqlExpression expression)
+        public ColumnDeclaration(string declaredName, SqlExpression expression)
         {
-            this.ColumnAlias = columnAlias;
+            this.DeclaredName = declaredName;
             this.Expression = expression;
         }
     }

@@ -121,5 +121,36 @@ namespace FrameDAL.Utility
                     + prop.DeclaringType.FullName + "." + prop.Name + "时发生异常。错误信息：" + e.Message, e);
             }
         }
+
+        public static object GetValue(this MemberInfo member, object instance)
+        {
+            switch (member.MemberType)
+            {
+                case MemberTypes.Property:
+                    return ((PropertyInfo)member).GetValue(instance, null);
+                case MemberTypes.Field:
+                    return ((FieldInfo)member).GetValue(instance);
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
+
+        public static void SetValue(this MemberInfo member, object instance, object value)
+        {
+            switch (member.MemberType)
+            {
+                case MemberTypes.Property:
+                    var pi = (PropertyInfo)member;
+                    // pi.SetValue(instance, value, null);
+                    pi.SetValueSafely(instance, value);
+                    break;
+                case MemberTypes.Field:
+                    // var fi = (FieldInfo)member;
+                    // fi.SetValue(instance, value);
+                    throw new NotImplementedException();
+                default:
+                    throw new InvalidOperationException();
+            }
+        }
     }
 }

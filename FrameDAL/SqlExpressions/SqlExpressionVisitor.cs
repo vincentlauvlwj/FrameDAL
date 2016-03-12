@@ -10,7 +10,7 @@ namespace FrameDAL.SqlExpressions
     {
         protected SqlExpressionVisitor() { }
 
-        protected virtual SqlExpression Visit(SqlExpression expr)
+        public virtual SqlExpression Visit(SqlExpression expr)
         {
             if (expr == null) return null;
 
@@ -61,9 +61,16 @@ namespace FrameDAL.SqlExpressions
                 case SqlExpressionType.Update:
                 case SqlExpressionType.Delete:
                     return this.VisitCommand((CommandExpression)expr);
+                case SqlExpressionType.Literal:
+                    return this.VisitLiteral((LiteralExpression)expr);
                 default:
                     return this.VisitUnknown(expr);
             }
+        }
+
+        protected virtual SqlExpression VisitLiteral(LiteralExpression expr)
+        {
+            return expr;
         }
 
         protected virtual SqlExpression VisitCommand(CommandExpression expr)
@@ -337,12 +344,12 @@ namespace FrameDAL.SqlExpressions
         protected virtual ColumnDeclaration VisitColumnDeclaration(ColumnDeclaration column)
         {
             SqlExpression expression = this.Visit(column.Expression);
-            return UpdateColumnDeclaration(column, column.ColumnAlias, expression);
+            return UpdateColumnDeclaration(column, column.DeclaredName, expression);
         }
 
         protected ColumnDeclaration UpdateColumnDeclaration(ColumnDeclaration column, string columnAlias, SqlExpression expression)
         {
-            if(columnAlias != column.ColumnAlias || expression != column.Expression)
+            if(columnAlias != column.DeclaredName || expression != column.Expression)
             {
                 return new ColumnDeclaration(columnAlias, expression);
             }
