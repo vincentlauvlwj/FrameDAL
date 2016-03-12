@@ -45,10 +45,220 @@ namespace FrameDAL.SqlExpressions
                     return this.VisitSelect((SelectExpression)expr);
                 case SqlExpressionType.Join:
                     return this.VisitJoin((JoinExpression)expr);
-
+                case SqlExpressionType.Aggregate:
+                    return this.VisitAggregate((AggregateExpression)expr);
+                case SqlExpressionType.Function:
+                    return this.VisitFunction((FunctionExpression)expr);
+                case SqlExpressionType.Constant:
+                    return this.VisitConstant((ConstantExpression)expr);
+                case SqlExpressionType.In:
+                    return this.VisitIn((InExpression)expr);
+                case SqlExpressionType.Between:
+                    return this.VisitBetween((BetweenExpression)expr);
+                case SqlExpressionType.Conditional:
+                    return this.VisitConditional((ConditionalExpression)expr);
+                case SqlExpressionType.Insert:
+                case SqlExpressionType.Update:
+                case SqlExpressionType.Delete:
+                    return this.VisitCommand((CommandExpression)expr);
                 default:
-                    throw new NotSupportedException("不支持的表达式类型：" + nameof(expr.NodeType));
+                    return this.VisitUnknown(expr);
             }
+        }
+
+        protected virtual SqlExpression VisitCommand(CommandExpression expr)
+        {
+            switch (expr.NodeType)
+            {
+                case SqlExpressionType.Insert:
+                    return this.VisitInsert((InsertExpression)expr);
+                case SqlExpressionType.Update:
+                    return this.VisitUpdate((UpdateExpression)expr);
+                case SqlExpressionType.Delete:
+                    return this.VisitDelete((DeleteExpression)expr);
+                default:
+                    return this.VisitUnknown(expr);
+            }
+        }
+
+        protected virtual SqlExpression VisitInsert(InsertExpression expr)
+        {
+            TableExpression table = (TableExpression)this.Visit(expr.Table);
+            ReadOnlyCollection<ColumnAssignment> assignments = this.VisitColumnAssignments(expr.Assignments);
+            return UpdateInsert(expr, table, assignments);
+        }
+
+        protected InsertExpression UpdateInsert(InsertExpression expr, TableExpression table, IEnumerable<ColumnAssignment> assignments)
+        {
+            if (table != expr.Table || assignments != expr.Assignments)
+            {
+                return new InsertExpression(table, assignments);
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitUpdate(UpdateExpression expr)
+        {
+            TableExpression table = (TableExpression)this.Visit(expr.Table);
+            SqlExpression where = this.Visit(expr.Where);
+            ReadOnlyCollection<ColumnAssignment> assignments = this.VisitColumnAssignments(expr.Assignments);
+            return UpdateUpdate(expr, table, where, assignments);
+        }
+
+        protected UpdateExpression UpdateUpdate(UpdateExpression expr, TableExpression table, SqlExpression where, IEnumerable<ColumnAssignment> assignments)
+        {
+            if (table != expr.Table || where != expr.Where || assignments != expr.Assignments)
+            {
+                return new UpdateExpression(table, where, assignments);
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitDelete(DeleteExpression expr)
+        {
+            TableExpression table = (TableExpression)this.Visit(expr.Table);
+            SqlExpression where = this.Visit(expr.Where);
+            return UpdateDelete(expr, table, where);
+        }
+
+        protected DeleteExpression UpdateDelete(DeleteExpression expr, TableExpression table, SqlExpression where)
+        {
+            if (table != expr.Table || where != expr.Where)
+            {
+                return new DeleteExpression(table, where);
+            }
+            return expr;
+        }
+
+        protected virtual ReadOnlyCollection<ColumnAssignment> VisitColumnAssignments(ReadOnlyCollection<ColumnAssignment> assignments)
+        {
+            List<ColumnAssignment> alternate = null;
+            for (int i = 0, n = assignments.Count; i < n; i++)
+            {
+                ColumnAssignment assignment = this.VisitColumnAssignment(assignments[i]);
+                if (alternate == null && assignment != assignments[i])
+                {
+                    alternate = assignments.Take(i).ToList();
+                }
+                if (alternate != null)
+                {
+                    alternate.Add(assignment);
+                }
+            }
+            if (alternate != null)
+            {
+                return alternate.AsReadOnly();
+            }
+            return assignments;
+        }
+
+        protected virtual ColumnAssignment VisitColumnAssignment(ColumnAssignment assignment)
+        {
+            ColumnExpression column = (ColumnExpression)this.Visit(assignment.Column);
+            SqlExpression expression = this.Visit(assignment.Expression);
+            return UpdateColumnAssignment(assignment, column, expression);
+        }
+
+        protected ColumnAssignment UpdateColumnAssignment(ColumnAssignment assignment, ColumnExpression column, SqlExpression expression)
+        {
+            if (column != assignment.Column || expression != assignment.Expression)
+            {
+                return new ColumnAssignment(column, expression);
+            }
+            return assignment;
+        }
+
+        protected virtual SqlExpression VisitConditional(ConditionalExpression expr)
+        {
+            SqlExpression test = this.Visit(expr.Test);
+            SqlExpression ifTrue = this.Visit(expr.IfTrue);
+            SqlExpression ifFalse = this.Visit(expr.IfFalse);
+            return UpdateConditional(expr, test, ifTrue, ifFalse);
+        }
+
+        protected ConditionalExpression UpdateConditional(ConditionalExpression expr, SqlExpression test, SqlExpression ifTrue, SqlExpression ifFalse)
+        {
+            if (test != expr.Test || ifTrue != expr.IfTrue || ifFalse != expr.IfFalse)
+            {
+                return new ConditionalExpression(test, ifTrue, ifFalse);
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitBetween(BetweenExpression expr)
+        {
+            SqlExpression expression = this.Visit(expr.Expression);
+            SqlExpression lower = this.Visit(expr.Lower);
+            SqlExpression upper = this.Visit(expr.Upper);
+            return UpdateBetween(expr, expression, lower, upper);
+        }
+
+        protected BetweenExpression UpdateBetween(BetweenExpression expr, SqlExpression expression, SqlExpression lower, SqlExpression upper)
+        {
+            if (expression != expr.Expression || lower != expr.Lower || upper != expr.Upper)
+            {
+                return new BetweenExpression(expression, lower, upper);
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitIn(InExpression expr)
+        {
+            SqlExpression expression = this.Visit(expr.Expression);
+            SelectExpression select = (SelectExpression)this.Visit(expr.Select);
+            ReadOnlyCollection<SqlExpression> values = this.VisitExpressionList(expr.Values);
+            return UpdateIn(expr, expression, select, values);
+        }
+
+        protected InExpression UpdateIn(InExpression expr, SqlExpression expression, SelectExpression select, IEnumerable<SqlExpression> values)
+        {
+            if (expression != expr.Expression || select != expr.Select || values != expr.Values)
+            {
+                if (select == null)
+                {
+                    return new InExpression(expression, values);
+                }
+                else
+                {
+                    return new InExpression(expression, select);
+                }
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitConstant(ConstantExpression expr)
+        {
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitFunction(FunctionExpression expr)
+        {
+            ReadOnlyCollection<SqlExpression> arguments = this.VisitExpressionList(expr.Arguments);
+            return UpdateFunction(expr, expr.FuncName, arguments);
+        }
+
+        protected FunctionExpression UpdateFunction(FunctionExpression expr, string funcName, IEnumerable<SqlExpression> arguments)
+        {
+            if (funcName != expr.FuncName || arguments != expr.Arguments)
+            {
+                return new FunctionExpression(funcName, arguments);
+            }
+            return expr;
+        }
+
+        protected virtual SqlExpression VisitAggregate(AggregateExpression expr)
+        {
+            SqlExpression argument = this.Visit(expr.Argument);
+            return UpdateAggregate(expr, expr.AggregateName, argument, expr.IsDistinct);
+        }
+
+        protected AggregateExpression UpdateAggregate(AggregateExpression expr, string aggregateName, SqlExpression argument, bool isDistinct)
+        {
+            if (aggregateName != expr.AggregateName || argument != expr.Argument || isDistinct != expr.IsDistinct)
+            {
+                return new AggregateExpression(aggregateName, argument, isDistinct);
+            }
+            return expr;
         }
 
         protected virtual SqlExpression VisitJoin(JoinExpression expr)
@@ -56,9 +266,14 @@ namespace FrameDAL.SqlExpressions
             SqlExpression left = this.Visit(expr.Left);
             SqlExpression right = this.Visit(expr.Right);
             SqlExpression condition = this.Visit(expr.Condition);
-            if(left != expr.Left || right != expr.Right || condition != expr.Condition)
+            return UpdateJoin(expr, expr.JoinType, left, right, condition);
+        }
+
+        protected JoinExpression UpdateJoin(JoinExpression expr, JoinType joinType, SqlExpression left, SqlExpression right, SqlExpression condition)
+        {
+            if (joinType != expr.JoinType || left != expr.Left || right != expr.Right || condition != expr.Condition)
             {
-                return new JoinExpression(expr.JoinType, left, right, condition);
+                return new JoinExpression(joinType, left, right, condition);
             }
             return expr;
         }
@@ -70,14 +285,33 @@ namespace FrameDAL.SqlExpressions
             ReadOnlyCollection<OrderByDeclaration> orderBy = this.VisitOrderBy(expr.OrderBy);
             ReadOnlyCollection<SqlExpression> groupBy = this.VisitExpressionList(expr.GroupBy);
             ReadOnlyCollection<ColumnDeclaration> columns = this.VisitColumnDeclarations(expr.Columns);
-            if(from != expr.From
+            return UpdateSelect(expr, expr.TableAlias, columns, from, where, orderBy, groupBy, expr.Skip, expr.Take, expr.IsDistinct);
+        }
+
+        protected SelectExpression UpdateSelect(
+            SelectExpression expr,
+            string tableAlias,
+            IEnumerable<ColumnDeclaration> columns,
+            SqlExpression from,
+            SqlExpression where,
+            IEnumerable<OrderByDeclaration> orderBy,
+            IEnumerable<SqlExpression> groupBy,
+            int? skip,
+            int? take,
+            bool isDistinct
+            )
+        {
+            if(tableAlias != expr.TableAlias
+                || columns != expr.Columns
+                || from != expr.From
                 || where != expr.Where
                 || orderBy != expr.OrderBy
                 || groupBy != expr.GroupBy
-                || columns != expr.Columns
-                )
+                || skip != expr.Skip
+                || take != expr.Take
+                || isDistinct != expr.IsDistinct)
             {
-                return new SelectExpression(expr.TableAlias, columns, from, where, orderBy, groupBy);
+                return new SelectExpression(tableAlias, columns, from, where, orderBy, groupBy, skip, take, isDistinct);
             }
             return expr;
         }
@@ -121,7 +355,15 @@ namespace FrameDAL.SqlExpressions
                 for (int i = 0, n = original.Count; i < n; i++)
                 {
                     SqlExpression p = this.Visit(original[i]);
-                    if (list != null)
+                    if(list == null && p != original[i])
+                    {
+                        list = original.Take(i).ToList();
+                    }
+                    if(list != null)
+                    {
+                        list.Add(p);
+                    }
+                    /*if (list != null)
                     {
                         list.Add(p);
                     }
@@ -133,7 +375,7 @@ namespace FrameDAL.SqlExpressions
                             list.Add(original[j]);
                         }
                         list.Add(p);
-                    }
+                    }*/
                 }
                 if (list != null)
                 {
@@ -180,9 +422,14 @@ namespace FrameDAL.SqlExpressions
         {
             SqlExpression left = this.Visit(expr.Left);
             SqlExpression right = this.Visit(expr.Right);
-            if(expr.Left != left || expr.Right != right)
+            return UpdateBinary(expr, expr.NodeType, left, right);
+        }
+
+        protected BinaryExpression UpdateBinary(BinaryExpression expr, SqlExpressionType nodeType, SqlExpression left, SqlExpression right)
+        {
+            if (nodeType != expr.NodeType || left != expr.Left || right != expr.Right)
             {
-                return new BinaryExpression(expr.NodeType, left, right);
+                return new BinaryExpression(nodeType, left, right);
             }
             return expr;
         }
@@ -190,11 +437,21 @@ namespace FrameDAL.SqlExpressions
         protected virtual SqlExpression VisitUnary(UnaryExpression expr)
         {
             SqlExpression operand = this.Visit(expr.Operand);
-            if(expr.Operand != operand)
+            return UpdateUnary(expr, expr.NodeType, operand);
+        }
+
+        protected UnaryExpression UpdateUnary(UnaryExpression expr, SqlExpressionType nodeType, SqlExpression operand)
+        {
+            if(nodeType != expr.NodeType || operand != expr.Operand)
             {
-                return new UnaryExpression(expr.NodeType, operand);
+                return new UnaryExpression(nodeType, operand);
             }
             return expr;
+        }
+
+        protected virtual SqlExpression VisitUnknown(SqlExpression expr)
+        {
+            throw new NotSupportedException("不支持的表达式类型：" + nameof(expr.NodeType));
         }
     }
 }
