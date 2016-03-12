@@ -132,24 +132,7 @@ namespace FrameDAL.SqlExpressions
 
         protected virtual ReadOnlyCollection<ColumnAssignment> VisitColumnAssignments(ReadOnlyCollection<ColumnAssignment> assignments)
         {
-            List<ColumnAssignment> alternate = null;
-            for (int i = 0, n = assignments.Count; i < n; i++)
-            {
-                ColumnAssignment assignment = this.VisitColumnAssignment(assignments[i]);
-                if (alternate == null && assignment != assignments[i])
-                {
-                    alternate = assignments.Take(i).ToList();
-                }
-                if (alternate != null)
-                {
-                    alternate.Add(assignment);
-                }
-            }
-            if (alternate != null)
-            {
-                return alternate.AsReadOnly();
-            }
-            return assignments;
+            return System.Linq.Expressions.ExpressionVisitor.Visit(assignments, VisitColumnAssignment);
         }
 
         protected virtual ColumnAssignment VisitColumnAssignment(ColumnAssignment assignment)
@@ -323,89 +306,47 @@ namespace FrameDAL.SqlExpressions
 
         protected virtual ReadOnlyCollection<OrderByDeclaration> VisitOrderBy(ReadOnlyCollection<OrderByDeclaration> orders)
         {
-            if (orders != null)
+            return System.Linq.Expressions.ExpressionVisitor.Visit(orders, VisitOrderByDeclaration);
+        }
+
+        protected virtual OrderByDeclaration VisitOrderByDeclaration(OrderByDeclaration order)
+        {
+            SqlExpression expression = this.Visit(order.Expression);
+            return UpdateOrderByDeclaration(order, order.OrderType, expression);
+        }
+
+        protected OrderByDeclaration UpdateOrderByDeclaration(OrderByDeclaration order, OrderType orderType, SqlExpression expression)
+        {
+            if(orderType != order.OrderType || expression != order.Expression)
             {
-                List<OrderByDeclaration> alternate = null;
-                for (int i = 0, n = orders.Count; i < n; i++)
-                {
-                    OrderByDeclaration expr = orders[i];
-                    SqlExpression e = this.Visit(expr.Expression);
-                    if (alternate == null && e != expr.Expression)
-                    {
-                        alternate = orders.Take(i).ToList();
-                    }
-                    if (alternate != null)
-                    {
-                        alternate.Add(new OrderByDeclaration(expr.OrderType, e));
-                    }
-                }
-                if (alternate != null)
-                {
-                    return alternate.AsReadOnly();
-                }
+                return new OrderByDeclaration(orderType, expression);
             }
-            return orders;
+            return order;
         }
 
         protected virtual ReadOnlyCollection<SqlExpression> VisitExpressionList(ReadOnlyCollection<SqlExpression> original)
         {
-            if (original != null)
-            {
-                List<SqlExpression> list = null;
-                for (int i = 0, n = original.Count; i < n; i++)
-                {
-                    SqlExpression p = this.Visit(original[i]);
-                    if(list == null && p != original[i])
-                    {
-                        list = original.Take(i).ToList();
-                    }
-                    if(list != null)
-                    {
-                        list.Add(p);
-                    }
-                    /*if (list != null)
-                    {
-                        list.Add(p);
-                    }
-                    else if (p != original[i])
-                    {
-                        list = new List<SqlExpression>(n);
-                        for (int j = 0; j < i; j++)
-                        {
-                            list.Add(original[j]);
-                        }
-                        list.Add(p);
-                    }*/
-                }
-                if (list != null)
-                {
-                    return list.AsReadOnly();
-                }
-            }
-            return original;
+            return System.Linq.Expressions.ExpressionVisitor.Visit(original, Visit);
         }
 
         protected virtual ReadOnlyCollection<ColumnDeclaration> VisitColumnDeclarations(ReadOnlyCollection<ColumnDeclaration> columns)
         {
-            List<ColumnDeclaration> alternate = null;
-            for (int i = 0, n = columns.Count; i < n; i++)
+            return System.Linq.Expressions.ExpressionVisitor.Visit(columns, VisitColumnDeclaration);
+        }
+
+        protected virtual ColumnDeclaration VisitColumnDeclaration(ColumnDeclaration column)
+        {
+            SqlExpression expression = this.Visit(column.Expression);
+            return UpdateColumnDeclaration(column, column.ColumnAlias, expression);
+        }
+
+        protected ColumnDeclaration UpdateColumnDeclaration(ColumnDeclaration column, string columnAlias, SqlExpression expression)
+        {
+            if(columnAlias != column.ColumnAlias || expression != column.Expression)
             {
-                ColumnDeclaration column = columns[i];
-                SqlExpression e = this.Visit(column.Expression);
-                if (alternate == null && e != column.Expression)
-                {
-                    alternate = columns.Take(i).ToList();
-                }
-                if (alternate != null)
-                {
-                    alternate.Add(new ColumnDeclaration(column.ColumnAlias, e));
-                }
+                return new ColumnDeclaration(columnAlias, expression);
             }
-            if (alternate != null)
-            {
-                return alternate.AsReadOnly();
-            }
-            return columns;
+            return column;
         }
 
         protected virtual SqlExpression VisitColumn(ColumnExpression expr)
