@@ -60,6 +60,21 @@ namespace FrameDAL.Linq.Translation
                 this.Expression = expression;
                 this.TranslateResult = translateResult;
             }
+
+            public SqlExpression SqlExpression
+            {
+                get { return TranslateResult.SqlExpression; }
+            }
+
+            public Expression Projector
+            {
+                get { return TranslateResult.Projector; }
+            }
+
+            public LambdaExpression Aggregator
+            {
+                get { return TranslateResult.Aggregator; }
+            }
         }
 
         private TranslateResult _curResult;
@@ -119,27 +134,49 @@ namespace FrameDAL.Linq.Translation
                 switch (m.Method.Name)
                 {
                     case "Where":
-                        return this.VisitWhere(m.Type, m.Arguments[0], (LambdaExpression)StripQuotes(m.Arguments[1]));
+                        return this.VisitWhere(m);
                     case "Select":
-                        return this.VisitSelect(m.Type, m.Arguments[0], (LambdaExpression)StripQuotes(m.Arguments[1]));
+                        return this.VisitSelect(m);
                 }
                 throw new NotSupportedException("不支持的方法：" + m.Method.Name);
             }
             return base.VisitMethodCall(m);
         }
 
-        private Expression VisitWhere(Type resultType, Expression source, LambdaExpression predicate)
+        private Expression VisitWhere(MethodCallExpression m)
         {
-            Bundle bundle = this.TranslateVisit(source);
-            this.map[predicate.Parameters[0]] = bundle.TranslateResult.Projector;
-            SqlExpression where = this.TranslateVisit(predicate.Body).TranslateResult.SqlExpression;
-
-            return null;
+            Expression source = m.Arguments[0];
+            LambdaExpression predicate = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            Bundle src = this.TranslateVisit(source);
+            this.map[predicate.Parameters[0]] = src.Projector;
+            Bundle where = this.TranslateVisit(predicate.Body);
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(
+                src.Projector, 
+                alias, 
+                ((SelectExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, where.SqlExpression),
+                pc.Projector);
+            return m;
         }
 
-        private Expression VisitSelect(Type resultType, Expression source, LambdaExpression selector)
+        private Expression VisitSelect(MethodCallExpression m)
         {
-            return null;
+            Expression source = m.Arguments[0];
+            LambdaExpression selector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            Bundle src = this.TranslateVisit(source);
+            this.map[selector.Parameters[0]] = src.Projector;
+            Bundle bundle = this.TranslateVisit(selector.Body);
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(
+                bundle.Expression,
+                alias,
+                ((SelectExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null),
+                pc.Projector);
+            return m;
         }
 
         protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
@@ -147,6 +184,16 @@ namespace FrameDAL.Linq.Translation
             if(IsTable(node.Value))
             {
                 CurrentResult = GetDefaultProjection((IQueryable) node.Value);
+                return node;
+            }
+            SqlExpression expr = node.Value as SqlExpression;
+            if(expr != null)
+            {
+                CurrentResult = new TranslateResult(expr);
+            }
+            else
+            {
+                CurrentResult = new TranslateResult(new FrameDAL.SqlExpressions.ConstantExpression(node.Value));
             }
             return node;
         }
@@ -206,11 +253,7 @@ namespace FrameDAL.Linq.Translation
                     }
                     break;
             }
-            if(source == m.Expression)
-            {
-                return m;
-            }
-            return Expression.MakeMemberAccess(source, m.Member);
+            return m.Update(source);
         }
 
         protected override Expression VisitUnary(System.Linq.Expressions.UnaryExpression node)
@@ -234,12 +277,8 @@ namespace FrameDAL.Linq.Translation
                 Bundle bundle = this.TranslateVisit(node.Operand);
                 this.CurrentResult = new TranslateResult(
                     new FrameDAL.SqlExpressions.UnaryExpression(
-                        exprType.Value, bundle.TranslateResult.SqlExpression));
-                if(bundle.Expression != node.Operand)
-                {
-                    return Expression.MakeUnary(node.NodeType, bundle.Expression, node.Type);
-                }
-                return node;
+                        exprType.Value, bundle.SqlExpression));
+                return node.Update(bundle.Expression);
             }
             return base.VisitUnary(node);
         }
@@ -309,12 +348,8 @@ namespace FrameDAL.Linq.Translation
                 Bundle right = this.TranslateVisit(node.Right);
                 this.CurrentResult = new TranslateResult(
                     new FrameDAL.SqlExpressions.BinaryExpression(
-                        exprType.Value, left.TranslateResult.SqlExpression, right.TranslateResult.SqlExpression));
-                if(left.Expression != node.Left || right.Expression != node.Right)
-                {
-                    return Expression.MakeBinary(node.NodeType, left.Expression, right.Expression);
-                }
-                return node;
+                        exprType.Value, left.SqlExpression, right.SqlExpression));
+                return node.Update(left.Expression, node.Conversion, right.Expression);
             }
             return base.VisitBinary(node);
         }

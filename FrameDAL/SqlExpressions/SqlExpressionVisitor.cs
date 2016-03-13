@@ -30,7 +30,9 @@ namespace FrameDAL.SqlExpressions
                 case SqlExpressionType.And:
                 case SqlExpressionType.Or:
                 case SqlExpressionType.LessThan:
+                case SqlExpressionType.LessThanOrEqual:
                 case SqlExpressionType.GreaterThan:
+                case SqlExpressionType.GreaterThanOrEqual:
                 case SqlExpressionType.Equal:
                 case SqlExpressionType.NotEqual:
                 case SqlExpressionType.RightShift:

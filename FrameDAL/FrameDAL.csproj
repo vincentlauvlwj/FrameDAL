@@ -67,6 +67,7 @@
     <Compile Include="Linq\Translation\PartialEvaluator.cs" />
     <Compile Include="SqlExpressions\SqlExpressions.cs" />
     <Compile Include="SqlExpressions\SqlExpressionVisitor.cs" />
+    <Compile Include="SqlExpressions\SqlFormatter.cs" />
     <Compile Include="Utility\CacheUtil.cs" />
     <Compile Include="Utility\IniConfigUtil.cs" />
     <Compile Include="Core\AppContext.cs" />
