@@ -58,7 +58,15 @@ namespace FrameDAL.Linq
 
         public override string ToString()
         {
-            return this.Expression.ToString();
+            if (this.Expression.NodeType == ExpressionType.Constant &&
+                ((ConstantExpression)this.Expression).Value == this)
+            {
+                return "Query(" + typeof(T) + ")";
+            }
+            else
+            {
+                return this.Expression.ToString();
+            }
         }
 
         public string QueryText

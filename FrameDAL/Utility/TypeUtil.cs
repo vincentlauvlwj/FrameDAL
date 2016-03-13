@@ -82,5 +82,23 @@ namespace FrameDAL.Utility
             if (ei != null) return ei.EventHandlerType;
             return null;
         }
+
+        public static object ConvertType(object value, Type t)
+        {
+            if (value is DBNull)
+            {
+                value = t.IsValueType ? Activator.CreateInstance(t) : null;
+            }
+            if (value == null)
+            {
+                return null;
+            }
+            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                t = t.GetGenericArguments()[0];
+            }
+
+            return value is IConvertible ? Convert.ChangeType(value, t) : value;
+        }
     }
 }

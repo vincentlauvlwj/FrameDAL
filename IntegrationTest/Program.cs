@@ -26,6 +26,21 @@ namespace ResumeFactory
 
             using (ISession session = AppContext.Instance.OpenSession())
             {
+                //var query = session.GetAll<User>().Where(u => u.Id == "fcff2ce4-543e-431c-96f1-8fbc43ccee09").ToList()[0];
+                //var query = session.GetAll<User0>().Select(u => u.UserName).ToList();
+                var query = session.GetAll<User>()
+                    .Select(u => new { u.UserName, u.UserPwd })
+                    .Where(u => u.UserName.Contains("123"));
+
+                var query1 =    from u in session.GetAll<User>()
+                                where u.UserPwd.Contains("123")
+                                select new { u.UserPwd, u.UserName };
+                var list = session.GetAll<User>().ToList();
+                return;
+            }
+
+            /*using (ISession session = AppContext.Instance.OpenSession())
+            {
                 User user = session.Get<User>("fcff2ce4-543e-431c-96f1-8fbc43ccee09");
                 MessageBox.Show(user.Resumes[0].ResumeName);
 
@@ -37,7 +52,7 @@ namespace ResumeFactory
 
                 Course course = session.Get<Course>(1);
                 MessageBox.Show(course.Students[0].StuName);
-            }
+            }*/
 
             /*FormLogin formLogin = new FormLogin();
             Sunisoft.IrisSkin.SkinEngine skin = new Sunisoft.IrisSkin.SkinEngine(formLogin);
@@ -49,6 +64,20 @@ namespace ResumeFactory
                 Application.Run(new FormMain(formLogin.LoginUser));
             }*/
         }
+    }
+
+    [Table("user")]
+    public class User0
+    {
+        [Id(GeneratorType.Uuid)]
+        [Column("id")]
+        public string Id { get; set; }
+
+        [Column("user_name")]
+        public string UserName { get; set; }
+
+        [Column("user_pwd")]
+        public string UserPwd { get; set; }
     }
 
     [Table("student")]

@@ -7,13 +7,13 @@ using FrameDAL.Utility;
 
 namespace FrameDAL.SqlExpressions
 {
-    public class FormatterResult
+    public class FormatResult
     {
         public string SqlText { get; private set; }
 
         public ReadOnlyCollection<object> Parameters { get; private set; }
 
-        public FormatterResult(string sqlText, IEnumerable<object> parameters)
+        public FormatResult(string sqlText, IEnumerable<object> parameters)
         {
             this.SqlText = sqlText;
             this.Parameters = parameters.ToReadOnly();
@@ -27,75 +27,22 @@ namespace FrameDAL.SqlExpressions
         private int depth;
         private List<object> parameters;
 
-        public static FormatterResult Format(SqlExpression expression)
+        private SqlFormatter()
+        {
+            sb = new StringBuilder();
+            parameters = new List<object>();
+        }
+
+        public static FormatResult Format(SqlExpression expression)
         {
             SqlFormatter formatter = new SqlFormatter();
             formatter.Visit(expression);
-            return new FormatterResult(formatter.sb.ToString(), formatter.parameters);
-        }
-
-        protected enum Indentation
-        {
-            Same,
-            Inner,
-            Outer
+            return new FormatResult(formatter.sb.ToString(), formatter.parameters);
         }
 
         protected void Write(object value)
         {
             this.sb.Append(value);
-        }
-
-        protected virtual void WriteAsAliasName(string aliasName)
-        {
-            this.Write("AS ");
-            this.WriteAliasName(aliasName);
-        }
-
-        protected virtual void WriteAliasName(string aliasName)
-        {
-            this.Write(aliasName);
-        }
-
-        protected virtual void WriteAsColumnName(string columnName)
-        {
-            this.Write("AS ");
-            this.WriteColumnName(columnName);
-        }
-
-        protected virtual void WriteColumnName(string columnName)
-        {
-            // string name = (this.Language != null) ? this.Language.Quote(columnName) : columnName;
-            this.Write(columnName);
-        }
-
-        protected virtual void WriteTableName(string tableName)
-        {
-            // string name = (this.Language != null) ? this.Language.Quote(tableName) : tableName;
-            this.Write(tableName);
-        }
-
-        protected void WriteLine(Indentation style)
-        {
-            sb.AppendLine();
-            this.Indent(style);
-            for (int i = 0, n = this.depth * this.indent; i < n; i++)
-            {
-                this.Write(" ");
-            }
-        }
-
-        protected void Indent(Indentation style)
-        {
-            if (style == Indentation.Inner)
-            {
-                this.depth++;
-            }
-            else if (style == Indentation.Outer)
-            {
-                this.depth--;
-                System.Diagnostics.Debug.Assert(this.depth >= 0);
-            }
         }
 
         protected virtual string GetOperator(UnaryExpression u)
@@ -158,12 +105,25 @@ namespace FrameDAL.SqlExpressions
             }
         }
 
+        protected override SqlExpression VisitConstant(ConstantExpression expr)
+        {
+            this.Write("? ");
+            parameters.Add(expr.Value);
+            return expr;
+        }
+
+        protected override SqlExpression VisitLiteral(LiteralExpression expr)
+        {
+            this.Write(expr.SqlText + " ");
+            return expr;
+        }
+
         protected override SqlExpression VisitUnary(UnaryExpression expr)
         {
             this.Write(GetOperator(expr));
             this.Write(" (");
             this.Visit(expr.Operand);
-            this.Write(")");
+            this.Write(") ");
             return expr;
         }
 
@@ -175,23 +135,41 @@ namespace FrameDAL.SqlExpressions
             this.Write(GetOperator(expr));
             this.Write(" (");
             this.Visit(expr.Right);
-            this.Write(")");
+            this.Write(") ");
             return expr;
         }
 
-        protected override SqlExpression VisitConstant(ConstantExpression expr)
+        protected override SqlExpression VisitTable(TableExpression expr)
         {
-            this.Write("?");
-            parameters.Add(expr.Value);
+            this.Write(expr.TableName + " " + expr.TableAlias + " ");
             return expr;
         }
 
         protected override SqlExpression VisitColumn(ColumnExpression expr)
         {
-            this.WriteAliasName(expr.TableAlias);
-            this.Write(".");
-            this.WriteColumnName(expr.ColumnName);
+            this.Write(expr.TableAlias + "." + expr.ColumnName + " ");
             return expr;
+        }
+
+        protected override ColumnDeclaration VisitColumnDeclaration(ColumnDeclaration column)
+        {
+            this.Visit(column.Expression);
+            ColumnExpression c = column.Expression as ColumnExpression;
+            if (c != null && c.ColumnName != column.DeclaredName || c == null)
+            {
+                this.Write("AS " + column.DeclaredName + " ");
+            }
+            return column;
+        }
+
+        protected override ReadOnlyCollection<ColumnDeclaration> VisitColumnDeclarations(ReadOnlyCollection<ColumnDeclaration> columns)
+        {
+            for(int i = 0, n = columns.Count; i < n;i ++)
+            {
+                if (i > 0) this.Write(", ");
+                this.VisitColumnDeclaration(columns[i]);
+            }
+            return columns;
         }
 
         protected override SqlExpression VisitSelect(SelectExpression expr)
@@ -201,114 +179,47 @@ namespace FrameDAL.SqlExpressions
             {
                 this.Write("DISTINCT ");
             }
-            this.WriteColumns(expr.Columns);
-            if(expr.From != null)
+            this.VisitColumnDeclarations(expr.Columns);
+            if (expr.From == null) throw new Exception("invalid sql tree!");
+            this.Write("FROM ");
+            this.VisitSource(expr.From);
+            if(expr.Where != null)
             {
-                this.WriteLine(Indentation.Same);
-                this.Write("FROM ");
-                this.VisitSource(expr.From);
-            }
-            if (expr.Where != null)
-            {
-                this.WriteLine(Indentation.Same);
                 this.Write("WHERE ");
                 this.Visit(expr.Where);
             }
-            if (expr.GroupBy != null && expr.GroupBy.Count > 0)
-            {
-                this.WriteLine(Indentation.Same);
-                this.Write("GROUP BY ");
-                for (int i = 0, n = expr.GroupBy.Count; i < n; i++)
-                {
-                    if (i > 0)
-                    {
-                        this.Write(", ");
-                    }
-                    this.Visit(expr.GroupBy[i]);
-                }
-            }
-            if (expr.OrderBy != null && expr.OrderBy.Count > 0)
-            {
-                this.WriteLine(Indentation.Same);
-                this.Write("ORDER BY ");
-                for (int i = 0, n = expr.OrderBy.Count; i < n; i++)
-                {
-                    OrderByDeclaration order = expr.OrderBy[i];
-                    if (i > 0)
-                    {
-                        this.Write(", ");
-                    }
-                    this.Visit(order.Expression);
-                    if (order.OrderType != OrderType.Ascending)
-                    {
-                        this.Write(" DESC");
-                    }
-                }
-            }
-            return base.VisitSelect(expr);
+
+
+
+            return expr;
         }
 
-        protected virtual void WriteColumns(ReadOnlyCollection<ColumnDeclaration> columns)
+        protected override SqlExpression VisitSource(SqlExpression expr)
         {
-            if (columns.Count > 0)
-            {
-                for (int i = 0, n = columns.Count; i < n; i++)
-                {
-                    ColumnDeclaration column = columns[i];
-                    if (i > 0)
-                    {
-                        this.Write(", ");
-                    }
-                    ColumnExpression c = this.Visit(column.Expression) as ColumnExpression;
-                    if (!string.IsNullOrEmpty(column.DeclaredName) && (c == null || c.ColumnName != column.DeclaredName))
-                    {
-                        this.Write(" ");
-                        this.WriteAsColumnName(column.DeclaredName);
-                    }
-                }
-            }
-            else
-            {
-                this.Write("NULL ");
-                this.WriteAsColumnName("tmp");
-                this.Write(" ");
-            }
-        }
-
-        protected override SqlExpression VisitSource(SqlExpression source)
-        {
-            switch (source.NodeType)
+            switch(expr.NodeType)
             {
                 case SqlExpressionType.Table:
-                    TableExpression table = (TableExpression)source;
-                    this.WriteTableName(table.TableName);
-                    this.Write(" ");
-                    this.WriteAsAliasName(table.TableAlias);
+                    this.Visit(expr);
                     break;
                 case SqlExpressionType.Select:
-                    SelectExpression select = (SelectExpression)source;
+                    SelectExpression select = (SelectExpression)expr;
                     this.Write("(");
-                    this.WriteLine(Indentation.Inner);
                     this.Visit(select);
-                    this.WriteLine(Indentation.Same);
-                    this.Write(") ");
-                    this.WriteAsAliasName(select.TableAlias);
-                    this.Indent(Indentation.Outer);
+                    this.Write(") " + select.TableAlias + " ");
                     break;
                 case SqlExpressionType.Join:
-                    this.VisitJoin((JoinExpression)source);
+                    this.Visit(expr);
                     break;
                 default:
-                    throw new InvalidOperationException("Select source is not valid type");
+                    throw new Exception("debug info");
             }
-            return source;
+            return expr;
         }
 
-        protected override SqlExpression VisitJoin(JoinExpression join)
+        protected override SqlExpression VisitJoin(JoinExpression expr)
         {
-            this.VisitSource(join.Left);
-            this.WriteLine(Indentation.Same);
-            switch (join.JoinType)
+            this.VisitSource(expr.Left);
+            switch(expr.JoinType)
             {
                 case JoinType.CrossJoin:
                     this.Write("CROSS JOIN ");
@@ -326,15 +237,13 @@ namespace FrameDAL.SqlExpressions
                     this.Write("LEFT OUTER JOIN ");
                     break;
             }
-            this.VisitSource(join.Right);
-            if (join.Condition != null)
+            this.VisitSource(expr.Right);
+            if(expr.Condition != null)
             {
-                this.WriteLine(Indentation.Inner);
                 this.Write("ON ");
-                this.Visit(join.Condition);
-                this.Indent(Indentation.Outer);
+                this.Visit(expr.Condition);
             }
-            return join;
+            return expr;
         }
     }
 }

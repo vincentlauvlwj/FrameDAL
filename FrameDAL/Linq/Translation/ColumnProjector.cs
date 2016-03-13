@@ -65,46 +65,75 @@ namespace FrameDAL.Linq.Translation
             string newAlias,
             params string[] existingAliases)
         {
-            return ProjectColumns(expression, existingColumns, newAlias, existingAliases);
+            return ProjectColumns(expression, existingColumns, newAlias, (IEnumerable<string>)existingAliases);
         }
 
-        protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
+        public override Expression Visit(Expression node)
         {
-            SqlExpression expression = node.Value as SqlExpression;
-            if(expression != null)
+            InjectedExpression injected = node as InjectedExpression;
+            if (injected != null)
             {
-                if(expression.NodeType == SqlExpressionType.Column)
+                SqlExpression sqlExpr = injected.SqlExpression;
+                if (sqlExpr.NodeType == SqlExpressionType.Column)
                 {
-                    ColumnExpression column = (ColumnExpression)expression;
+                    ColumnExpression column = (ColumnExpression)sqlExpr;
                     ColumnExpression mapped;
-                    if(this.map.TryGetValue(column, out mapped))
+                    if (this.map.TryGetValue(column, out mapped))
                     {
-                        return Expression.Constant(mapped);
+                        return new InjectedExpression(mapped, injected.ColumnType);
                     }
-                    foreach(ColumnDeclaration existingColumn in this.columns)
+                    foreach (ColumnDeclaration existingColumn in this.columns)
                     {
                         ColumnExpression c = existingColumn.Expression as ColumnExpression;
-                        if(c != null && c.TableAlias == column.TableAlias && c.ColumnName == column.ColumnName)
+                        if (c != null && c.TableAlias == column.TableAlias && c.ColumnName == column.ColumnName)
                         {
-                            return Expression.Constant(new ColumnExpression(this.newAlias, existingColumn.DeclaredName));
+                            return new InjectedExpression(new ColumnExpression(this.newAlias, existingColumn.DeclaredName), injected.ColumnType);
                         }
                     }
-                    if(this.existingAliases.Contains(column.TableAlias))
+                    if (this.existingAliases.Contains(column.TableAlias))
                     {
                         string declaredName = this.GetUniqueColumnName(column.ColumnName);
                         this.columns.Add(new ColumnDeclaration(declaredName, column));
                         mapped = new ColumnExpression(this.newAlias, declaredName);
                         this.map.Add(column, mapped);
                         this.columnNames.Add(declaredName);
-                        return Expression.Constant(mapped);
+                        return new InjectedExpression(mapped, injected.ColumnType);
                     }
                 }
                 else
                 {
                     string declaredName = this.GetNextColumnName();
-                    this.columns.Add(new ColumnDeclaration(declaredName, expression));
-                    return Expression.Constant(new ColumnExpression(this.newAlias, declaredName));
+                    this.columns.Add(new ColumnDeclaration(declaredName, sqlExpr));
+                    return new InjectedExpression(new ColumnExpression(this.newAlias, declaredName), injected.ColumnType);
                 }
+            }
+            return base.Visit(node);
+        }
+
+        protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
+        {
+            List<MemberBinding> bindings = node.Value as List<MemberBinding>;
+            if(bindings != null)
+            {
+                List<MemberBinding> alternate = null;
+                for (int i = 0, n = bindings.Count; i < n;i ++)
+                {
+                    MemberAssignment assign = bindings[i] as MemberAssignment;
+                    Expression e = this.Visit(assign.Expression);
+                    if(alternate == null && e != assign.Expression)
+                    {
+                        alternate = bindings.Take(i).ToList();
+                    }
+                    if(alternate != null)
+                    {
+                        alternate.Add(Expression.Bind(assign.Member, e));
+                    }
+                }
+                if(alternate != null)
+                {
+                    return Expression.Constant(alternate);
+                }
+                return Expression.Constant(bindings);
             }
             return base.VisitConstant(node);
         }

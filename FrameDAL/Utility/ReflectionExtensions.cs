@@ -97,23 +97,8 @@ namespace FrameDAL.Utility
         {
             try
             {
-                Type t = prop.PropertyType;
-
-                if (value is DBNull)
-                {
-                    value = t.IsValueType ? Activator.CreateInstance(t) : null;
-                }
-                if (value == null)
-                {
-                    prop.SetValue(entity, null, null);
-                    return;
-                }
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>))
-                {
-                    t = t.GetGenericArguments()[0];
-                }
-
-                prop.SetValue(entity, value is IConvertible ? Convert.ChangeType(value, t) : value, null);
+                value = TypeUtil.ConvertType(value, prop.PropertyType);
+                prop.SetValue(entity, value, null);
             }
             catch (Exception e)
             {
