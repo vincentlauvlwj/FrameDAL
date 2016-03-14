@@ -24,20 +24,7 @@ namespace ResumeFactory
                 = FrameDAL.Config.Configuration.DefaultPath
                 = Application.StartupPath + @"\ResumeFactory.ini";
 
-            using (ISession session = AppContext.Instance.OpenSession())
-            {
-                //var query = session.GetAll<User>().Where(u => u.Id == "fcff2ce4-543e-431c-96f1-8fbc43ccee09").ToList()[0];
-                //var query = session.GetAll<User0>().Select(u => u.UserName).ToList();
-                var query = session.GetAll<User>()
-                    .Select(u => new { u.UserName, u.UserPwd })
-                    .Where(u => u.UserName.Contains("123"));
-
-                var query1 =    from u in session.GetAll<User>()
-                                where u.UserPwd.Contains("123")
-                                select new { u.UserPwd, u.UserName };
-                var list = session.GetAll<User>().ToList();
-                return;
-            }
+            new LinqTest().Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
             {
