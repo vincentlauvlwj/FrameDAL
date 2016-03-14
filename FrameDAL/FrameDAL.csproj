@@ -64,6 +64,7 @@
     <Compile Include="Linq\LinqQueryProvider.cs" />
     <Compile Include="Linq\Translation\ColumnProjector.cs" />
     <Compile Include="Linq\Translation\ExpressionTranslator.cs" />
+    <Compile Include="Linq\Translation\MemberAccessReplacer.cs" />
     <Compile Include="Linq\Translation\PartialEvaluator.cs" />
     <Compile Include="SqlExpressions\SqlExpressions.cs" />
     <Compile Include="SqlExpressions\SqlExpressionVisitor.cs" />

@@ -79,6 +79,14 @@ namespace FrameDAL.Linq.Translation
                 return base.Visit(exp);
             }
 
+            // 其他信息: 从“VisitMemberInit”调用时，重写“System.Linq.Expressions.NewExpression”类型的节点必须返回相同类型的非 null 值。或者，重写并更改“VisitMemberInit”，以便不访问此类型的子级。
+            protected override Expression VisitMemberInit(MemberInitExpression node)
+            {
+                NewExpression newExpr = this.Visit(node.NewExpression) as NewExpression;
+                var bindings = ExpressionVisitor.Visit(node.Bindings, this.VisitMemberBinding);
+                return node.Update(newExpr ?? node.NewExpression, bindings);
+            }
+
             private Expression PostEval(ConstantExpression e)
             {
                 if (this.onEval != null)

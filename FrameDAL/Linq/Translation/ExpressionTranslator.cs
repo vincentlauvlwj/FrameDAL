@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -51,47 +52,17 @@ namespace FrameDAL.Linq.Translation
 
     public class ExpressionTranslator : ExpressionVisitor
     {
-        private Dictionary<ParameterExpression, Expression> map;
         private int aliasCount;
         private Configuration config;
 
         private ExpressionTranslator(Configuration config)
         {
             this.config = config;
-            this.map = new Dictionary<ParameterExpression, Expression>();
         }
 
         public static TranslateResult Translate(Expression expr, Configuration config)
         {
-            return new ExpressionTranslator(config).TranslateVisit(expr).TranslateResult;
-        }
-
-        private class Bundle
-        {
-            public Expression Expression { get; private set; }
-
-            public TranslateResult TranslateResult { get; private set; }
-
-            public Bundle(Expression expression, TranslateResult translateResult)
-            {
-                this.Expression = expression;
-                this.TranslateResult = translateResult;
-            }
-
-            public SqlExpression SqlExpression
-            {
-                get { return TranslateResult.SqlExpression; }
-            }
-
-            public Expression Projector
-            {
-                get { return TranslateResult.Projector; }
-            }
-
-            public LambdaExpression Aggregator
-            {
-                get { return TranslateResult.Aggregator; }
-            }
+            return new ExpressionTranslator(config).Translate(expr);
         }
 
         private TranslateResult _curResult;
@@ -104,26 +75,20 @@ namespace FrameDAL.Linq.Translation
             {
                 _curResult = value;
                 _flag = !_flag;
-                //if (!_flag) throw new Exception("Debug Exception!");
+                if (!_flag) throw new Exception("Debug Exception!");
             }
         }
 
         private class Status
         {
-            public TranslateResult CurrentResult { get; private set; }
+            public TranslateResult CurrentResult { get; set; }
 
-            public bool Flag { get; private set; }
-
-            public Status(TranslateResult curResult, bool flag)
-            {
-                this.CurrentResult = curResult;
-                this.Flag = flag;
-            }
+            public bool Flag { get; set; }
         }
 
         private Status PreTranslate()
         {
-            Status status = new Status(_curResult, _flag);
+            Status status = new Status { CurrentResult = _curResult, Flag = _flag };
             _curResult = null;
             _flag = false;
             return status;
@@ -137,11 +102,11 @@ namespace FrameDAL.Linq.Translation
             return result;
         }
 
-        private Bundle TranslateVisit(Expression expr)
+        private TranslateResult Translate(Expression expr)
         {
             Status status = PreTranslate();
             expr = this.Visit(expr);
-            return new Bundle(expr, PostTranslate(status));
+            return PostTranslate(status);
         }
 
         protected override Expression VisitMethodCall(MethodCallExpression m)
@@ -155,26 +120,24 @@ namespace FrameDAL.Linq.Translation
                     case "Select":
                         return this.VisitSelect(m);
                 }
-                throw new NotSupportedException("不支持的方法：" + m.Method.Name);
             }
-            return base.VisitMethodCall(m);
+            throw new NotSupportedException("不支持的方法：" + m.Method.Name);
         }
 
         private Expression VisitWhere(MethodCallExpression m)
         {
             Expression source = m.Arguments[0];
-            System.Diagnostics.Debug.WriteLine(source);
             LambdaExpression predicate = (LambdaExpression)StripQuotes(m.Arguments[1]);
-            Bundle src = this.TranslateVisit(source);
-            this.map[predicate.Parameters[0]] = src.Projector;
-            Bundle where = this.TranslateVisit(predicate.Body);
+            TranslateResult src = this.Translate(source);
+            Expression where = MemberAccessReplacer.Replace(predicate.Body, predicate.Parameters[0], src.Projector);
+            TranslateResult translatedWhere = this.Translate(where);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 src.Projector, 
                 alias, 
                 ((SelectExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
-                new SelectExpression(alias, pc.Columns, src.SqlExpression, where.SqlExpression),
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, translatedWhere.SqlExpression),
                 pc.Projector);
             return m;
         }
@@ -183,12 +146,10 @@ namespace FrameDAL.Linq.Translation
         {
             Expression source = m.Arguments[0];
             LambdaExpression selector = (LambdaExpression)StripQuotes(m.Arguments[1]);
-            Bundle src = this.TranslateVisit(source);
-            this.map[selector.Parameters[0]] = src.Projector;
-            Bundle bundle = this.TranslateVisit(selector.Body);
+            TranslateResult src = this.Translate(source);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
-                bundle.Expression,
+                MemberAccessReplacer.Replace(selector.Body, selector.Parameters[0], src.Projector),
                 alias,
                 ((SelectExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
@@ -203,6 +164,7 @@ namespace FrameDAL.Linq.Translation
             if(injected != null)
             {
                 CurrentResult = new TranslateResult(injected.SqlExpression);
+                return node;
             }
             return base.Visit(node);
         }
@@ -216,67 +178,6 @@ namespace FrameDAL.Linq.Translation
             }
             CurrentResult = new TranslateResult(new FrameDAL.SqlExpressions.ConstantExpression(node.Value));
             return node;
-        }
-
-        protected override Expression VisitParameter(ParameterExpression node)
-        {
-            Expression e;
-            if (this.map.TryGetValue(node, out e))
-            {
-                return e;
-            }
-            return node;
-        }
-
-        protected override Expression VisitMember(MemberExpression m)
-        {
-            Expression source = this.Visit(m.Expression);
-            switch(source.NodeType)
-            {
-                case ExpressionType.Call:
-                    MethodCallExpression call = (MethodCallExpression)source;
-                    if(call != null && call.Method.Name == "NewDefaultProjectedObject")
-                    {
-                        var bindings = ((System.Linq.Expressions.ConstantExpression)call.Arguments[0]).Value as List<MemberBinding>;
-                        for(int i = 0, n = bindings.Count; i < n; i++)
-                        {
-                            MemberAssignment assign = bindings[i] as MemberAssignment;
-                            if (assign != null && MembersMatch(assign.Member, m.Member))
-                            {
-                                CurrentResult = new TranslateResult(((InjectedExpression)assign.Expression).SqlExpression);
-                                return assign.Expression;
-                            }
-                        }
-                    }
-                    break;
-                case ExpressionType.MemberInit:
-                    MemberInitExpression min = (MemberInitExpression)source;
-                    for (int i = 0, n = min.Bindings.Count; i < n; i++)
-                    {
-                        MemberAssignment assign = min.Bindings[i] as MemberAssignment;
-                        if (assign != null && MembersMatch(assign.Member, m.Member))
-                        {
-                            CurrentResult = new TranslateResult(((InjectedExpression)assign.Expression).SqlExpression);
-                            return assign.Expression;
-                        }
-                    }
-                    break;
-                case ExpressionType.New:
-                    NewExpression nex = (NewExpression)source;
-                    if (nex.Members != null)
-                    {
-                        for (int i = 0, n = nex.Members.Count; i < n; i++)
-                        {
-                            if (MembersMatch(nex.Members[i], m.Member))
-                            {
-                                CurrentResult = new TranslateResult(((InjectedExpression)nex.Arguments[i]).SqlExpression);
-                                return nex.Arguments[i];
-                            }
-                        }
-                    }
-                    break;
-            }
-            return m.Update(source);
         }
 
         protected override Expression VisitUnary(System.Linq.Expressions.UnaryExpression node)
@@ -297,13 +198,13 @@ namespace FrameDAL.Linq.Translation
             }
             if(exprType != null)
             {
-                Bundle bundle = this.TranslateVisit(node.Operand);
+                TranslateResult result = this.Translate(node.Operand);
                 this.CurrentResult = new TranslateResult(
                     new FrameDAL.SqlExpressions.UnaryExpression(
-                        exprType.Value, bundle.SqlExpression));
-                return node.Update(bundle.Expression);
+                        exprType.Value, result.SqlExpression));
+                return node;
             }
-            return base.VisitUnary(node);
+            throw new NotSupportedException("不支持的表达式：" + node.NodeType);
         }
 
         protected override Expression VisitBinary(System.Linq.Expressions.BinaryExpression node)
@@ -367,31 +268,14 @@ namespace FrameDAL.Linq.Translation
             }
             if(exprType != null)
             {
-                Bundle left = this.TranslateVisit(node.Left);
-                Bundle right = this.TranslateVisit(node.Right);
+                TranslateResult left = this.Translate(node.Left);
+                TranslateResult right = this.Translate(node.Right);
                 this.CurrentResult = new TranslateResult(
                     new FrameDAL.SqlExpressions.BinaryExpression(
                         exprType.Value, left.SqlExpression, right.SqlExpression));
-                return node.Update(left.Expression, node.Conversion, right.Expression);
+                return node;
             }
-            return base.VisitBinary(node);
-        }
-
-        private bool MembersMatch(MemberInfo a, MemberInfo b)
-        {
-            if (a == b)
-            {
-                return true;
-            }
-            if (a is MethodInfo && b is PropertyInfo)
-            {
-                return a == ((PropertyInfo)b).GetGetMethod();
-            }
-            else if (a is PropertyInfo && b is MethodInfo)
-            {
-                return ((PropertyInfo)a).GetGetMethod() == b;
-            }
-            return false;
+            throw new NotSupportedException("不支持的表达式：" + node.NodeType);
         }
 
         private static Expression StripQuotes(Expression e)
@@ -429,22 +313,17 @@ namespace FrameDAL.Linq.Translation
             {
                 ColumnAttribute column = prop.GetColumnAttribute();
                 if (column == null) continue;
-                bindings.Add(Expression.Bind(prop, new InjectedExpression(new ColumnExpression(selectAlias, column.Name), prop.PropertyType)));
-                SqlExpression c;
-                if(string.IsNullOrWhiteSpace(column.SQL))
-                {
-                    c = new ColumnExpression(tableAlias, column.Name);
-                }
-                else
-                {
-                    c = new LiteralExpression(column.SQL);
-                }
-                columns.Add(new ColumnDeclaration(column.Name, c));
+                bindings.Add(Expression.Bind(prop, new InjectedExpression(
+                    new ColumnExpression(selectAlias, column.Name), prop.PropertyType)));
+                columns.Add(new ColumnDeclaration(column.Name,
+                    string.IsNullOrWhiteSpace(column.SQL) 
+                    ? new ColumnExpression(tableAlias, column.Name)
+                    : (SqlExpression)new LiteralExpression(column.SQL)));
             }
             Expression projector = Expression.Call(
                 Expression.Constant(this), 
                 newDefaultProjectedObject.MakeGenericMethod(query.ElementType), 
-                Expression.Constant(bindings),
+                Expression.Constant(bindings.AsReadOnly()),
                 Expression.Parameter(typeof(DbDataReader), "reader"));
             SqlExpression select = new SelectExpression(
                 selectAlias,
@@ -458,9 +337,9 @@ namespace FrameDAL.Linq.Translation
         private static MethodInfo newDefaultProjectedObject 
             = typeof(ExpressionTranslator).GetMethod(
                 "NewDefaultProjectedObject", 
-                new Type[] { typeof(IEnumerable<MemberBinding>), typeof(DbDataReader) });
+                new Type[] { typeof(ReadOnlyCollection<MemberBinding>), typeof(DbDataReader) });
 
-        public T NewDefaultProjectedObject<T>(IEnumerable<MemberBinding> bindings, DbDataReader reader)
+        public T NewDefaultProjectedObject<T>(ReadOnlyCollection<MemberBinding> bindings, DbDataReader reader)
         {
             object proxy = EntityFactory.GetEntity(typeof(T), config.EnableLazy, false);
             foreach(MemberBinding binding in bindings)

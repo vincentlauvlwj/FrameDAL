@@ -464,7 +464,7 @@ namespace FrameDAL.Core
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
         public void Close()
         {
-            CheckSessionStatus();
+            /*CheckSessionStatus();
             if (db.InTransaction())
             {
                 db.RollbackTransaction();
@@ -473,7 +473,8 @@ namespace FrameDAL.Core
             else
             {
                 AcceptChanges();
-            }
+            }*/
+            AcceptChanges();
             IsClosed = true;
         }
 

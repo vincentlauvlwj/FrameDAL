@@ -5,19 +5,20 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Reflection;
 using FrameDAL.Core;
+using FrameDAL.Utility;
 using System.Runtime.InteropServices;
 
 namespace ResumeFactory
 {
+    public class AssertFailedException : Exception { }
+
     public class BaseTest
     {
         protected ISession session;
 
         public void Run()
         {
-            Shell.AllocConsole();
-            session = AppContext.Instance.OpenSession();
-            session.BeginTransaction();
+            Init();
 
             foreach(MethodInfo method in this.GetType().GetMethods().Where(m => m.Name.StartsWith("Test")))
             {
@@ -29,12 +30,40 @@ namespace ResumeFactory
                     DateTime stop = DateTime.Now;
                     Shell.WriteLine("Success: {0} : {1}ms", method.Name, (stop - start).TotalMilliseconds);
                 }
+                catch(AssertFailedException e)
+                {
+                    Shell.WriteLine("AssertFailed: {0}", method.Name);
+                }
                 catch(Exception e)
                 {
-                    Shell.WriteLine("Failed: {0} : {1}", method.Name, e.Message);
+                    Shell.WriteLine("Error: {0} : {1}", method.Name, e.Message);
                 }
             }
 
+            Destroy();
+        }
+
+        public void Debug(Action fn)
+        {
+            Init();
+
+            DateTime start = DateTime.Now;
+            fn();
+            DateTime stop = DateTime.Now;
+            Shell.WriteLine("Success: {0} : {1}ms", fn.Method.Name, (stop - start).TotalMilliseconds);
+
+            Destroy();
+        }
+
+        protected virtual void Init()
+        {
+            Shell.AllocConsole();
+            session = AppContext.Instance.OpenSession();
+            session.BeginTransaction();
+        }
+
+        protected virtual void Destroy()
+        {
             session.CommitTransaction();
             session.Close();
             Shell.Pause();
@@ -45,13 +74,27 @@ namespace ResumeFactory
         {
             if(!predicate)
             {
-                throw new Exception("assert failed");
+                throw new AssertFailedException();
             }
         }
 
         protected void Assert(object obj1, object obj2)
         {
             Assert(object.Equals(obj1, obj2));
+        }
+
+        protected string ObjectToString<T>(T obj)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(typeof(T).Name + " { ");
+            PropertyInfo[] props = typeof(T).GetCachedProperties();
+            for (int i = 0; i < props.Length; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(props[i].Name + " = " + props[i].GetValue(obj, null));
+            }
+            sb.Append(" }");
+            return sb.ToString();
         }
     }
 
@@ -81,7 +124,8 @@ namespace ResumeFactory
 
         private static ConsoleColor GetConsoleColor(string output)
         {
-            if (output.StartsWith("Failed")) return ConsoleColor.Red;
+            if (output.StartsWith("AssertFailed")) return ConsoleColor.Yellow;
+            if (output.StartsWith("Error")) return ConsoleColor.Red;
             if (output.StartsWith("Success")) return ConsoleColor.Green;
             return ConsoleColor.Gray;
         }

@@ -23,8 +23,10 @@ namespace ResumeFactory
             ResumeFactory.Common.Config.DefaultPath
                 = FrameDAL.Config.Configuration.DefaultPath
                 = Application.StartupPath + @"\ResumeFactory.ini";
-
-            new LinqTest().Run();
+            
+            LinqTest test = new LinqTest();
+            //test.Debug(test.TestWhere);
+            test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
             {

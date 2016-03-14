@@ -61,7 +61,7 @@ namespace FrameDAL.Linq
             if (this.Expression.NodeType == ExpressionType.Constant &&
                 ((ConstantExpression)this.Expression).Value == this)
             {
-                return "Query(" + typeof(T) + ")";
+                return "Query(" + typeof(T).Name + ")";
             }
             else
             {

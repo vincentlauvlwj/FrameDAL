@@ -11,22 +11,15 @@ namespace FrameDAL.Linq.Translation
 {
     public sealed class ProjectedColumns
     {
-        public Expression Projector { get; private set; }
+        public Expression Projector { get; set; }
 
-        public ReadOnlyCollection<ColumnDeclaration> Columns { get; private set; }
-
-        public ProjectedColumns(Expression projector, IEnumerable<ColumnDeclaration> columns)
-        {
-            this.Projector = projector;
-            this.Columns = columns.ToReadOnly();
-        }
+        public List<ColumnDeclaration> Columns { get; set; }
     }
 
     public class ColumnProjector : ExpressionVisitor
     {
         private Dictionary<ColumnExpression, ColumnExpression> map;
         private List<ColumnDeclaration> columns;
-        private HashSet<string> columnNames;
         private HashSet<string> existingAliases;
         private string newAlias;
         private int columnCount;
@@ -39,12 +32,10 @@ namespace FrameDAL.Linq.Translation
             if(existingColumns != null)
             {
                 this.columns = new List<ColumnDeclaration>(existingColumns);
-                this.columnNames = new HashSet<string>(existingColumns.Select(c => c.DeclaredName));
             }
             else
             {
                 this.columns = new List<ColumnDeclaration>();
-                this.columnNames = new HashSet<string>();
             }
         }
 
@@ -56,7 +47,7 @@ namespace FrameDAL.Linq.Translation
         {
             ColumnProjector projector = new ColumnProjector(existingColumns, newAlias, existingAliases);
             Expression expr = projector.Visit(expression);
-            return new ProjectedColumns(expr, projector.columns);
+            return new ProjectedColumns { Projector = expr, Columns = projector.columns };
         }
 
         public static ProjectedColumns ProjectColumns(
@@ -96,7 +87,6 @@ namespace FrameDAL.Linq.Translation
                         this.columns.Add(new ColumnDeclaration(declaredName, column));
                         mapped = new ColumnExpression(this.newAlias, declaredName);
                         this.map.Add(column, mapped);
-                        this.columnNames.Add(declaredName);
                         return new InjectedExpression(mapped, injected.ColumnType);
                     }
                 }
@@ -112,35 +102,17 @@ namespace FrameDAL.Linq.Translation
 
         protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
         {
-            List<MemberBinding> bindings = node.Value as List<MemberBinding>;
+            ReadOnlyCollection<MemberBinding> bindings = node.Value as ReadOnlyCollection<MemberBinding>;
             if(bindings != null)
             {
-                List<MemberBinding> alternate = null;
-                for (int i = 0, n = bindings.Count; i < n;i ++)
-                {
-                    MemberAssignment assign = bindings[i] as MemberAssignment;
-                    Expression e = this.Visit(assign.Expression);
-                    if(alternate == null && e != assign.Expression)
-                    {
-                        alternate = bindings.Take(i).ToList();
-                    }
-                    if(alternate != null)
-                    {
-                        alternate.Add(Expression.Bind(assign.Member, e));
-                    }
-                }
-                if(alternate != null)
-                {
-                    return Expression.Constant(alternate);
-                }
-                return Expression.Constant(bindings);
+                return Expression.Constant(ExpressionVisitor.Visit(bindings, this.VisitMemberBinding));
             }
             return base.VisitConstant(node);
         }
 
         private bool IsColumnNameInUse(string name)
         {
-            return this.columnNames.Contains(name);
+            return this.columns.Exists(c => c.DeclaredName == name);
         }
 
         private string GetUniqueColumnName(string name)

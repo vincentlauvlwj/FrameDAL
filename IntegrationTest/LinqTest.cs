@@ -3,26 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using FrameDAL.Core;
+using FrameDAL.Linq;
 using ResumeFactory.Entity;
 
 namespace ResumeFactory
 {
     public class LinqTest : BaseTest
     {
+        public List<T> Query<T>(IQueryable<T> query)
+        {
+            LinqQuery<T> q = query as LinqQuery<T>;
+            Shell.WriteLine("\nLinqExpression:\n{0}", q.ToString());
+            Shell.WriteLine("\nTranslated SQL:\n{0}", q.QueryText);
+            List<T> result = q.ToList();
+            StringBuilder sb = new StringBuilder();
+            foreach(T item in result)
+            {
+                sb.AppendLine(ObjectToString(item));
+            }
+            Shell.WriteLine("\nResults:\n{0}", sb.ToString());
+            return result;
+        }
+
         public void TestWhere()
         {
             var query = session.GetAll<User>()
-                .Where(u => u.UserName == "123")
-                .ToList()[0];
-            Assert(query.UserName == "123");
+                .Where(u => u.UserName != "123")
+                .Select(u => new User { Id = "222", UserName = u.UserName, UserPwd = u.UserPwd});
+            var result = Query(query);
+            Assert(result[0].UserName == "0123");
         }
 
-        public void TestSelectWhere1()
+        public void TestSelectWhere()
         {
             var query1 = from u in session.GetAll<User>()
-                         where u.UserPwd.Contains("123")
+                         where u.UserName == "123"
                          select new { u.UserPwd, u.UserName };
-            Assert(query1.ToList()[0].UserPwd == "0123");
+            Assert(query1.ToList().Count > 0);
         }
 
         public void TestSqlWhere()
