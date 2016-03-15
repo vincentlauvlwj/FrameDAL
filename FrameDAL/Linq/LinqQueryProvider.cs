@@ -64,7 +64,7 @@ namespace FrameDAL.Linq
             return ExpressionTranslator.Translate(expression, AppContext.Instance.Configuration);
         }
 
-        private class ProjectorBuilder : ExpressionVisitor
+        private class ProjectorBuilder : InjectedExpressionVisitor
         {
             private static MethodInfo convertType
                 = typeof(TypeUtil).GetMethod("ConvertType", new Type[2] { typeof(object), typeof(Type) });
@@ -80,17 +80,12 @@ namespace FrameDAL.Linq
                 return Expression.Lambda(expression, builder.row).Compile();
             }
 
-            public override Expression Visit(Expression node)
+            protected override Expression VisitInjected(InjectedExpression node)
             {
-                InjectedExpression injected = node as InjectedExpression;
-                if (injected != null)
-                {
-                    ColumnExpression column = injected.SqlExpression as ColumnExpression;
-                    Expression value = Expression.MakeIndex(row, indexer, new Expression[] { Expression.Constant(column.ColumnName) });
-                    Expression result = Expression.Call(convertType, value, Expression.Constant(injected.ColumnType));
-                    return Expression.Convert(result, injected.ColumnType);
-                }
-                return base.Visit(node);
+                ColumnExpression column = node.SqlExpression as ColumnExpression;
+                Expression value = Expression.MakeIndex(row, indexer, new Expression[] { Expression.Constant(column.ColumnName) });
+                Expression result = Expression.Call(convertType, value, Expression.Constant(node.ColumnType));
+                return Expression.Convert(result, node.ColumnType);
             }
 
             protected override Expression VisitParameter(ParameterExpression node)

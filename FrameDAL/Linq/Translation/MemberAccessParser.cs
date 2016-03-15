@@ -8,27 +8,16 @@ using System.Reflection;
 
 namespace FrameDAL.Linq.Translation
 {
-    public class MemberAccessReplacer : ExpressionVisitor
+    public class MemberAccessParser : InjectedExpressionVisitor
     {
         private Dictionary<ParameterExpression, Expression> map;
 
-        public static Expression Replace(Expression expression, ParameterExpression paramExpr, Expression projector)
+        public static Expression Parse(LambdaExpression expression, params Expression[] projectors)
         {
-            return Replace(expression, paramExpr, projector, null, null);
-        }
-
-        public static Expression Replace(
-            Expression expression, 
-            ParameterExpression paramExpr0, 
-            Expression projector0,
-            ParameterExpression paramExpr1,
-            Expression projector1)
-        {
-            MemberAccessReplacer replacer = new MemberAccessReplacer();
-            replacer.map = new Dictionary<ParameterExpression, Expression>();
-            if(paramExpr0 != null) replacer.map[paramExpr0] = projector0;
-            if(paramExpr1 != null) replacer.map[paramExpr1] = projector1;
-            return replacer.Visit(expression);
+            MemberAccessParser parser = new MemberAccessParser();
+            parser.map = expression.Parameters.Select((param, i) => new { param, i })
+                .ToDictionary(x => x.param, x => projectors[x.i]);
+            return parser.Visit(expression.Body);
         }
 
         protected override Expression VisitParameter(ParameterExpression node)

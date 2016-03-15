@@ -50,7 +50,7 @@ namespace FrameDAL.Linq.Translation
         /// <summary>
         /// Evaluates & replaces sub-trees when first candidate is reached (top-down)
         /// </summary>
-        class SubtreeEvaluator : ExpressionVisitor
+        class SubtreeEvaluator : InjectedExpressionVisitor
         {
             HashSet<Expression> candidates;
             Func<ConstantExpression, Expression> onEval;

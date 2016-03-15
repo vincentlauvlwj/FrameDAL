@@ -68,7 +68,13 @@ namespace ResumeFactory
 
         public void TestFail()
         {
-            var query = session.GetAll<User>().OrderBy(u => u.UserName).ToList();
+            var query = session.GetAll<User0>().Join(
+                session.GetAll<Resume0>(),
+                u => u.Id,
+                r => r.UserId,
+                (u, r) => new { u.UserName, r.ResumeName },
+                null);
+            TestQuery(query);
         }
 
         public void TestNestedQuery()
@@ -91,6 +97,7 @@ namespace ResumeFactory
                 .Select(u => new { Name = u.UserName, Password = u.UserPwd })
                 .Where(x => x.Name == "123" || x.Name == "coder")
                 .Select(x => x.Name);
+            //((IEnumerable<string>)query).SelectMany
             TestQuery(query);
         }
 
@@ -99,6 +106,16 @@ namespace ResumeFactory
             var query =
                 from u in session.GetAll<User0>()
                 join r in session.GetAll<Resume0>() on u.Id equals r.UserId
+                select new { u.UserName, r.ResumeName };
+            TestQuery(query);
+        }
+
+        public void TestSelectMany()
+        {
+            var query =
+                from u in session.GetAll<User0>()
+                from r in session.GetAll<Resume0>()
+                where r.UserId == u.Id
                 select new { u.UserName, r.ResumeName };
             TestQuery(query);
         }

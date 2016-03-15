@@ -25,7 +25,7 @@ namespace ResumeFactory
                 = Application.StartupPath + @"\ResumeFactory.ini";
             
             LinqTest test = new LinqTest();
-            //test.Debug(test.TestJoin);
+            //test.Debug(test.TestSelectMany);
             test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
@@ -74,7 +74,7 @@ namespace ResumeFactory
     {
         [Id(GeneratorType.Uuid)]
         [Column("id")]
-        public string id { get; set; }
+        public string Id { get; set; }
 
         [Column("resume_name")]
         public string ResumeName { get; set; }

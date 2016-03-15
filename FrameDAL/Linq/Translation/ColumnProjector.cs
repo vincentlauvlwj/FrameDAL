@@ -16,7 +16,7 @@ namespace FrameDAL.Linq.Translation
         public List<ColumnDeclaration> Columns { get; set; }
     }
 
-    public class ColumnProjector : ExpressionVisitor
+    public class ColumnProjector : InjectedExpressionVisitor
     {
         private Dictionary<ColumnExpression, ColumnExpression> map;
         private List<ColumnDeclaration> columns;
@@ -59,45 +59,41 @@ namespace FrameDAL.Linq.Translation
             return ProjectColumns(expression, existingColumns, newAlias, (IEnumerable<string>)existingAliases);
         }
 
-        public override Expression Visit(Expression node)
+        protected override Expression VisitInjected(InjectedExpression node)
         {
-            InjectedExpression injected = node as InjectedExpression;
-            if (injected != null)
+            SqlExpression sqlExpr = node.SqlExpression;
+            if (sqlExpr.NodeType == SqlExpressionType.Column)
             {
-                SqlExpression sqlExpr = injected.SqlExpression;
-                if (sqlExpr.NodeType == SqlExpressionType.Column)
+                ColumnExpression column = (ColumnExpression)sqlExpr;
+                ColumnExpression mapped;
+                if (this.map.TryGetValue(column, out mapped))
                 {
-                    ColumnExpression column = (ColumnExpression)sqlExpr;
-                    ColumnExpression mapped;
-                    if (this.map.TryGetValue(column, out mapped))
+                    return new InjectedExpression(mapped, node.ColumnType);
+                }
+                foreach (ColumnDeclaration existingColumn in this.columns)
+                {
+                    ColumnExpression c = existingColumn.Expression as ColumnExpression;
+                    if (c != null && c.TableAlias == column.TableAlias && c.ColumnName == column.ColumnName)
                     {
-                        return new InjectedExpression(mapped, injected.ColumnType);
-                    }
-                    foreach (ColumnDeclaration existingColumn in this.columns)
-                    {
-                        ColumnExpression c = existingColumn.Expression as ColumnExpression;
-                        if (c != null && c.TableAlias == column.TableAlias && c.ColumnName == column.ColumnName)
-                        {
-                            return new InjectedExpression(new ColumnExpression(this.newAlias, existingColumn.DeclaredName), injected.ColumnType);
-                        }
-                    }
-                    if (this.existingAliases.Contains(column.TableAlias))
-                    {
-                        string declaredName = this.GetUniqueColumnName(column.ColumnName);
-                        this.columns.Add(new ColumnDeclaration(declaredName, column));
-                        mapped = new ColumnExpression(this.newAlias, declaredName);
-                        this.map.Add(column, mapped);
-                        return new InjectedExpression(mapped, injected.ColumnType);
+                        return new InjectedExpression(new ColumnExpression(this.newAlias, existingColumn.DeclaredName), node.ColumnType);
                     }
                 }
-                else
+                if (this.existingAliases.Contains(column.TableAlias))
                 {
-                    string declaredName = this.GetNextColumnName();
-                    this.columns.Add(new ColumnDeclaration(declaredName, sqlExpr));
-                    return new InjectedExpression(new ColumnExpression(this.newAlias, declaredName), injected.ColumnType);
+                    string declaredName = this.GetUniqueColumnName(column.ColumnName);
+                    this.columns.Add(new ColumnDeclaration(declaredName, column));
+                    mapped = new ColumnExpression(this.newAlias, declaredName);
+                    this.map.Add(column, mapped);
+                    return new InjectedExpression(mapped, node.ColumnType);
                 }
+                return node;
             }
-            return base.Visit(node);
+            else
+            {
+                string declaredName = this.GetNextColumnName();
+                this.columns.Add(new ColumnDeclaration(declaredName, sqlExpr));
+                return new InjectedExpression(new ColumnExpression(this.newAlias, declaredName), node.ColumnType);
+            }
         }
 
         protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)

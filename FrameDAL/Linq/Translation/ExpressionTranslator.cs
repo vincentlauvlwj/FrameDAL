@@ -34,24 +34,7 @@ namespace FrameDAL.Linq.Translation
         public TranslateResult(SqlExpression sqlExpr) : this(sqlExpr, null, null) { }
     }
 
-    public sealed class InjectedExpression : Expression
-    {
-        public SqlExpression SqlExpression { get; private set; }
-
-        public Type ColumnType { get; private set; }
-
-        public override ExpressionType NodeType { get { return ExpressionType.Constant; } }
-
-        public override Type Type { get { return ColumnType; } }
-
-        public InjectedExpression(SqlExpression sqlExpr, Type columnType) 
-        {
-            this.SqlExpression = sqlExpr;
-            this.ColumnType = columnType;
-        }
-    }
-
-    public class ExpressionTranslator : ExpressionVisitor
+    public class ExpressionTranslator : InjectedExpressionVisitor
     {
         private int aliasCount;
         private Configuration config;
@@ -122,6 +105,8 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitSelect(m);
                     case "Join":
                         return this.VisitJoin(m);
+                    case "SelectMany":
+                        return this.VisitSelectMany(m);
                 }
             }
             throw new NotSupportedException("不支持的方法：" + m.Method.Name);
@@ -131,9 +116,11 @@ namespace FrameDAL.Linq.Translation
         {
             Expression source = m.Arguments[0];
             LambdaExpression predicate = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            if (predicate.Parameters.Count == 2)
+                throw new NotSupportedException("Where方法不支持类型为Expression<Func<TSource, int, bool>>的predicate。");
 
             TranslateResult src = this.Translate(source);
-            Expression where = MemberAccessReplacer.Replace(predicate.Body, predicate.Parameters[0], src.Projector);
+            Expression where = MemberAccessParser.Parse(predicate, src.Projector);
             TranslateResult translatedWhere = this.Translate(where);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
@@ -150,11 +137,13 @@ namespace FrameDAL.Linq.Translation
         {
             Expression source = m.Arguments[0];
             LambdaExpression selector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            if (selector.Parameters.Count == 2)
+                throw new NotSupportedException("Select方法不支持类型为Expression<Func<TSource, int, TResult>>的selector。");
 
             TranslateResult src = this.Translate(source);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
-                MemberAccessReplacer.Replace(selector.Body, selector.Parameters[0], src.Projector),
+                MemberAccessParser.Parse(selector, src.Projector),
                 alias,
                 ((AliasedExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
@@ -165,28 +154,25 @@ namespace FrameDAL.Linq.Translation
 
         private Expression VisitJoin(MethodCallExpression m)
         {
+            if (m.Arguments.Count == 6)
+                throw new NotSupportedException("Join方法不支持comparer参数。");
             Expression outerSource = m.Arguments[0];
             Expression innerSource = m.Arguments[1];
             if (! typeof(IQueryable).IsAssignableFrom(innerSource.Type))
-                throw new NotSupportedException("不支持的数据源：" + innerSource.Type);
+                throw new NotSupportedException("Join方法不支持的数据源：" + innerSource.Type);
             LambdaExpression outerKey = (LambdaExpression)StripQuotes(m.Arguments[2]);
             LambdaExpression innerKey = (LambdaExpression)StripQuotes(m.Arguments[3]);
             LambdaExpression resultSelector = (LambdaExpression)StripQuotes(m.Arguments[4]);
 
             TranslateResult outerResult = this.Translate(outerSource);
             TranslateResult innerResult = this.Translate(innerSource);
-            Expression outerKeyExpr = MemberAccessReplacer.Replace(outerKey.Body, outerKey.Parameters[0], outerResult.Projector);
-            Expression innerKeyExpr = MemberAccessReplacer.Replace(innerKey.Body, innerKey.Parameters[0], innerResult.Projector);
+            Expression outerKeyExpr = MemberAccessParser.Parse(outerKey, outerResult.Projector);
+            Expression innerKeyExpr = MemberAccessParser.Parse(innerKey, innerResult.Projector);
             TranslateResult outerKeyResult = this.Translate(outerKeyExpr);
             TranslateResult innerKeyResult = this.Translate(innerKeyExpr);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
-                MemberAccessReplacer.Replace(
-                    resultSelector.Body,
-                    resultSelector.Parameters[0],
-                    outerResult.Projector,
-                    resultSelector.Parameters[1],
-                    innerResult.Projector),
+                MemberAccessParser.Parse(resultSelector, outerResult.Projector, innerResult.Projector),
                 alias,
                 ((AliasedExpression)outerResult.SqlExpression).TableAlias,
                 ((AliasedExpression)innerResult.SqlExpression).TableAlias);
@@ -202,15 +188,33 @@ namespace FrameDAL.Linq.Translation
             return m;
         }
 
-        public override Expression Visit(Expression node)
+        private Expression VisitSelectMany(MethodCallExpression m)
         {
-            InjectedExpression injected = node as InjectedExpression;
-            if(injected != null)
-            {
-                CurrentResult = new TranslateResult(injected.SqlExpression);
-                return node;
-            }
-            return base.Visit(node);
+            Expression source = m.Arguments[0];
+            LambdaExpression collectionSelector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            if (collectionSelector.Parameters.Count == 2)
+                throw new NotSupportedException("SelectMany方法不支持类型为Expression<Func<TSource, int, IEnumerable<TResult>>>的collectionSelector。");
+            LambdaExpression resultSelector = m.Arguments.Count == 3 ? (LambdaExpression)StripQuotes(m.Arguments[2]) : null;
+
+            TranslateResult left = this.Translate(source);
+            Expression rightExpr = MemberAccessParser.Parse(collectionSelector, left.Projector);
+            TranslateResult right = this.Translate(rightExpr);
+            JoinType joinType = JoinTypeJudger.GetJoinType(collectionSelector);
+            JoinExpression join = new JoinExpression(joinType, left.SqlExpression, right.SqlExpression, null);
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(
+                resultSelector == null ? right.Projector : MemberAccessParser.Parse(resultSelector, left.Projector, right.Projector),
+                alias,
+                ((AliasedExpression)left.SqlExpression).TableAlias,
+                ((AliasedExpression)right.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(new SelectExpression(alias, pc.Columns, join, null), pc.Projector);
+            return m;
+        }
+
+        protected override Expression VisitInjected(InjectedExpression node)
+        {
+            CurrentResult = new TranslateResult(node.SqlExpression);
+            return node;
         }
 
         protected override Expression VisitConstant(System.Linq.Expressions.ConstantExpression node)
@@ -320,6 +324,26 @@ namespace FrameDAL.Linq.Translation
                 return node;
             }
             throw new NotSupportedException("不支持的表达式：" + node.NodeType);
+        }
+
+        private class JoinTypeJudger : ExpressionVisitor
+        {
+            private bool isParamReferenced = false;
+            private ParameterExpression param;
+
+            public static JoinType GetJoinType(LambdaExpression collectionSelector)
+            {
+                JoinTypeJudger judger = new JoinTypeJudger();
+                judger.param = collectionSelector.Parameters[0];
+                judger.Visit(collectionSelector.Body);
+                return judger.isParamReferenced ? JoinType.CrossApply : JoinType.CrossJoin;
+            }
+
+            protected override Expression VisitParameter(ParameterExpression node)
+            {
+                if (node == param) isParamReferenced = true;
+                return base.VisitParameter(node);
+            }
         }
 
         private static Expression StripQuotes(Expression e)
