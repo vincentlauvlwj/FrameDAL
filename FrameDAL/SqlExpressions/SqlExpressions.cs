@@ -144,15 +144,22 @@ namespace FrameDAL.SqlExpressions
         }
     }
 
-    public class TableExpression : SqlExpression
+    public abstract class AliasedExpression : SqlExpression
     {
         public string TableAlias { get; private set; }
 
-        public string TableName { get; private set; }
-
-        public TableExpression(string tableAlias, string tableName) : base(SqlExpressionType.Table)
+        public AliasedExpression(SqlExpressionType nodeType, string tableAlias) : base(nodeType)
         {
             this.TableAlias = tableAlias;
+        }
+    }
+
+    public class TableExpression : AliasedExpression
+    {
+        public string TableName { get; private set; }
+
+        public TableExpression(string tableAlias, string tableName) : base(SqlExpressionType.Table, tableAlias)
+        {
             this.TableName = tableName;
         }
     }
@@ -202,10 +209,8 @@ namespace FrameDAL.SqlExpressions
         }
     }
 
-    public class SelectExpression : SqlExpression
+    public class SelectExpression : AliasedExpression
     {
-        public string TableAlias { get; private set; }
-
         public ReadOnlyCollection<ColumnDeclaration> Columns { get; private set; }
 
         public SqlExpression From { get; private set; }
@@ -233,9 +238,8 @@ namespace FrameDAL.SqlExpressions
             int? take,
             bool isDistinct 
             )
-            : base(SqlExpressionType.Select)
+            : base(SqlExpressionType.Select, tableAlias)
         {
-            this.TableAlias = tableAlias;
             this.Columns = columns.ToReadOnly();
             this.From = from;
             this.Where = where;

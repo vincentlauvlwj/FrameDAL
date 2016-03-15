@@ -10,7 +10,7 @@ namespace ResumeFactory
 {
     public class LinqTest : BaseTest
     {
-        public List<T> Query<T>(IQueryable<T> query)
+        private List<T> TestQuery<T>(IQueryable<T> query)
         {
             LinqQuery<T> q = query as LinqQuery<T>;
             Shell.WriteLine("\nLinqExpression:\n{0}", q.ToString());
@@ -30,11 +30,11 @@ namespace ResumeFactory
             var query = session.GetAll<User>()
                 .Where(u => u.UserName != "123")
                 .Select(u => new User { Id = "222", UserName = u.UserName, UserPwd = u.UserPwd});
-            var result = Query(query);
+            var result = TestQuery(query);
             Assert(result[0].UserName == "0123");
         }
 
-        public void TestSelectWhere()
+        public void TestWhereSelect()
         {
             var query1 = from u in session.GetAll<User>()
                          where u.UserName == "123"
@@ -69,6 +69,38 @@ namespace ResumeFactory
         public void TestFail()
         {
             var query = session.GetAll<User>().OrderBy(u => u.UserName).ToList();
+        }
+
+        public void TestNestedQuery()
+        {
+            var query =
+                from u in session.GetAll<User0>()
+                select new
+                {
+                    u.UserName,
+                    Resumes = session.GetAll<Resume0>().Where(r => r.UserId == u.Id)
+                };
+            var result = query.ToList();
+            Assert(result.Count > 0);
+            Assert(result[0].Resumes.ToList().Count >= 0);
+        }
+
+        public void TestSelectWhereSelect()
+        {
+            var query = session.GetAll<User0>()
+                .Select(u => new { Name = u.UserName, Password = u.UserPwd })
+                .Where(x => x.Name == "123" || x.Name == "coder")
+                .Select(x => x.Name);
+            TestQuery(query);
+        }
+
+        public void TestJoin()
+        {
+            var query =
+                from u in session.GetAll<User0>()
+                join r in session.GetAll<Resume0>() on u.Id equals r.UserId
+                select new { u.UserName, r.ResumeName };
+            TestQuery(query);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace ResumeFactory
                 = Application.StartupPath + @"\ResumeFactory.ini";
             
             LinqTest test = new LinqTest();
-            //test.Debug(test.TestWhere);
+            //test.Debug(test.TestJoin);
             test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
@@ -67,6 +67,20 @@ namespace ResumeFactory
 
         [Column("user_pwd")]
         public string UserPwd { get; set; }
+    }
+
+    [Table("resume")]
+    public class Resume0
+    {
+        [Id(GeneratorType.Uuid)]
+        [Column("id")]
+        public string id { get; set; }
+
+        [Column("resume_name")]
+        public string ResumeName { get; set; }
+
+        [Column("user_id")]
+        public string UserId { get; set; }
     }
 
     [Table("student")]

@@ -10,22 +10,33 @@ namespace FrameDAL.Linq.Translation
 {
     public class MemberAccessReplacer : ExpressionVisitor
     {
-        private ParameterExpression paramExpr;
-        private Expression projector;
+        private Dictionary<ParameterExpression, Expression> map;
 
         public static Expression Replace(Expression expression, ParameterExpression paramExpr, Expression projector)
         {
+            return Replace(expression, paramExpr, projector, null, null);
+        }
+
+        public static Expression Replace(
+            Expression expression, 
+            ParameterExpression paramExpr0, 
+            Expression projector0,
+            ParameterExpression paramExpr1,
+            Expression projector1)
+        {
             MemberAccessReplacer replacer = new MemberAccessReplacer();
-            replacer.paramExpr = paramExpr;
-            replacer.projector = projector;
+            replacer.map = new Dictionary<ParameterExpression, Expression>();
+            if(paramExpr0 != null) replacer.map[paramExpr0] = projector0;
+            if(paramExpr1 != null) replacer.map[paramExpr1] = projector1;
             return replacer.Visit(expression);
         }
 
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            if (node == paramExpr)
+            Expression e;
+            if(map.TryGetValue(node, out e))
             {
-                return projector;
+                return e;
             }
             return node;
         }

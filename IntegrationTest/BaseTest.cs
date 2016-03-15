@@ -85,6 +85,7 @@ namespace ResumeFactory
 
         protected string ObjectToString<T>(T obj)
         {
+            if (IsBaseType(typeof(T))) return obj.ToString();
             StringBuilder sb = new StringBuilder();
             sb.Append(typeof(T).Name + " { ");
             PropertyInfo[] props = typeof(T).GetCachedProperties();
@@ -95,6 +96,11 @@ namespace ResumeFactory
             }
             sb.Append(" }");
             return sb.ToString();
+        }
+
+        private bool IsBaseType(Type type)
+        {
+            return type == typeof(string) || type.IsValueType;
         }
     }
 

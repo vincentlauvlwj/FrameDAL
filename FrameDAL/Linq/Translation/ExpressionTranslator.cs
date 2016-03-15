@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Data;
 using System.Data.Common;
 using FrameDAL.Core;
 using FrameDAL.Config;
@@ -119,6 +120,8 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitWhere(m);
                     case "Select":
                         return this.VisitSelect(m);
+                    case "Join":
+                        return this.VisitJoin(m);
                 }
             }
             throw new NotSupportedException("不支持的方法：" + m.Method.Name);
@@ -128,6 +131,7 @@ namespace FrameDAL.Linq.Translation
         {
             Expression source = m.Arguments[0];
             LambdaExpression predicate = (LambdaExpression)StripQuotes(m.Arguments[1]);
+
             TranslateResult src = this.Translate(source);
             Expression where = MemberAccessReplacer.Replace(predicate.Body, predicate.Parameters[0], src.Projector);
             TranslateResult translatedWhere = this.Translate(where);
@@ -135,7 +139,7 @@ namespace FrameDAL.Linq.Translation
             ProjectedColumns pc = this.ProjectColumns(
                 src.Projector, 
                 alias, 
-                ((SelectExpression)src.SqlExpression).TableAlias);
+                ((AliasedExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
                 new SelectExpression(alias, pc.Columns, src.SqlExpression, translatedWhere.SqlExpression),
                 pc.Projector);
@@ -146,15 +150,55 @@ namespace FrameDAL.Linq.Translation
         {
             Expression source = m.Arguments[0];
             LambdaExpression selector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+
             TranslateResult src = this.Translate(source);
             string alias = this.GetNextAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 MemberAccessReplacer.Replace(selector.Body, selector.Parameters[0], src.Projector),
                 alias,
-                ((SelectExpression)src.SqlExpression).TableAlias);
+                ((AliasedExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
                 new SelectExpression(alias, pc.Columns, src.SqlExpression, null),
                 pc.Projector);
+            return m;
+        }
+
+        private Expression VisitJoin(MethodCallExpression m)
+        {
+            Expression outerSource = m.Arguments[0];
+            Expression innerSource = m.Arguments[1];
+            if (! typeof(IQueryable).IsAssignableFrom(innerSource.Type))
+                throw new NotSupportedException("不支持的数据源：" + innerSource.Type);
+            LambdaExpression outerKey = (LambdaExpression)StripQuotes(m.Arguments[2]);
+            LambdaExpression innerKey = (LambdaExpression)StripQuotes(m.Arguments[3]);
+            LambdaExpression resultSelector = (LambdaExpression)StripQuotes(m.Arguments[4]);
+
+            TranslateResult outerResult = this.Translate(outerSource);
+            TranslateResult innerResult = this.Translate(innerSource);
+            Expression outerKeyExpr = MemberAccessReplacer.Replace(outerKey.Body, outerKey.Parameters[0], outerResult.Projector);
+            Expression innerKeyExpr = MemberAccessReplacer.Replace(innerKey.Body, innerKey.Parameters[0], innerResult.Projector);
+            TranslateResult outerKeyResult = this.Translate(outerKeyExpr);
+            TranslateResult innerKeyResult = this.Translate(innerKeyExpr);
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(
+                MemberAccessReplacer.Replace(
+                    resultSelector.Body,
+                    resultSelector.Parameters[0],
+                    outerResult.Projector,
+                    resultSelector.Parameters[1],
+                    innerResult.Projector),
+                alias,
+                ((AliasedExpression)outerResult.SqlExpression).TableAlias,
+                ((AliasedExpression)innerResult.SqlExpression).TableAlias);
+            JoinExpression join = new JoinExpression(
+                JoinType.InnerJoin,
+                outerResult.SqlExpression,
+                innerResult.SqlExpression,
+                new FrameDAL.SqlExpressions.BinaryExpression(
+                    SqlExpressionType.Equal,
+                    outerKeyResult.SqlExpression,
+                    innerKeyResult.SqlExpression));
+            CurrentResult = new TranslateResult(new SelectExpression(alias, pc.Columns, join, null), pc.Projector);
             return m;
         }
 
@@ -324,7 +368,7 @@ namespace FrameDAL.Linq.Translation
                 Expression.Constant(this), 
                 newDefaultProjectedObject.MakeGenericMethod(query.ElementType), 
                 Expression.Constant(bindings.AsReadOnly()),
-                Expression.Parameter(typeof(DbDataReader), "reader"));
+                Expression.Parameter(typeof(DataRow), "row"));
             SqlExpression select = new SelectExpression(
                 selectAlias,
                 columns,
@@ -337,17 +381,16 @@ namespace FrameDAL.Linq.Translation
         private static MethodInfo newDefaultProjectedObject 
             = typeof(ExpressionTranslator).GetMethod(
                 "NewDefaultProjectedObject", 
-                new Type[] { typeof(ReadOnlyCollection<MemberBinding>), typeof(DbDataReader) });
+                new Type[] { typeof(ReadOnlyCollection<MemberBinding>), typeof(DataRow) });
 
-        public T NewDefaultProjectedObject<T>(ReadOnlyCollection<MemberBinding> bindings, DbDataReader reader)
+        public T NewDefaultProjectedObject<T>(ReadOnlyCollection<MemberBinding> bindings, DataRow row)
         {
             object proxy = EntityFactory.GetEntity(typeof(T), config.EnableLazy, false);
             foreach(MemberBinding binding in bindings)
             {
                 MemberAssignment assign = (MemberAssignment)binding;
                 string columnName = ((ColumnExpression)((InjectedExpression)assign.Expression).SqlExpression).ColumnName;
-                object value = reader.GetValue(reader.GetOrdinal(columnName));
-                assign.Member.SetValue(proxy, value);
+                assign.Member.SetValue(proxy, row[columnName]);
             }
             return (T)proxy;
         }
