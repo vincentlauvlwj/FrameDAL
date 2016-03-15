@@ -25,8 +25,8 @@ namespace ResumeFactory
                 = Application.StartupPath + @"\ResumeFactory.ini";
             
             LinqTest test = new LinqTest();
-            //test.Debug(test.TestSelectMany);
-            test.Run();
+            test.Debug(test.TestDistinct);
+            //test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
             {

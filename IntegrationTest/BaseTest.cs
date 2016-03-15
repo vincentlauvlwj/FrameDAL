@@ -85,6 +85,7 @@ namespace ResumeFactory
 
         protected string ObjectToString<T>(T obj)
         {
+            if (obj == null) return "null";
             if (IsBaseType(typeof(T))) return obj.ToString();
             StringBuilder sb = new StringBuilder();
             sb.Append(typeof(T).Name + " { ");

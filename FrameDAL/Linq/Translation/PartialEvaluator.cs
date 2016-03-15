@@ -44,7 +44,20 @@ namespace FrameDAL.Linq.Translation
 
         private static bool CanBeEvaluatedLocally(Expression expression)
         {
-            return expression.NodeType != ExpressionType.Parameter;
+            ConstantExpression cex = expression as ConstantExpression;
+            if (cex != null && cex.Value is IQueryable)
+            {
+                return false;
+            }
+            MethodCallExpression mc = expression as MethodCallExpression;
+            if (mc != null && (mc.Method.DeclaringType == typeof(Enumerable) || mc.Method.DeclaringType == typeof(Queryable)))
+            {
+                return false;
+            }
+            if (expression.NodeType == ExpressionType.Convert && expression.Type == typeof(object))
+                return true;
+            return expression.NodeType != ExpressionType.Parameter 
+                && expression.NodeType != ExpressionType.Lambda;
         }
 
         /// <summary>

@@ -107,6 +107,8 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitJoin(m);
                     case "SelectMany":
                         return this.VisitSelectMany(m);
+                    case "Distinct":
+                        return this.VisitDistinct(m);
                 }
             }
             throw new NotSupportedException("不支持的方法：" + m.Method.Name);
@@ -208,6 +210,21 @@ namespace FrameDAL.Linq.Translation
                 ((AliasedExpression)left.SqlExpression).TableAlias,
                 ((AliasedExpression)right.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(new SelectExpression(alias, pc.Columns, join, null), pc.Projector);
+            return m;
+        }
+
+        private Expression VisitDistinct(MethodCallExpression m)
+        {
+            if (m.Arguments.Count == 2)
+                throw new NotSupportedException("Distinct方法不支持comparer参数。");
+            Expression source = m.Arguments[0];
+
+            TranslateResult src = this.Translate(source);
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null, null, null, null, null, true),
+                pc.Projector);
             return m;
         }
 

@@ -9,15 +9,9 @@ namespace FrameDAL.SqlExpressions
 {
     public class FormatResult
     {
-        public string SqlText { get; private set; }
+        public string SqlText { get; set; }
 
-        public ReadOnlyCollection<object> Parameters { get; private set; }
-
-        public FormatResult(string sqlText, IEnumerable<object> parameters)
-        {
-            this.SqlText = sqlText;
-            this.Parameters = parameters.ToReadOnly();
-        }
+        public List<object> Parameters { get; set; }
     }
 
     public class SqlFormatter : SqlExpressionVisitor
@@ -37,7 +31,7 @@ namespace FrameDAL.SqlExpressions
         {
             SqlFormatter formatter = new SqlFormatter();
             formatter.Visit(expression);
-            return new FormatResult(formatter.sb.ToString(), formatter.parameters);
+            return new FormatResult() { SqlText = formatter.sb.ToString(), Parameters = formatter.parameters };
         }
 
         protected void Write(object value)

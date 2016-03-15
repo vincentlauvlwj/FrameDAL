@@ -28,10 +28,10 @@ namespace ResumeFactory
         public void TestWhere()
         {
             var query = session.GetAll<User>()
-                .Where(u => u.UserName != "123")
+                .Where(u => u.UserName == "123")
                 .Select(u => new User { Id = "222", UserName = u.UserName, UserPwd = u.UserPwd});
             var result = TestQuery(query);
-            Assert(result[0].UserName == "0123");
+            Assert(result[0].UserName == "123");
         }
 
         public void TestWhereSelect()
@@ -97,7 +97,7 @@ namespace ResumeFactory
                 .Select(u => new { Name = u.UserName, Password = u.UserPwd })
                 .Where(x => x.Name == "123" || x.Name == "coder")
                 .Select(x => x.Name);
-            //((IEnumerable<string>)query).SelectMany
+            //((IEnumerable<string>)query.Distinct).Distinct
             TestQuery(query);
         }
 
@@ -118,6 +118,22 @@ namespace ResumeFactory
                 where r.UserId == u.Id
                 select new { u.UserName, r.ResumeName };
             TestQuery(query);
+        }
+
+        public void TestNullArgument()
+        {
+            var query = from s in session.GetAll<Student>()
+                        where s.StuName == null
+                        select s;
+            var result = TestQuery(query);
+            Assert(result.Count > 0);
+        }
+
+        public void TestDistinct()
+        {
+            var query = session.GetAll<Student>().Select(s => s.StuName).Distinct();
+            var result = TestQuery(query);
+            Assert(result.Count == 6);
         }
     }
 }

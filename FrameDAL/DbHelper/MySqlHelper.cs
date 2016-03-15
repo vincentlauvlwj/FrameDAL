@@ -86,6 +86,8 @@ namespace FrameDAL.DbHelper
                 }
                 else
                 {
+                    if(param == null)
+                        throw new NotSupportedException("查询参数列表中有元素为null。");
                     arr.Add(param == null ? DBNull.Value : param);
                 }
             }
