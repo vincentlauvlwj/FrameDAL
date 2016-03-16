@@ -36,7 +36,6 @@ namespace FrameDAL.Linq.Translation
 
     public class ExpressionTranslator : InjectedExpressionVisitor
     {
-        private int aliasCount;
         private Configuration config;
 
         private ExpressionTranslator(Configuration config)
@@ -109,6 +108,12 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitSelectMany(m);
                     case "Distinct":
                         return this.VisitDistinct(m);
+                    case "OrderBy":
+                    case "OrderByDescending":
+                        return this.VisitOrderBy(m);
+                    case "ThenBy":
+                    case "ThenByDescending":
+                        return this.VisitThenBy(m);
                 }
             }
             throw new NotSupportedException("不支持的方法：" + m.Method.Name);
@@ -228,6 +233,57 @@ namespace FrameDAL.Linq.Translation
             return m;
         }
 
+        private List<MethodCallExpression> thenBys;
+
+        private Expression VisitOrderBy(MethodCallExpression m)
+        {
+            if (m.Arguments.Count == 3)
+                throw new NotSupportedException(m.Method.Name + "方法不支持comparer参数。");
+            Expression source = m.Arguments[0];
+            LambdaExpression keySelector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+
+            List<MethodCallExpression> myThenBys = this.thenBys;
+            this.thenBys = null;
+            TranslateResult src = this.Translate(source);
+            List<OrderByDeclaration> orderings = new List<OrderByDeclaration>();
+            Expression keyExpr = MemberAccessParser.Parse(keySelector, src.Projector);
+            orderings.Add(new OrderByDeclaration(GetOrderType(m), this.Translate(keyExpr).SqlExpression));
+
+            if(myThenBys != null)
+            {
+                for(int i = myThenBys.Count - 1; i >= 0; i--)
+                {
+                    keySelector = (LambdaExpression)StripQuotes(myThenBys[i].Arguments[1]);
+                    keyExpr = MemberAccessParser.Parse(keySelector, src.Projector);
+                    orderings.Add(new OrderByDeclaration(GetOrderType(myThenBys[i]), this.Translate(keyExpr).SqlExpression));
+                }
+            }
+
+            string alias = this.GetNextAlias();
+            ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null, orderings, null),
+                pc.Projector);
+            return m;
+        }
+
+        private Expression VisitThenBy(MethodCallExpression m)
+        {
+            if (m.Arguments.Count == 3)
+                throw new NotSupportedException(m.Method.Name + "方法不支持comparer参数。");
+            Expression source = m.Arguments[0];
+            
+            if (this.thenBys == null)
+            {
+                this.thenBys = new List<MethodCallExpression>();
+            }
+            this.thenBys.Add(m);
+            this.Visit(source);
+            if (this.thenBys != null)
+                throw new InvalidOperationException("调用ThenBy方法之前必须调用OrderBy方法。");
+            return m;
+        }
+
         protected override Expression VisitInjected(InjectedExpression node)
         {
             CurrentResult = new TranslateResult(node.SqlExpression);
@@ -343,6 +399,11 @@ namespace FrameDAL.Linq.Translation
             throw new NotSupportedException("不支持的表达式：" + node.NodeType);
         }
 
+        private OrderType GetOrderType(MethodCallExpression m)
+        {
+            return m.Method.Name.EndsWith("Descending") ? OrderType.Descending : OrderType.Ascending;
+        }
+
         private class JoinTypeJudger : ExpressionVisitor
         {
             private bool isParamReferenced = false;
@@ -382,6 +443,8 @@ namespace FrameDAL.Linq.Translation
             IQueryable q = value as IQueryable;
             return q != null && q.Expression.NodeType == ExpressionType.Constant;
         }
+        
+        private int aliasCount;
 
         private string GetNextAlias()
         {

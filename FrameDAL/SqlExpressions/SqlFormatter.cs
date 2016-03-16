@@ -168,13 +168,14 @@ namespace FrameDAL.SqlExpressions
 
         protected override SqlExpression VisitSelect(SelectExpression expr)
         {
+            if (expr.Columns == null || expr.Columns.Count == 0 || expr.From == null)
+                throw new Exception("invalid sql tree!");
             this.Write("SELECT ");
             if(expr.IsDistinct)
             {
                 this.Write("DISTINCT ");
             }
             this.VisitColumnDeclarations(expr.Columns);
-            if (expr.From == null) throw new Exception("invalid sql tree!");
             this.Write("FROM ");
             this.VisitSource(expr.From);
             if(expr.Where != null)
@@ -182,10 +183,47 @@ namespace FrameDAL.SqlExpressions
                 this.Write("WHERE ");
                 this.Visit(expr.Where);
             }
-
-
-
+            if(expr.GroupBy != null && expr.GroupBy.Count != 0)
+            {
+                this.Write("GROUP BY ");
+                this.VisitExpressionList(expr.GroupBy);
+            }
+            if(expr.OrderBy != null && expr.OrderBy.Count != 0)
+            {
+                this.Write("ORDER BY ");
+                this.VisitOrderBy(expr.OrderBy);
+            }
             return expr;
+        }
+
+        protected override ReadOnlyCollection<OrderByDeclaration> VisitOrderBy(ReadOnlyCollection<OrderByDeclaration> orders)
+        {
+            for (int i = 0, n = orders.Count; i < n; i++)
+            {
+                if (i > 0) this.Write(", ");
+                this.VisitOrderByDeclaration(orders[i]);
+            }
+            return orders;
+        }
+
+        protected override OrderByDeclaration VisitOrderByDeclaration(OrderByDeclaration order)
+        {
+            this.Visit(order.Expression);
+            if(order.OrderType == OrderType.Descending)
+            {
+                this.Write("DESC ");
+            }
+            return order;
+        }
+
+        protected override ReadOnlyCollection<SqlExpression> VisitExpressionList(ReadOnlyCollection<SqlExpression> original)
+        {
+            for (int i = 0, n = original.Count; i < n; i++)
+            {
+                if (i > 0) this.Write(", ");
+                this.Visit(original[i]);
+            }
+            return original;
         }
 
         protected override SqlExpression VisitSource(SqlExpression expr)

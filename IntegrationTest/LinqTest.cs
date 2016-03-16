@@ -97,7 +97,7 @@ namespace ResumeFactory
                 .Select(u => new { Name = u.UserName, Password = u.UserPwd })
                 .Where(x => x.Name == "123" || x.Name == "coder")
                 .Select(x => x.Name);
-            //((IEnumerable<string>)query.Distinct).Distinct
+            //((IEnumerable<string>)query.Distinct).OrderBy
             TestQuery(query);
         }
 
@@ -134,6 +134,19 @@ namespace ResumeFactory
             var query = session.GetAll<Student>().Select(s => s.StuName).Distinct();
             var result = TestQuery(query);
             Assert(result.Count == 6);
+        }
+
+        public void TestOrderBy()
+        {
+            var query = session.GetAll<Student>().OrderBy(s => s.StuAge);
+            var result = TestQuery(query);
+            Assert(result[0].Id == 6);
+        }
+
+        public void TestOrderByThenBy()
+        {
+            var query = session.GetAll<Student>().OrderBy(s => s.StuName).ThenBy(s => s.StuAge);
+            TestQuery(query);
         }
     }
 }
