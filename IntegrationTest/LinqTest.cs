@@ -148,5 +148,11 @@ namespace ResumeFactory
             var query = session.GetAll<Student>().OrderBy(s => s.StuName).ThenBy(s => s.StuAge);
             TestQuery(query);
         }
+
+        public void TestOrderByRewriter()
+        {
+            var query = session.GetAll<Student>().OrderBy(s => s.StuAge).Where(s => s.Id != 6);
+            TestQuery(query);
+        }
     }
 }

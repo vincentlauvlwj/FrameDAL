@@ -42,7 +42,10 @@ namespace FrameDAL.Linq
         public object Execute(Expression expression)
         {
             TranslateResult translateResult = Translate(expression);
-            FormatResult formatResult = SqlFormatter.Format(translateResult.SqlExpression);
+            SqlExpression sqlExpr = translateResult.SqlExpression;
+            sqlExpr = OrderByRewriter.Rewrite(sqlExpr);
+            FormatResult formatResult = SqlFormatter.Format(sqlExpr);
+
             IList list = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(TypeUtil.GetElementType(expression.Type)));
             Delegate projector = ProjectorBuilder.Build(translateResult.Projector);
             DataTable dt = session.CreateSqlQuery(formatResult.SqlText, formatResult.Parameters).ExecuteGetDataTable();
@@ -55,7 +58,10 @@ namespace FrameDAL.Linq
 
         public string GetQueryText(Expression expression)
         {
-            return SqlFormatter.Format(Translate(expression).SqlExpression).SqlText;
+            TranslateResult translateResult = Translate(expression);
+            SqlExpression sqlExpr = translateResult.SqlExpression;
+            sqlExpr = OrderByRewriter.Rewrite(sqlExpr);
+            return SqlFormatter.Format(sqlExpr).SqlText;
         }
 
         public TranslateResult Translate(Expression expression)

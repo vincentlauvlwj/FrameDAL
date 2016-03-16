@@ -67,6 +67,7 @@
     <Compile Include="Linq\Translation\InjectedExpression.cs" />
     <Compile Include="Linq\Translation\MemberAccessParser.cs" />
     <Compile Include="Linq\Translation\PartialEvaluator.cs" />
+    <Compile Include="SqlExpressions\OrderByRewriter.cs" />
     <Compile Include="SqlExpressions\SqlExpressions.cs" />
     <Compile Include="SqlExpressions\SqlExpressionVisitor.cs" />
     <Compile Include="SqlExpressions\SqlFormatter.cs" />
