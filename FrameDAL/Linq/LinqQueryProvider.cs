@@ -45,9 +45,9 @@ namespace FrameDAL.Linq
             SqlExpression sqlExpr = translateResult.SqlExpression;
             sqlExpr = OrderByRewriter.Rewrite(sqlExpr);
             FormatResult formatResult = SqlFormatter.Format(sqlExpr);
-
-            IList list = (IList) Activator.CreateInstance(typeof(List<>).MakeGenericType(TypeUtil.GetElementType(expression.Type)));
             Delegate projector = ProjectorBuilder.Build(translateResult.Projector);
+
+            IList list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(TypeUtil.GetElementType(expression.Type)));
             DataTable dt = session.CreateSqlQuery(formatResult.SqlText, formatResult.Parameters).ExecuteGetDataTable();
             foreach(DataRow row in dt.Rows)
             {

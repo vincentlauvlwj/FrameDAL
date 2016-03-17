@@ -154,5 +154,12 @@ namespace ResumeFactory
             var query = session.GetAll<Student>().OrderBy(s => s.StuAge).Where(s => s.Id != 6);
             TestQuery(query);
         }
+
+        public void TestOrderByDistinct()
+        {
+            // 先OrderBy再Distinct会导致排序信息丢失、无法排序，因此排序方法应该最后调用
+            var query = session.GetAll<Student>().OrderBy(s => s.StuAge).Distinct();
+            TestQuery(query);
+        }
     }
 }

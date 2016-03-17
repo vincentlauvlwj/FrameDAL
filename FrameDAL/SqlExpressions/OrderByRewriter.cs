@@ -29,8 +29,11 @@ namespace FrameDAL.SqlExpressions
                 bool hasGroupBy = select.GroupBy != null && select.GroupBy.Count > 0;
                 bool canHaveOrderBy = saveIsOuterMostSelect || select.Take != null || select.Skip != null;
                 bool canReceiveOrderings = canHaveOrderBy && !hasGroupBy && !select.IsDistinct && !AggregateChecker.HasAggregates(select);
+                bool canPassOnOrderings = !saveIsOuterMostSelect && !hasGroupBy && !select.IsDistinct;
 
-                if(hasOrderBy)
+                if (!canReceiveOrderings && !canPassOnOrderings && this.gatheredOrderings != null)
+                    throw new InvalidOperationException("此表达式可能导致排序信息丢失，请尽量把OrderBy，ThenBy之类的调用放到表达式末尾。");
+                if (hasOrderBy)
                 {
                     this.PrependOrderings(select.OrderBy);
                 }
@@ -44,7 +47,6 @@ namespace FrameDAL.SqlExpressions
                     orderings = select.OrderBy;
                 }
 
-                bool canPassOnOrderings = !saveIsOuterMostSelect && !hasGroupBy && !select.IsDistinct;
                 ReadOnlyCollection<ColumnDeclaration> columns = select.Columns;
                 if (this.gatheredOrderings != null)
                 {
