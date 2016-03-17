@@ -282,7 +282,7 @@ namespace FrameDAL.SqlExpressions
 
         protected SelectExpression UpdateSelect(
             SelectExpression expr,
-            string tableAlias,
+            TableAlias tableAlias,
             IEnumerable<ColumnDeclaration> columns,
             SqlExpression from,
             SqlExpression where,

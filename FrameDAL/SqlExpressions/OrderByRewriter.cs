@@ -52,7 +52,7 @@ namespace FrameDAL.SqlExpressions
                 {
                     if (canPassOnOrderings)
                     {
-                        HashSet<string> existingAliases = DeclaredAliasGatherer.Gather(select.From);
+                        HashSet<TableAlias> existingAliases = DeclaredAliasGatherer.Gather(select.From);
                         BindResult project = this.RebindOrderings(this.gatheredOrderings, select.TableAlias, existingAliases, select.Columns);
                         this.gatheredOrderings = null;
                         this.PrependOrderings(project.Orderings);
@@ -89,7 +89,7 @@ namespace FrameDAL.SqlExpressions
             public IList<OrderByDeclaration> Orderings { get; set; }
         }
 
-        private BindResult RebindOrderings(IList<OrderByDeclaration> orderings, string alias, HashSet<string> existingAliases, IList<ColumnDeclaration> existingColumns)
+        private BindResult RebindOrderings(IList<OrderByDeclaration> orderings, TableAlias alias, HashSet<TableAlias> existingAliases, IList<ColumnDeclaration> existingColumns)
         {
             List<ColumnDeclaration> newColumns = null;
             List<OrderByDeclaration> newOrderings = new List<OrderByDeclaration>();
@@ -194,9 +194,9 @@ namespace FrameDAL.SqlExpressions
 
         private class DeclaredAliasGatherer : SqlExpressionVisitor
         {
-            HashSet<string> aliases = new HashSet<string>();
+            HashSet<TableAlias> aliases = new HashSet<TableAlias>();
 
-            public static HashSet<string> Gather(SqlExpression source)
+            public static HashSet<TableAlias> Gather(SqlExpression source)
             {
                 DeclaredAliasGatherer gatherer = new DeclaredAliasGatherer();
                 gatherer.Visit(source);

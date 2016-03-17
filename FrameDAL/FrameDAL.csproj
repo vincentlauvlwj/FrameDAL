@@ -62,6 +62,7 @@
     <Compile Include="Config\Configuration.cs" />
     <Compile Include="Linq\LinqQuery.cs" />
     <Compile Include="Linq\LinqQueryProvider.cs" />
+    <Compile Include="Linq\Translation\AggregateParser.cs" />
     <Compile Include="Linq\Translation\ColumnProjector.cs" />
     <Compile Include="Linq\Translation\ExpressionTranslator.cs" />
     <Compile Include="Linq\Translation\InjectedExpression.cs" />

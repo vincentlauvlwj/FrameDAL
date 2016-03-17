@@ -114,6 +114,14 @@ namespace FrameDAL.Linq.Translation
                     case "ThenBy":
                     case "ThenByDescending":
                         return this.VisitThenBy(m);
+                    case "GroupBy":
+                        return this.VisitGroupBy(m);
+                    case "Count":
+                    case "Min":
+                    case "Max":
+                    case "Sum":
+                    case "Average":
+                        return this.VisitAggregate(m);
                 }
             }
             throw new NotSupportedException("不支持的方法：" + m.Method.Name);
@@ -129,7 +137,7 @@ namespace FrameDAL.Linq.Translation
             TranslateResult src = this.Translate(source);
             Expression where = MemberAccessParser.Parse(predicate, src.Projector);
             TranslateResult translatedWhere = this.Translate(where);
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 src.Projector, 
                 alias, 
@@ -148,7 +156,7 @@ namespace FrameDAL.Linq.Translation
                 throw new NotSupportedException("Select方法不支持类型为Expression<Func<TSource, int, TResult>>的selector。");
 
             TranslateResult src = this.Translate(source);
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 MemberAccessParser.Parse(selector, src.Projector),
                 alias,
@@ -177,7 +185,7 @@ namespace FrameDAL.Linq.Translation
             Expression innerKeyExpr = MemberAccessParser.Parse(innerKey, innerResult.Projector);
             TranslateResult outerKeyResult = this.Translate(outerKeyExpr);
             TranslateResult innerKeyResult = this.Translate(innerKeyExpr);
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 MemberAccessParser.Parse(resultSelector, outerResult.Projector, innerResult.Projector),
                 alias,
@@ -208,7 +216,7 @@ namespace FrameDAL.Linq.Translation
             TranslateResult right = this.Translate(rightExpr);
             JoinType joinType = JoinTypeJudger.GetJoinType(collectionSelector);
             JoinExpression join = new JoinExpression(joinType, left.SqlExpression, right.SqlExpression, null);
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(
                 resultSelector == null ? right.Projector : MemberAccessParser.Parse(resultSelector, left.Projector, right.Projector),
                 alias,
@@ -225,7 +233,7 @@ namespace FrameDAL.Linq.Translation
             Expression source = m.Arguments[0];
 
             TranslateResult src = this.Translate(source);
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
                 new SelectExpression(alias, pc.Columns, src.SqlExpression, null, null, null, null, null, true),
@@ -259,7 +267,7 @@ namespace FrameDAL.Linq.Translation
                 }
             }
 
-            string alias = this.GetNextAlias();
+            TableAlias alias = new TableAlias();
             ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
             CurrentResult = new TranslateResult(
                 new SelectExpression(alias, pc.Columns, src.SqlExpression, null, orderings, null),
@@ -284,9 +292,75 @@ namespace FrameDAL.Linq.Translation
             return m;
         }
 
+        private Expression VisitGroupBy(MethodCallExpression m)
+        {
+            if (HasComparerArgument(m))
+                throw new NotSupportedException(m.Method.Name + "方法不支持comparer参数。");
+            Expression source = m.Arguments[0];
+            LambdaExpression keySelector = (LambdaExpression)StripQuotes(m.Arguments[1]);
+            LambdaExpression elementSelector = null, resultSelector = null;
+            if (m.Arguments.Count == 4)
+            {
+                elementSelector = (LambdaExpression)StripQuotes(m.Arguments[2]);
+                resultSelector = (LambdaExpression)StripQuotes(m.Arguments[3]);
+            }
+            else if (m.Arguments.Count == 3)
+            {
+                LambdaExpression expr = (LambdaExpression)StripQuotes(m.Arguments[2]);
+                if (expr.Parameters.Count == 1)
+                {
+                    elementSelector = expr;
+                }
+                else
+                {
+                    resultSelector = expr;
+                }
+            }
+
+            TranslateResult src = this.Translate(source);
+            Expression keyExpr = MemberAccessParser.Parse(keySelector, src.Projector);
+            Expression elemExpr = elementSelector == null ? src.Projector : MemberAccessParser.Parse(elementSelector, src.Projector);
+            TableAlias existingAlias = ((AliasedExpression)src.SqlExpression).TableAlias;
+            ProjectedColumns pcKey = this.ProjectColumns(keyExpr, existingAlias, existingAlias);
+            IEnumerable<SqlExpression> groupExprs = pcKey.Columns.Select(c => c.Expression);
+
+            TranslateResult subquerySrc = this.Translate(source);
+            Expression subqueryKeyExpr = MemberAccessParser.Parse(keySelector, subquerySrc.Projector);
+            Expression subqueryElemExpr = elementSelector == null ? subquerySrc.Projector : MemberAccessParser.Parse(elementSelector, subquerySrc.Projector);
+            TableAlias subqueryExistingAlias = ((AliasedExpression)subquerySrc.SqlExpression).TableAlias;
+            ProjectedColumns subqueryPcKey = this.ProjectColumns(subqueryKeyExpr, subqueryExistingAlias, subqueryExistingAlias);
+            IEnumerable<SqlExpression> subqueryGroupExprs = subqueryPcKey.Columns.Select(c => c.Expression);
+            SqlExpression subqueryCorrelation = this.BuildPredicateWithNullsEqual(groupExprs, subqueryGroupExprs);
+
+            TableAlias subqueryAlias = new TableAlias();
+            ProjectedColumns subqueryPc = this.ProjectColumns(subqueryElemExpr, subqueryAlias, subqueryExistingAlias);
+            TranslateResult subquery = new TranslateResult(
+                new SelectExpression(subqueryAlias, subqueryPc.Columns, subquerySrc.SqlExpression, subqueryCorrelation),
+                subqueryPc.Projector);
+
+            Expression resultExpr;
+            if(resultSelector != null)
+            {
+
+            }
+            else
+            {
+                // TODO
+            }
+
+
+            return m;
+        }
+
+        private Expression VisitAggregate(MethodCallExpression m)
+        {
+
+            return m;
+        }
+
         protected override Expression VisitInjected(InjectedExpression node)
         {
-            CurrentResult = new TranslateResult(node.SqlExpression);
+            CurrentResult = node.TranslateResult;
             return node;
         }
 
@@ -399,6 +473,36 @@ namespace FrameDAL.Linq.Translation
             throw new NotSupportedException("不支持的表达式：" + node.NodeType);
         }
 
+        private SqlExpression BuildPredicateWithNullsEqual(IEnumerable<SqlExpression> source1, IEnumerable<SqlExpression> source2)
+        {
+            IEnumerator<SqlExpression> en1 = source1.GetEnumerator();
+            IEnumerator<SqlExpression> en2 = source2.GetEnumerator();
+            SqlExpression result = null;
+            while (en1.MoveNext() && en2.MoveNext())
+            {
+                SqlExpression compare = new FrameDAL.SqlExpressions.BinaryExpression(
+                    SqlExpressionType.Or,
+                    new FrameDAL.SqlExpressions.BinaryExpression(
+                        SqlExpressionType.And,
+                        new FrameDAL.SqlExpressions.UnaryExpression(SqlExpressionType.IsNull, en1.Current),
+                        new FrameDAL.SqlExpressions.UnaryExpression(SqlExpressionType.IsNull, en2.Current)
+                        ),
+                    new FrameDAL.SqlExpressions.BinaryExpression(
+                        SqlExpressionType.Equal,
+                        en1.Current,
+                        en2.Current
+                        )
+                    );
+                result = (result == null) ? compare : new FrameDAL.SqlExpressions.BinaryExpression(SqlExpressionType.And, result, compare);
+            }
+            return result;
+        }
+
+        private bool HasComparerArgument(MethodCallExpression m)
+        {
+            return m.Arguments.Any(e => e.Type.GetGenericTypeDefinition() == typeof(IEqualityComparer<>));
+        }
+
         private OrderType GetOrderType(MethodCallExpression m)
         {
             return m.Method.Name.EndsWith("Descending") ? OrderType.Descending : OrderType.Ascending;
@@ -433,7 +537,7 @@ namespace FrameDAL.Linq.Translation
             return e;
         }
 
-        private ProjectedColumns ProjectColumns(Expression expression, string newAlias, params string[] existingAliases)
+        private ProjectedColumns ProjectColumns(Expression expression, TableAlias newAlias, params TableAlias[] existingAliases)
         {
             return ColumnProjector.ProjectColumns(expression, null, newAlias, existingAliases);
         }
@@ -443,18 +547,11 @@ namespace FrameDAL.Linq.Translation
             IQueryable q = value as IQueryable;
             return q != null && q.Expression.NodeType == ExpressionType.Constant;
         }
-        
-        private int aliasCount;
-
-        private string GetNextAlias()
-        {
-            return "t" + aliasCount++;
-        }
 
         private TranslateResult GetDefaultProjection(IQueryable query)
         {
-            string tableAlias = this.GetNextAlias();
-            string selectAlias = this.GetNextAlias();
+            TableAlias tableAlias = new TableAlias();
+            TableAlias selectAlias = new TableAlias();
             List<MemberBinding> bindings = new List<MemberBinding>();
             List<ColumnDeclaration> columns = new List<ColumnDeclaration>();
             foreach(PropertyInfo prop in query.ElementType.GetCachedProperties())
@@ -462,7 +559,7 @@ namespace FrameDAL.Linq.Translation
                 ColumnAttribute column = prop.GetColumnAttribute();
                 if (column == null) continue;
                 bindings.Add(Expression.Bind(prop, new InjectedExpression(
-                    new ColumnExpression(selectAlias, column.Name), prop.PropertyType)));
+                    new TranslateResult(new ColumnExpression(selectAlias, column.Name)), prop.PropertyType)));
                 columns.Add(new ColumnDeclaration(column.Name,
                     string.IsNullOrWhiteSpace(column.SQL) 
                     ? new ColumnExpression(tableAlias, column.Name)
@@ -493,7 +590,7 @@ namespace FrameDAL.Linq.Translation
             foreach(MemberBinding binding in bindings)
             {
                 MemberAssignment assign = (MemberAssignment)binding;
-                string columnName = ((ColumnExpression)((InjectedExpression)assign.Expression).SqlExpression).ColumnName;
+                string columnName = ((ColumnExpression)((InjectedExpression)assign.Expression).TranslateResult.SqlExpression).ColumnName;
                 assign.Member.SetValue(proxy, row[columnName]);
             }
             return (T)proxy;

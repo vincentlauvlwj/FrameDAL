@@ -9,18 +9,18 @@ namespace FrameDAL.Linq.Translation
 {
     public sealed class InjectedExpression : Expression
     {
-        public SqlExpression SqlExpression { get; private set; }
+        private Type type;
 
-        public Type ColumnType { get; private set; }
+        public TranslateResult TranslateResult { get; private set; }
 
-        public override ExpressionType NodeType { get { return ExpressionType.Constant; } }
+        public override ExpressionType NodeType { get { return (ExpressionType)6666666; } }
 
-        public override Type Type { get { return ColumnType; } }
+        public override Type Type { get { return type; } }
 
-        public InjectedExpression(SqlExpression sqlExpr, Type columnType)
+        public InjectedExpression(TranslateResult translateResult, Type type)
         {
-            this.SqlExpression = sqlExpr;
-            this.ColumnType = columnType;
+            this.TranslateResult = translateResult;
+            this.type = type;
         }
     }
 

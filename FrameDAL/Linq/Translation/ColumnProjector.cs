@@ -20,14 +20,14 @@ namespace FrameDAL.Linq.Translation
     {
         private Dictionary<ColumnExpression, ColumnExpression> map;
         private List<ColumnDeclaration> columns;
-        private HashSet<string> existingAliases;
-        private string newAlias;
+        private HashSet<TableAlias> existingAliases;
+        private TableAlias newAlias;
         private int columnCount;
 
-        private ColumnProjector(IEnumerable<ColumnDeclaration> existingColumns, string newAlias, IEnumerable<string> existingAliases)
+        private ColumnProjector(IEnumerable<ColumnDeclaration> existingColumns, TableAlias newAlias, IEnumerable<TableAlias> existingAliases)
         {
             this.newAlias = newAlias;
-            this.existingAliases = new HashSet<string>(existingAliases);
+            this.existingAliases = new HashSet<TableAlias>(existingAliases);
             this.map = new Dictionary<ColumnExpression, ColumnExpression>();
             if(existingColumns != null)
             {
@@ -42,8 +42,8 @@ namespace FrameDAL.Linq.Translation
         public static ProjectedColumns ProjectColumns(
             Expression expression, 
             IEnumerable<ColumnDeclaration> existingColumns, 
-            string newAlias, 
-            IEnumerable<string> existingAliases)
+            TableAlias newAlias, 
+            IEnumerable<TableAlias> existingAliases)
         {
             ColumnProjector projector = new ColumnProjector(existingColumns, newAlias, existingAliases);
             Expression expr = projector.Visit(expression);
@@ -53,29 +53,29 @@ namespace FrameDAL.Linq.Translation
         public static ProjectedColumns ProjectColumns(
             Expression expression,
             IEnumerable<ColumnDeclaration> existingColumns,
-            string newAlias,
-            params string[] existingAliases)
+            TableAlias newAlias,
+            params TableAlias[] existingAliases)
         {
-            return ProjectColumns(expression, existingColumns, newAlias, (IEnumerable<string>)existingAliases);
+            return ProjectColumns(expression, existingColumns, newAlias, (IEnumerable<TableAlias>)existingAliases);
         }
 
         protected override Expression VisitInjected(InjectedExpression node)
         {
-            SqlExpression sqlExpr = node.SqlExpression;
+            SqlExpression sqlExpr = node.TranslateResult.SqlExpression;
             if (sqlExpr.NodeType == SqlExpressionType.Column)
             {
                 ColumnExpression column = (ColumnExpression)sqlExpr;
                 ColumnExpression mapped;
                 if (this.map.TryGetValue(column, out mapped))
                 {
-                    return new InjectedExpression(mapped, node.ColumnType);
+                    return new InjectedExpression(new TranslateResult(mapped), node.Type);
                 }
                 foreach (ColumnDeclaration existingColumn in this.columns)
                 {
                     ColumnExpression c = existingColumn.Expression as ColumnExpression;
                     if (c != null && c.TableAlias == column.TableAlias && c.ColumnName == column.ColumnName)
                     {
-                        return new InjectedExpression(new ColumnExpression(this.newAlias, existingColumn.DeclaredName), node.ColumnType);
+                        return new InjectedExpression(new TranslateResult(new ColumnExpression(this.newAlias, existingColumn.DeclaredName)), node.Type);
                     }
                 }
                 if (this.existingAliases.Contains(column.TableAlias))
@@ -84,7 +84,7 @@ namespace FrameDAL.Linq.Translation
                     this.columns.Add(new ColumnDeclaration(declaredName, column));
                     mapped = new ColumnExpression(this.newAlias, declaredName);
                     this.map.Add(column, mapped);
-                    return new InjectedExpression(mapped, node.ColumnType);
+                    return new InjectedExpression(new TranslateResult(mapped), node.Type);
                 }
                 return node;
             }
@@ -92,7 +92,7 @@ namespace FrameDAL.Linq.Translation
             {
                 string declaredName = this.GetNextColumnName();
                 this.columns.Add(new ColumnDeclaration(declaredName, sqlExpr));
-                return new InjectedExpression(new ColumnExpression(this.newAlias, declaredName), node.ColumnType);
+                return new InjectedExpression(new TranslateResult(new ColumnExpression(this.newAlias, declaredName)), node.Type);
             }
         }
 

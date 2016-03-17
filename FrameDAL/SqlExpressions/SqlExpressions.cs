@@ -146,9 +146,9 @@ namespace FrameDAL.SqlExpressions
 
     public abstract class AliasedExpression : SqlExpression
     {
-        public string TableAlias { get; private set; }
+        public TableAlias TableAlias { get; private set; }
 
-        public AliasedExpression(SqlExpressionType nodeType, string tableAlias) : base(nodeType)
+        public AliasedExpression(SqlExpressionType nodeType, TableAlias tableAlias) : base(nodeType)
         {
             this.TableAlias = tableAlias;
         }
@@ -158,7 +158,7 @@ namespace FrameDAL.SqlExpressions
     {
         public string TableName { get; private set; }
 
-        public TableExpression(string tableAlias, string tableName) : base(SqlExpressionType.Table, tableAlias)
+        public TableExpression(TableAlias tableAlias, string tableName) : base(SqlExpressionType.Table, tableAlias)
         {
             this.TableName = tableName;
         }
@@ -166,11 +166,11 @@ namespace FrameDAL.SqlExpressions
 
     public class ColumnExpression : SqlExpression
     {
-        public string TableAlias { get; private set; }
+        public TableAlias TableAlias { get; private set; }
 
         public string ColumnName { get; private set; }
 
-        public ColumnExpression(string tableAlias, string columnName) : base(SqlExpressionType.Column)
+        public ColumnExpression(TableAlias tableAlias, string columnName) : base(SqlExpressionType.Column)
         {
             this.TableAlias = tableAlias;
             this.ColumnName = columnName;
@@ -209,6 +209,14 @@ namespace FrameDAL.SqlExpressions
         }
     }
 
+    public class TableAlias
+    {
+        public override string ToString()
+        {
+            return "t" + this.GetHashCode();
+        }
+    }
+
     public class SelectExpression : AliasedExpression
     {
         public ReadOnlyCollection<ColumnDeclaration> Columns { get; private set; }
@@ -228,7 +236,7 @@ namespace FrameDAL.SqlExpressions
         public bool IsDistinct { get; private set; }
 
         public SelectExpression(
-            string tableAlias,
+            TableAlias tableAlias,
             IEnumerable<ColumnDeclaration> columns,
             SqlExpression from,
             SqlExpression where,
@@ -251,7 +259,7 @@ namespace FrameDAL.SqlExpressions
         }
 
         public SelectExpression(
-            string tableAlias,
+            TableAlias tableAlias,
             IEnumerable<ColumnDeclaration> columns,
             SqlExpression from,
             SqlExpression where,
@@ -263,7 +271,7 @@ namespace FrameDAL.SqlExpressions
         }
 
         public SelectExpression(
-            string tableAlias,
+            TableAlias tableAlias,
             IEnumerable<ColumnDeclaration> columns,
             SqlExpression from,
             SqlExpression where

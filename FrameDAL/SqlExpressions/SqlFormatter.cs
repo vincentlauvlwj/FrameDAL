@@ -16,15 +16,16 @@ namespace FrameDAL.SqlExpressions
 
     public class SqlFormatter : SqlExpressionVisitor
     {
-        private StringBuilder sb;
-        private int indent = 2;
         private int depth;
+        private StringBuilder sb;
         private List<object> parameters;
+        private Dictionary<TableAlias, string> aliases;
 
         private SqlFormatter()
         {
             sb = new StringBuilder();
             parameters = new List<object>();
+            aliases = new Dictionary<TableAlias, string>();
         }
 
         public static FormatResult Format(SqlExpression expression)
@@ -50,7 +51,7 @@ namespace FrameDAL.SqlExpressions
         {
             this.sb.AppendLine();
             this.Indent(style);
-            for (int i = 0, n = this.depth * this.indent; i < n; i++)
+            for (int i = 0, n = this.depth * 2; i < n; i++)
             {
                 this.Write(" ");
             }
@@ -67,6 +68,17 @@ namespace FrameDAL.SqlExpressions
                 this.depth--;
                 System.Diagnostics.Debug.Assert(this.depth >= 0);
             }
+        }
+
+        protected virtual string GetAliasName(TableAlias alias)
+        {
+            string name;
+            if(!this.aliases.TryGetValue(alias, out name))
+            {
+                name = "t" + this.aliases.Count;
+                this.aliases.Add(alias, name);
+            }
+            return name;
         }
 
         protected virtual string GetOperator(UnaryExpression u)
@@ -165,13 +177,13 @@ namespace FrameDAL.SqlExpressions
 
         protected override SqlExpression VisitTable(TableExpression expr)
         {
-            this.Write(expr.TableName + " " + expr.TableAlias + " ");
+            this.Write(expr.TableName + " " + GetAliasName(expr.TableAlias) + " ");
             return expr;
         }
 
         protected override SqlExpression VisitColumn(ColumnExpression expr)
         {
-            this.Write(expr.TableAlias + "." + expr.ColumnName + " ");
+            this.Write(GetAliasName(expr.TableAlias) + "." + expr.ColumnName + " ");
             return expr;
         }
 
@@ -275,7 +287,7 @@ namespace FrameDAL.SqlExpressions
                     this.NewLine(Indentation.Inner);
                     this.Visit(select);
                     this.NewLine(Indentation.Outer);
-                    this.Write(") " + select.TableAlias + " ");
+                    this.Write(") " + GetAliasName(select.TableAlias) + " ");
                     break;
                 case SqlExpressionType.Join:
                     this.Visit(expr);

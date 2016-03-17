@@ -88,10 +88,14 @@ namespace FrameDAL.Linq
 
             protected override Expression VisitInjected(InjectedExpression node)
             {
-                ColumnExpression column = node.SqlExpression as ColumnExpression;
-                Expression value = Expression.MakeIndex(row, indexer, new Expression[] { Expression.Constant(column.ColumnName) });
-                Expression result = Expression.Call(convertType, value, Expression.Constant(node.ColumnType));
-                return Expression.Convert(result, node.ColumnType);
+                ColumnExpression column = node.TranslateResult.SqlExpression as ColumnExpression;
+                if (column != null)
+                {
+                    Expression value = Expression.MakeIndex(row, indexer, new Expression[] { Expression.Constant(column.ColumnName) });
+                    Expression result = Expression.Call(convertType, value, Expression.Constant(node.Type));
+                    return Expression.Convert(result, node.Type);
+                }
+                return node;
             }
 
             protected override Expression VisitParameter(ParameterExpression node)
