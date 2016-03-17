@@ -97,7 +97,7 @@ namespace ResumeFactory
                 .Select(u => new { Name = u.UserName, Password = u.UserPwd })
                 .Where(x => x.Name == "123" || x.Name == "coder")
                 .Select(x => x.Name);
-            //((IEnumerable<string>)query.Distinct).OrderBy
+            //((IEnumerable<string>)query.GroupBy).GroupBy
             TestQuery(query);
         }
 

@@ -58,7 +58,7 @@ namespace FrameDAL.Linq.Translation
             {
                 _curResult = value;
                 _flag = !_flag;
-                if (!_flag) throw new Exception("Debug Exception!");
+                System.Diagnostics.Debug.Assert(_flag);
             }
         }
 

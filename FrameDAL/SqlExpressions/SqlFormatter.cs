@@ -39,6 +39,36 @@ namespace FrameDAL.SqlExpressions
             this.sb.Append(value);
         }
 
+        protected enum Indentation
+        {
+            Inner,
+            Same,
+            Outer
+        }
+
+        protected void NewLine(Indentation style)
+        {
+            this.sb.AppendLine();
+            this.Indent(style);
+            for (int i = 0, n = this.depth * this.indent; i < n; i++)
+            {
+                this.Write(" ");
+            }
+        }
+
+        protected void Indent(Indentation style)
+        {
+            if (style == Indentation.Inner)
+            {
+                depth++;
+            }
+            else if (style == Indentation.Outer)
+            {
+                this.depth--;
+                System.Diagnostics.Debug.Assert(this.depth >= 0);
+            }
+        }
+
         protected virtual string GetOperator(UnaryExpression u)
         {
             switch (u.NodeType)
@@ -176,20 +206,26 @@ namespace FrameDAL.SqlExpressions
                 this.Write("DISTINCT ");
             }
             this.VisitColumnDeclarations(expr.Columns);
+
+            this.NewLine(Indentation.Same);
             this.Write("FROM ");
             this.VisitSource(expr.From);
+
             if(expr.Where != null)
             {
+                this.NewLine(Indentation.Same);
                 this.Write("WHERE ");
                 this.Visit(expr.Where);
             }
             if(expr.GroupBy != null && expr.GroupBy.Count != 0)
             {
+                this.NewLine(Indentation.Same);
                 this.Write("GROUP BY ");
                 this.VisitExpressionList(expr.GroupBy);
             }
             if(expr.OrderBy != null && expr.OrderBy.Count != 0)
             {
+                this.NewLine(Indentation.Same);
                 this.Write("ORDER BY ");
                 this.VisitOrderBy(expr.OrderBy);
             }
@@ -236,14 +272,16 @@ namespace FrameDAL.SqlExpressions
                 case SqlExpressionType.Select:
                     SelectExpression select = (SelectExpression)expr;
                     this.Write("(");
+                    this.NewLine(Indentation.Inner);
                     this.Visit(select);
+                    this.NewLine(Indentation.Outer);
                     this.Write(") " + select.TableAlias + " ");
                     break;
                 case SqlExpressionType.Join:
                     this.Visit(expr);
                     break;
                 default:
-                    throw new Exception("debug info");
+                    throw new ArgumentException("Invalid Source!", nameof(expr));
             }
             return expr;
         }
@@ -251,6 +289,7 @@ namespace FrameDAL.SqlExpressions
         protected override SqlExpression VisitJoin(JoinExpression expr)
         {
             this.VisitSource(expr.Left);
+            this.NewLine(Indentation.Same);
             switch(expr.JoinType)
             {
                 case JoinType.CrossJoin:
@@ -272,6 +311,7 @@ namespace FrameDAL.SqlExpressions
             this.VisitSource(expr.Right);
             if(expr.Condition != null)
             {
+                this.NewLine(Indentation.Same);
                 this.Write("ON ");
                 this.Visit(expr.Condition);
             }
