@@ -25,8 +25,8 @@ namespace ResumeFactory
                 = Application.StartupPath + @"\ResumeFactory.ini";
             
             LinqTest test = new LinqTest();
-            //test.Debug(test.TestDistinct);
-            test.Run();
+            test.Debug(test.TestGroupBy);
+            //test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
             {
@@ -94,7 +94,10 @@ namespace ResumeFactory
         public virtual string StuName { get; set; }
 
         [Column("stu_age")]
-        public virtual string StuAge { get; set; }
+        public virtual int StuAge { get; set; }
+
+        [Column("stu_class")]
+        public virtual int StuClass { get; set; }
 
         [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id", LazyLoad = false)]
         public virtual List<Course> Courses { get; set; }

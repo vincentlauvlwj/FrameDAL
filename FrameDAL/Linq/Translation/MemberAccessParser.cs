@@ -23,7 +23,7 @@ namespace FrameDAL.Linq.Translation
         protected override Expression VisitParameter(ParameterExpression node)
         {
             Expression e;
-            if(map.TryGetValue(node, out e))
+            if(map != null && map.TryGetValue(node, out e))
             {
                 return e;
             }

@@ -161,5 +161,19 @@ namespace ResumeFactory
             var query = session.GetAll<Student>().OrderBy(s => s.StuAge).Distinct();
             TestQuery(query);
         }
+
+        public void TestGroupBy()
+        {
+            var query = session.GetAll<Student>().GroupBy(
+                s => s.StuClass,
+                (k, g) => new
+                {
+                    Class = k,
+                    MaxId = g.Max(s => s.Id),
+                    AvgAge = g.Average(s => s.StuAge),
+                    StuCount = g.Count()
+                });
+            TestQuery(query);
+        }
     }
 }

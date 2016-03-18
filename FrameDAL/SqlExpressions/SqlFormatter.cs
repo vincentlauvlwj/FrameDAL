@@ -69,6 +69,11 @@ namespace FrameDAL.SqlExpressions
                 System.Diagnostics.Debug.Assert(this.depth >= 0);
             }
         }
+        
+        protected virtual bool RequiresAsteriskWhenNoArgument(string aggName)
+        {
+            return aggName == "COUNT";
+        }
 
         protected virtual string GetAliasName(TableAlias alias)
         {
@@ -156,10 +161,20 @@ namespace FrameDAL.SqlExpressions
 
         protected override SqlExpression VisitUnary(UnaryExpression expr)
         {
-            this.Write(GetOperator(expr));
-            this.Write(" (");
-            this.Visit(expr.Operand);
-            this.Write(") ");
+            if (expr.NodeType == SqlExpressionType.IsNull)
+            {
+                this.Write("(");
+                this.Visit(expr.Operand);
+                this.Write(") ");
+                this.Write(GetOperator(expr));
+            }
+            else
+            {
+                this.Write(GetOperator(expr));
+                this.Write(" (");
+                this.Visit(expr.Operand);
+                this.Write(") ");
+            }
             return expr;
         }
 
@@ -181,6 +196,22 @@ namespace FrameDAL.SqlExpressions
             return expr;
         }
 
+        protected override SqlExpression VisitAggregate(AggregateExpression expr)
+        {
+            this.Write(expr.AggregateName + "(");
+            this.Write(expr.IsDistinct ? "DISTINCT " : "");
+            if (expr.Argument != null)
+            {
+                this.Visit(expr.Argument);
+            }
+            else if(RequiresAsteriskWhenNoArgument(expr.AggregateName))
+            {
+                this.Write("*");
+            }
+            this.Write(") ");
+            return expr;
+        }
+
         protected override SqlExpression VisitColumn(ColumnExpression expr)
         {
             this.Write(GetAliasName(expr.TableAlias) + "." + expr.ColumnName + " ");
@@ -189,9 +220,20 @@ namespace FrameDAL.SqlExpressions
 
         protected override ColumnDeclaration VisitColumnDeclaration(ColumnDeclaration column)
         {
-            this.Visit(column.Expression);
+            if(column.Expression.NodeType == SqlExpressionType.Select)
+            {
+                this.Write("(");
+                this.NewLine(Indentation.Inner);
+                this.Visit(column.Expression);
+                this.NewLine(Indentation.Outer);
+                this.Write(") ");
+            }
+            else
+            {
+                this.Visit(column.Expression);
+            }
             ColumnExpression c = column.Expression as ColumnExpression;
-            if (c != null && c.ColumnName != column.DeclaredName || c == null)
+            if ((c != null && c.ColumnName != column.DeclaredName || c == null) && !string.IsNullOrWhiteSpace(column.DeclaredName))
             {
                 this.Write("AS " + column.DeclaredName + " ");
             }

@@ -37,10 +37,12 @@ namespace FrameDAL.Linq.Translation
     public class ExpressionTranslator : InjectedExpressionVisitor
     {
         private Configuration config;
+        private Dictionary<TranslateResult, GroupByInfo> groupByMap;
 
         private ExpressionTranslator(Configuration config)
         {
             this.config = config;
+            this.groupByMap = new Dictionary<TranslateResult, GroupByInfo>();
         }
 
         public static TranslateResult Translate(Expression expr, Configuration config)
@@ -330,6 +332,7 @@ namespace FrameDAL.Linq.Translation
             TableAlias subqueryExistingAlias = ((AliasedExpression)subquerySrc.SqlExpression).TableAlias;
             ProjectedColumns subqueryPcKey = this.ProjectColumns(subqueryKeyExpr, subqueryExistingAlias, subqueryExistingAlias);
             IEnumerable<SqlExpression> subqueryGroupExprs = subqueryPcKey.Columns.Select(c => c.Expression);
+            
             SqlExpression subqueryCorrelation = this.BuildPredicateWithNullsEqual(groupExprs, subqueryGroupExprs);
 
             TableAlias subqueryAlias = new TableAlias();
@@ -338,23 +341,79 @@ namespace FrameDAL.Linq.Translation
                 new SelectExpression(subqueryAlias, subqueryPc.Columns, subquerySrc.SqlExpression, subqueryCorrelation),
                 subqueryPc.Projector);
 
+            GroupByInfo info = new GroupByInfo() { ElementExpr = elemExpr, Alias = existingAlias };
+            this.groupByMap.Add(subquery, info);
+
             Expression resultExpr;
             if(resultSelector != null)
             {
-
+                resultExpr = AggregateParser.Parse(
+                    resultSelector, 
+                    pcKey.Projector, 
+                    new InjectedExpression(subquery, resultSelector.Parameters[1].Type),
+                    this.Translate);
             }
             else
             {
                 // TODO
+                resultExpr = null;
             }
 
-
+            TableAlias alias = new TableAlias();
+            ProjectedColumns pc = this.ProjectColumns(resultExpr, alias, existingAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null, null, groupExprs),
+                pc.Projector);
             return m;
         }
 
         private Expression VisitAggregate(MethodCallExpression m)
         {
+            Expression source = m.Arguments[0];
+            LambdaExpression argument = m.Arguments.Count == 2 ? (LambdaExpression)StripQuotes(m.Arguments[1]) : null;
 
+            string aggName = GetAggregateName(m);
+            bool hasPredicateArg = this.HasPredicateArg(aggName);
+            bool argumentWasPredicate = false;
+
+            if (argument != null && hasPredicateArg)
+            {
+                source = Expression.Call(typeof(Queryable), "Where", m.Method.GetGenericArguments(), source, argument);
+                argument = null;
+                argumentWasPredicate = true;
+            }
+
+            TranslateResult src = this.Translate(source);
+            SqlExpression argExpr = null;
+            if(argument != null)
+            {
+                argExpr = this.Translate(MemberAccessParser.Parse(argument, src.Projector)).SqlExpression;
+            }
+            else if(!hasPredicateArg)
+            {
+                argExpr = this.Translate(src.Projector).SqlExpression;
+            }
+
+            TableAlias alias = new TableAlias();
+            AggregateExpression aggExpr = new AggregateExpression(aggName, argExpr, false);
+            SelectExpression select = new SelectExpression(alias, new ColumnDeclaration[] { new ColumnDeclaration("", aggExpr) }, src.SqlExpression, null);
+
+            GroupByInfo info;
+            if(!argumentWasPredicate && this.groupByMap.TryGetValue(src, out info))
+            {
+                if (argument != null)
+                {
+                    argExpr = this.Translate(MemberAccessParser.Parse(argument, info.ElementExpr)).SqlExpression;
+                }
+                else if (!hasPredicateArg)
+                {
+                    argExpr = this.Translate(info.ElementExpr).SqlExpression;
+                }
+                aggExpr = new AggregateExpression(aggName, argExpr, false);
+                CurrentResult = new TranslateResult(aggExpr);
+                return m;
+            }
+            CurrentResult = new TranslateResult(select);
             return m;
         }
 
@@ -471,6 +530,37 @@ namespace FrameDAL.Linq.Translation
                 return node;
             }
             throw new NotSupportedException("不支持的表达式：" + node.NodeType);
+        }
+
+        private class GroupByInfo
+        {
+            public Expression ElementExpr { get; set; }
+
+            public TableAlias Alias { get; set; }
+        }
+
+        private bool HasPredicateArg(string aggName)
+        {
+            return aggName == "COUNT";
+        }
+
+        private string GetAggregateName(MethodCallExpression m)
+        {
+            switch (m.Method.Name)
+            {
+                case "Count":
+                    return "COUNT";
+                case "Min":
+                    return "MIN";
+                case "Max":
+                    return "MAX";
+                case "Sum":
+                    return "SUM";
+                case "Average":
+                    return "AVG";
+                default:
+                    throw new NotSupportedException("Unsupported aggregate type: " + m.Method.Name);
+            }
         }
 
         private SqlExpression BuildPredicateWithNullsEqual(IEnumerable<SqlExpression> source1, IEnumerable<SqlExpression> source2)
