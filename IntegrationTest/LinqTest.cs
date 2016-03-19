@@ -175,5 +175,19 @@ namespace ResumeFactory
                 });
             TestQuery(query);
         }
+
+        public void TestSqlLikeGroupBy()
+        {
+            var query = from s in session.GetAll<Student>()
+                        group s by s.StuClass into g
+                        select new
+                        {
+                            Class = g.Key,
+                            MaxId = g.Max(s => s.Id),
+                            AvgAge = g.Average(s => s.StuAge),
+                            StuCount = g.Count()
+                        };
+            TestQuery(query);
+        }
     }
 }

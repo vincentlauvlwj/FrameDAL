@@ -25,7 +25,7 @@ namespace ResumeFactory
                 = Application.StartupPath + @"\ResumeFactory.ini";
             
             LinqTest test = new LinqTest();
-            test.Debug(test.TestGroupBy);
+            test.Debug(test.TestSqlLikeGroupBy);
             //test.Run();
 
             /*using (ISession session = AppContext.Instance.OpenSession())
