@@ -205,5 +205,19 @@ namespace ResumeFactory
                         };
             TestQuery(query);
         }
+
+        public void TestRedundantSubqueries()
+        {
+            var query = from s in session.GetAll<User0>()
+                        join r in session.GetAll<Resume0>() on s.Id equals r.UserId
+                        let p = s.UserPwd
+                        orderby s.Id
+                        where s.UserName != "aaa"
+                        where p != "55555"
+                        select new { s.UserName, s.UserPwd } into x
+                        where x.UserName == "coder"
+                        select x;
+            TestQuery(query);
+        }
     }
 }
