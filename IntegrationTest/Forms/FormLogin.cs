@@ -15,8 +15,9 @@ namespace ResumeFactory.Forms
     public partial class FormLogin : Form
     {
         public User LoginUser { get; private set; }
-        private LoginService loginService;
+        private LoginService loginService = new LoginService();
         private User getUser;
+
         public FormLogin()
         {
             InitializeComponent();
@@ -50,7 +51,6 @@ namespace ResumeFactory.Forms
             }
             if (textBoxAccount.Text != "" && textBoxAccount.Text != "")
             {
-                 loginService = new LoginService();
                 if ((getUser = loginService.Login(textBoxAccount.Text.ToString(), textBoxPassword.Text.ToString()))!=null)
                 {
                     LoginUser = getUser;

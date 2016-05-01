@@ -19,17 +19,12 @@ namespace ResumeFactory.Service
         {
             using (ISession session = AppContext.Instance.OpenSession())
             {
-                List<User> result = session.CreateSqlQuery("select * from user where user_name =?", name).ExecuteGetList<User>();
-                if (result.Count > 0)
-                {
-                    if (result[0].UserName == name && result[0].UserPwd == pass)
-                        return result[0];
-                    else return null;
-                }
-                else               
-                    return null;                
+                return session.GetAll<User>()
+                    .Where(u => u.UserName == name && u.UserPwd == pass)
+                    .FirstOrDefault();            
             }
         }
+
         /// <summary>
         /// 用于用户注册。输入用户账户名称，账户密码，如果用户名已存在会有提示。
         /// 无返回值。

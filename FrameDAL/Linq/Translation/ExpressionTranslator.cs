@@ -20,13 +20,13 @@ namespace FrameDAL.Linq.Translation
 
         public Expression Projector { get; private set; }
 
-        public LambdaExpression Aggregator { get; private set; }
+        public LambdaExpression Extractor { get; private set; }
 
-        public TranslateResult(SqlExpression sqlExpr, Expression projector, LambdaExpression aggregator)
+        public TranslateResult(SqlExpression sqlExpr, Expression projector, LambdaExpression extractor)
         {
             this.SqlExpression = sqlExpr;
             this.Projector = projector;
-            this.Aggregator = aggregator;
+            this.Extractor = extractor;
         }
 
         public TranslateResult(SqlExpression sqlExpr, Expression projector) : this(sqlExpr, projector, null) { }
