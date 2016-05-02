@@ -91,8 +91,7 @@ namespace ResumeFactory.Service
         {
             using (ISession session = context.OpenSession())
             {
-                string tableName = typeof(T).GetTableAttribute().Name;
-                return session.CreateSqlQuery("select * from " + tableName).ExecuteGetList<T>();
+                return session.GetAll<T>().ToList();
             }
         }
 
