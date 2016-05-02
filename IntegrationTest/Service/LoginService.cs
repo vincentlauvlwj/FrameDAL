@@ -21,7 +21,7 @@ namespace ResumeFactory.Service
             {
                 return session.GetAll<User>()
                     .Where(u => u.UserName == name && u.UserPwd == pass)
-                    .FirstOrDefault();            
+                    .SingleOrDefault();            
             }
         }
 
@@ -63,17 +63,11 @@ namespace ResumeFactory.Service
         /// <returns></returns>
         public bool name_exist(String name)
         {
-            bool flag = false;
             using (ISession session = AppContext.Instance.OpenSession())
-            {                 
-                 User user = new User();
-                 User loginUser = session.Get<User>(user.Id);
-                 String sql = "select * from user where user_name = '"+ name +"'";
-                 Object result = session.CreateSqlQuery(sql).ExecuteScalar();
-                 if (result!=null)                     
-                     flag = true;
+            {
+                User user = session.GetAll<User>().Where(u => u.UserName == name).SingleOrDefault();
+                return user != null;
             }
-            return flag;
         }      
     }
 }

@@ -118,6 +118,11 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitThenBy(m);
                     case "GroupBy":
                         return this.VisitGroupBy(m);
+                    case "Single":
+                    case "SingleOrDefault":
+                    case "First":
+                    case "FirstOrDefault":
+                        return this.VisitExtractor(m);
                     case "Count":
                     case "Min":
                     case "Max":
@@ -414,6 +419,21 @@ namespace FrameDAL.Linq.Translation
                 return m;
             }
             CurrentResult = new TranslateResult(select);
+            return m;
+        }
+
+        private Expression VisitExtractor(MethodCallExpression m)
+        {
+            Expression source = m.Arguments[0];
+            if (m.Arguments.Count > 1)
+                throw new NotSupportedException("不支持多参数的" + m.Method.Name + "方法");
+
+            TranslateResult src = this.Translate(source);
+            Type elementType = TypeUtil.GetElementType(source.Type);
+            ParameterExpression param = Expression.Parameter(typeof(IEnumerable<>).MakeGenericType(elementType));
+            Expression body = Expression.Call(typeof(Enumerable), m.Method.Name, new Type[] { elementType }, param);
+            LambdaExpression extractor = Expression.Lambda(body, param);
+            CurrentResult = new TranslateResult(src.SqlExpression, src.Projector, extractor);
             return m;
         }
 

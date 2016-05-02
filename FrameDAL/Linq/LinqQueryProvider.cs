@@ -53,6 +53,18 @@ namespace FrameDAL.Linq
             {
                 list.Add(projector.DynamicInvoke(row));
             }
+
+            if(translateResult.Extractor != null)
+            {
+                try
+                {
+                    return translateResult.Extractor.Compile().DynamicInvoke(list);
+                }
+                catch(TargetInvocationException e)
+                {
+                    throw e.InnerException;
+                }
+            }
             return list;
         }
 
