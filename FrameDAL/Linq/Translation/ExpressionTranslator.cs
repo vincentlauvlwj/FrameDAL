@@ -118,6 +118,10 @@ namespace FrameDAL.Linq.Translation
                         return this.VisitThenBy(m);
                     case "GroupBy":
                         return this.VisitGroupBy(m);
+                    case "Skip":
+                        return this.VisitSkip(m);
+                    case "Take":
+                        return this.VisitTake(m);
                     case "Single":
                     case "SingleOrDefault":
                     case "First":
@@ -434,6 +438,35 @@ namespace FrameDAL.Linq.Translation
             Expression body = Expression.Call(typeof(Enumerable), m.Method.Name, new Type[] { elementType }, param);
             LambdaExpression extractor = Expression.Lambda(body, param);
             CurrentResult = new TranslateResult(src.SqlExpression, src.Projector, extractor);
+            return m;
+        }
+
+        private Expression VisitSkip(MethodCallExpression m)
+        {
+            Expression source = m.Arguments[0];
+            int skip = (int)((System.Linq.Expressions.ConstantExpression)m.Arguments[1]).Value;
+
+            TranslateResult src = this.Translate(source);
+            TableAlias alias = new TableAlias();
+            ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null, null, null, skip, null, false), 
+                pc.Projector);
+            return m;
+        }
+
+        private Expression VisitTake(MethodCallExpression m)
+        {
+            Expression source = m.Arguments[0];
+            int take = (int)((System.Linq.Expressions.ConstantExpression)m.Arguments[1]).Value;
+
+            TranslateResult src = this.Translate(source);
+            SelectExpression select = (SelectExpression)src.SqlExpression;
+            TableAlias alias = new TableAlias();
+            ProjectedColumns pc = this.ProjectColumns(src.Projector, alias, ((AliasedExpression)src.SqlExpression).TableAlias);
+            CurrentResult = new TranslateResult(
+                new SelectExpression(alias, pc.Columns, src.SqlExpression, null, null, null, null, take, false),
+                pc.Projector);
             return m;
         }
 

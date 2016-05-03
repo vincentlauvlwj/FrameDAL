@@ -29,7 +29,7 @@ namespace ResumeFactory.Forms
             textBoxPassword.Text = Config.Password;
             checkBoxRememberPwd.Checked = Config.RememberPassword;
             //自动登录
-            //AutoLogin();
+            AutoLogin();
         }
 
         /// <summary>

@@ -106,11 +106,7 @@ namespace ResumeFactory.Service
             int firstResult = (pageNum - 1) * pageSize;
             using (ISession session = context.OpenSession())
             {
-                string tableName = typeof(T).GetTableAttribute().Name;
-                ISqlQuery query = session.CreateSqlQuery("select * from " + tableName);
-                query.FirstResult = firstResult;
-                query.PageSize = pageSize;
-                return query.ExecuteGetList<T>();
+                return session.GetAll<T>().Skip(firstResult).Take(pageSize).ToList();
             }
         }
 

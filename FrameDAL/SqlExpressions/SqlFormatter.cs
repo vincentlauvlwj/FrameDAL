@@ -283,6 +283,11 @@ namespace FrameDAL.SqlExpressions
                 this.Write("ORDER BY ");
                 this.VisitOrderBy(expr.OrderBy);
             }
+            if(expr.Skip != null || expr.Take != null)
+            {
+                this.NewLine(Indentation.Same);
+                this.Write(string.Format("LIMIT %d, %d", expr.Skip == null ? 0 : expr.Skip.Value, expr.Take == null ? int.MaxValue : expr.Take.Value));
+            }
             return expr;
         }
 
