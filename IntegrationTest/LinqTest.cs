@@ -219,5 +219,16 @@ namespace ResumeFactory
                         select x;
             TestQuery(query);
         }
+
+        public void TestSkipTake()
+        {
+            var query = session.GetAll<User>().Skip(1).Take(1);
+            TestQuery(query);
+        }
+
+        public void TestRootAggregate()
+        {
+            Assert(session.GetAll<User>().Count() != 0);
+        }
     }
 }
