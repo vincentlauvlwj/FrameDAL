@@ -44,7 +44,25 @@
 
 ### 使用DbHelper工具类的方式
 
+DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一个中间层，它采用模块化编程的思想，封装了传统数据库访问方式中的模板化代码，提供了一系列实用的函数以供调用。在使用时，只需要向其提供要执行的SQL语句及其参数即可，例如：
+
+````C#
+	public DataTable GetNamesByClassName(string className)
+    {
+		string connStr = "server=localhost;database=test;user id=root;password=root";
+        IDbHelper db = new MySqlHelper(connStr);
+		string sql = "select name from student where class_name=?";
+        return db.ExecuteGetDataTable(sql, className);
+    }
+````
+
+这种数据库访问方式避免了书写传统数据库访问方式中的大量冗余代码，同时得益于中间层相对简单，其性能也可与前者媲美。由于其方便使用，学习成本低，因此在体检系统开发的前期，我们曾大量使用了这种数据库访问方式。我们不仅可以使用自己开发的DbHelper工具类，还可以使用各种第三方的数据库访问工具，它们简单灵活，功能多样，因此有大量的信息系统采用这种方式。
+
+然而，这种方式还是有一定的耦合度，我们的SQL是直接硬编码在代码中的，当数据库的结构发生改变时，我们就不得不修改遍布整个项目的SQL语句，这样极易导致错误。而且，不同数据库之间的SQL语法并不兼容，使用这种方式也无法消除代码与数据库之间的耦合。
+
 ### 使用ORM框架的意义
+
+
 
 ## 背景
 
