@@ -21,8 +21,8 @@ namespace ResumeFactory
             ResumeFactory.Common.Config.DefaultPath
                 = FrameDAL.Config.Configuration.DefaultPath
                 = Application.StartupPath + @"\ResumeFactory.ini";
-            RunUnitTest();
-            // RunResumeFactory();
+            // RunUnitTest();
+            RunResumeFactory();
         }
 
         private static void RunUnitTest()

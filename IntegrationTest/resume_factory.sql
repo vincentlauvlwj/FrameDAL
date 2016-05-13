@@ -1,7 +1,7 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : MySql
+Source Server         : resume_factory
 Source Server Version : 50018
 Source Host           : localhost:3306
 Source Database       : test
@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50018
 File Encoding         : 65001
 
-Date: 2016-05-04 23:20:58
+Date: 2016-05-13 18:26:21
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -3814,6 +3814,22 @@ INSERT INTO `certificate_dict` VALUES ('88', '', '', 'LPI Certification Level 2 
 INSERT INTO `certificate_dict` VALUES ('9', '', '中级口译证书', '全国计算机等级三级', '', '', '执业资格证书');
 
 -- ----------------------------
+-- Table structure for class
+-- ----------------------------
+DROP TABLE IF EXISTS `class`;
+CREATE TABLE `class` (
+  `id` int(11) NOT NULL auto_increment,
+  `class_name` varchar(255) default NULL,
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of class
+-- ----------------------------
+INSERT INTO `class` VALUES ('1', '一班');
+INSERT INTO `class` VALUES ('2', '二班');
+
+-- ----------------------------
 -- Table structure for course
 -- ----------------------------
 DROP TABLE IF EXISTS `course`;
@@ -5038,7 +5054,7 @@ CREATE TABLE `resume` (
 -- Records of resume
 -- ----------------------------
 INSERT INTO `resume` VALUES ('2d8eb7b1-3d2b-428a-8826-0815175d557c', 'fcff2ce4-543e-431c-96f1-8fbc43ccee09', '3', '张三', '1', '2015-12-05 20:33:12');
-INSERT INTO `resume` VALUES ('dbcbcf64-94a8-47f4-bd27-d19ebdbabb79', 'fcff2ce4-543e-431c-96f1-8fbc43ccee09', '2', '程慧涛', '1', '2015-12-20 23:19:39');
+INSERT INTO `resume` VALUES ('dbcbcf64-94a8-47f4-bd27-d19ebdbabb79', 'fcff2ce4-543e-431c-96f1-8fbc43ccee09', '1', '程慧涛', '1', '2015-12-20 23:19:39');
 INSERT INTO `resume` VALUES ('fc4e74f4-b2aa-4a0b-82d2-0eba01c5d106', 'fcff2ce4-543e-431c-96f1-8fbc43ccee09', '2', '刘文俊 - 实习简历', '1', '2015-12-06 01:13:11');
 
 -- ----------------------------
@@ -5152,12 +5168,41 @@ CREATE TABLE `social_practice` (
 INSERT INTO `social_practice` VALUES ('a34b1841-529a-4e3b-af83-014b834d9cd7', '2d8eb7b1-3d2b-428a-8826-0815175d557c', 'aaa', '2015-11-12', '2015-12-12', 'aaa\nsdf\nsdf', '1');
 
 -- ----------------------------
+-- Table structure for student
+-- ----------------------------
+DROP TABLE IF EXISTS `student`;
+CREATE TABLE `student` (
+  `id` int(11) NOT NULL auto_increment,
+  `stu_name` varchar(255) default NULL,
+  `stu_age` int(255) default NULL,
+  `class_id` int(255) default NULL,
+  PRIMARY KEY  (`id`),
+  KEY `class_id` (`class_id`),
+  CONSTRAINT `class_id` FOREIGN KEY (`class_id`) REFERENCES `class` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of student
+-- ----------------------------
+INSERT INTO `student` VALUES ('1', '张珊', '21', '1');
+INSERT INTO `student` VALUES ('2', '李师', '10', '2');
+INSERT INTO `student` VALUES ('3', '王武', '18', '1');
+INSERT INTO `student` VALUES ('4', '赵遛', '19', '2');
+INSERT INTO `student` VALUES ('5', '哈哈君', '31', '1');
+INSERT INTO `student` VALUES ('6', null, null, '2');
+INSERT INTO `student` VALUES ('7', '哈哈君', '9', '1');
+
+-- ----------------------------
 -- Table structure for stu_course
 -- ----------------------------
 DROP TABLE IF EXISTS `stu_course`;
 CREATE TABLE `stu_course` (
   `stu_id` int(11) default NULL,
-  `course_id` int(11) default NULL
+  `course_id` int(11) default NULL,
+  KEY `stu_id` (`stu_id`),
+  KEY `course_id` (`course_id`),
+  CONSTRAINT `course_id` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `stu_id` FOREIGN KEY (`stu_id`) REFERENCES `student` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
@@ -5171,29 +5216,6 @@ INSERT INTO `stu_course` VALUES ('1', '5');
 INSERT INTO `stu_course` VALUES ('1', '6');
 INSERT INTO `stu_course` VALUES ('2', '1');
 INSERT INTO `stu_course` VALUES ('2', '2');
-
--- ----------------------------
--- Table structure for student
--- ----------------------------
-DROP TABLE IF EXISTS `student`;
-CREATE TABLE `student` (
-  `id` int(11) NOT NULL auto_increment,
-  `stu_name` varchar(255) default NULL,
-  `stu_age` int(255) default NULL,
-  `stu_class` int(255) default NULL,
-  PRIMARY KEY  (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of student
--- ----------------------------
-INSERT INTO `student` VALUES ('1', '张珊', '21', '1');
-INSERT INTO `student` VALUES ('2', '李师', '10', '2');
-INSERT INTO `student` VALUES ('3', '王武', '18', '1');
-INSERT INTO `student` VALUES ('4', '赵遛', '19', '2');
-INSERT INTO `student` VALUES ('5', '哈哈君', '31', '1');
-INSERT INTO `student` VALUES ('6', null, null, '2');
-INSERT INTO `student` VALUES ('7', '哈哈君', '9', '1');
 
 -- ----------------------------
 -- Table structure for train_experience

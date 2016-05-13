@@ -300,7 +300,7 @@ namespace FrameDAL.Core
             if (db.InTransaction())
             {
                 object id = entity.GetType().GetIdProperty().GetValue(entity, null);
-                if (id == null || (int)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), id) == 0)
+                if (id == null || (long)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), id) == 0)
                 {
                     Add(entity, enableCascade);
                 }
