@@ -77,10 +77,24 @@ namespace ResumeFactory
         public string UserId { get; set; }
     }
 
+    [Table("class")]
+    public class Class
+    {
+        [Id(GeneratorType.Identity)]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("class_name")]
+        public virtual string ClassName { get; set; }
+
+        [OneToMany("class_id")]
+        public virtual List<Student> Students { get; set; }
+    }
+
     [Table("student")]
     public class Student
     {
-        [Id(GeneratorType.Identity)]
+        [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
         [Column("id")]
         public virtual int Id { get; set; }
 
@@ -90,10 +104,13 @@ namespace ResumeFactory
         [Column("stu_age")]
         public virtual int StuAge { get; set; }
 
-        [Column("stu_class")]
+        [Column("stu_class", ReadOnly = true)]
         public virtual int StuClass { get; set; }
 
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id", LazyLoad = false)]
+        [ManyToOne("class_id", LazyLoad = false)]
+        public virtual Class Class { get; set; }
+
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
         public virtual List<Course> Courses { get; set; }
     }
 
@@ -107,7 +124,7 @@ namespace ResumeFactory
         [Column("course_name")]
         public virtual string CourseName { get; set; }
 
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id", LazyLoad = false)]
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id")]
         public virtual List<Student> Students { get; set; }
     }
 }

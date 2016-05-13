@@ -101,11 +101,81 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
 
 ## 设计
 
-### 数据-关系映射方式设计
+### 映射方式设计
 
-作为一个ORM框架，最重要的部分就是“映射”，如何优雅地实现对象与关系数据的映射是ORM框架永恒的主题。现有的主流ORM框架通常都会提供两种配置映射的方式，一种是XML方式，另一种是Attribute元数据标记（在Java中称为Annotation）的方式。两者对比，XML语法繁琐、配置复杂，但是灵活性好、功能强大，还能使配置与代码完全解耦，修改配置还可以不用重新编译程序。Attitude元数据标记配置简单、学习成本低，但是会使配置信息耦合到代码文件中，修改配置须重新编译程序。
+作为一个ORM框架，最重要的部分就是“映射”，如何优雅地实现对象与关系数据的映射是ORM框架永恒的主题。现有的主流ORM框架通常都会提供两种配置映射的方式，一种是XML方式，另一种是Attribute元数据标记（在Java中称为Annotation）的方式。本框架支持的是第二种，即直接在实体类上添加Attribute元数据标记来描述它和数据表之间的映射关系。下面以一个简单的业务模型为例，介绍本框架的映射方式设计。
+
+在此例中，具有班级、学生和课程三个实体。班级和学生是一对多的关系，一个班级可以有多个学生，但每个学生只能属于一个班级。体现在表的结构上，student表中具有一个class_id的外键字段，引用了class表的主键。学生和课程是多对多的关系，一个学生可以修多门课程，一门课程也能有多个学生。多对多的关系需要额外使用一张关联表stu_course来表示，这张关联表中只有两个外键字段，分别引用了student表和course表的主键。具体的表结构如下图所示。
 
 ![](db-sample.png)
+
+现在，我们对这个业务场景进行面向对象的建模，我们分别用Class、Student和Course三个类来表示这三个实体。其中，Class类中应该具有一个Student对象的集合，以表示该班级中的所有学生，Student类中应该具有一个Class类的嵌套对象，以表示该学生所属的班级。另外Student类中还应具有一个Course对象的集合，表示该学生选修的所有课程，同理，Course类中也应该有一个Student对象的集合。将上面的分析转换成C#代码如下。
+
+````C#
+	[Table("class")]
+    public class Class
+    {
+        [Id(GeneratorType.Identity)]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("class_name")]
+        public virtual string ClassName { get; set; }
+
+        [OneToMany("class_id")]
+        public virtual List<Student> Students { get; set; }
+    }
+
+    [Table("student")]
+    public class Student
+    {
+        [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("stu_name")]
+        public virtual string StuName { get; set; }
+
+        [Column("stu_age")]
+        public virtual int StuAge { get; set; }
+
+        [Column("stu_class", ReadOnly = true)]
+        public virtual int StuClass { get; set; }
+
+        [ManyToOne("class_id", LazyLoad = false)]
+        public virtual Class Class { get; set; }
+
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
+        public virtual List<Course> Courses { get; set; }
+    }
+
+    [Table("course")]
+    public class Course
+    {
+        [Id(GeneratorType.Identity)]
+        [Column("id")]
+        public virtual int Id { get; set; }
+
+        [Column("course_name")]
+        public virtual string CourseName { get; set; }
+
+        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id")]
+        public virtual List<Student> Students { get; set; }
+    }
+````
+
+上面的代码与普通的C#类并没有太大的区别，唯一的不同在于这些类使用了大量Attribute元数据标记，这些元数据描述了这些类与数据表之间的映射关系。另外，这些Attribute中还具有一些额外的配置项，这些配置项将对框架的运行方式有不同的影响。
+
+下面是各种Attribute的功能说明：
+
+ - Table：TableAttribute用于修饰类，表示这个实体类对应数据库中的一张表或者视图，它接受一个字符串参数作为表名，此参数将用于构造查询的SQL语句。
+ - Id：IdAttribute必须与ColumnAttribute一起使用，表示它修饰的属性对应于表中的主键字段。它具有两个参数，GeneratorType参数接受一个枚举值，表示一个特定的主键生成策略，可用值包括Assign（手动赋值）、Uuid（全局唯一ID）、Identity（自增长）和Sequence（序列）。SeqName接受一个字符串，当GeneratorType配置为Sequence时可用，用于指定数据库中用于生成主键的序列名。
+ - Column：ColumnAttribute用于修饰属性，表示这个属性对应表或视图中的一个字段。它具有三个参数，Name为字段名，ReadOnly表示此属性是否只读，当设置为只读时，对这个属性作出的修改将无法持久化到数据库，LazyLoad是开启懒加载的开关，对于普通属性，其默认值为false。
+ - ManyToOne：ManyToOneAttribute修饰嵌套对象属性，用于表示数据库中的多对一关系。它具有三个参数，ForeignKey表示对应的外键字段的名称，LazyLoad是懒加载的开关，对于关联属性，其默认值为true，Cascade表示级联操作的类型，用于配置对此实体类的修改同步更新到该关联属性的时机。
+ - OneToMany：OneToManyAttribute修饰嵌套对象属性，用于表示数据库中的一对多关系。它具有三个参数，InverseForeignKey表示外键字段的名称，LazyLoad是懒加载的开关，Cascade表示级联操作的类型。
+ - ManyToMany：ManyToManyAttribute修饰嵌套对象属性，用于表示数据库中的多对多关系。它具有五个参数，JoinTable表示关联表的表名，JoinColumn表示指向本表主键的外键名，InverseJoinColumn表示指向另一端的表的主键的外键名，LazyLoad是懒加载的开关，Cascade是级联操作的类型。
+
+配置映射关系是使用ORM框架的第一个步骤，这种使用Attribute元数据标记作为映射方式的设计简单便捷，学习成本低。配置好映射关系之后，就可以使用框架提供的API方便地进行数据持久化操作了。
 
 ### 核心API设计
 
