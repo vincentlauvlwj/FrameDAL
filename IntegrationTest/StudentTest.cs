@@ -34,9 +34,6 @@ namespace ResumeFactory
         [Column("stu_age")]
         public virtual int StuAge { get; set; }
 
-        [Column("stu_class", ReadOnly = true)]
-        public virtual int StuClass { get; set; }
-
         [ManyToOne("class_id", LazyLoad = false)]
         public virtual Class Class { get; set; }
 
@@ -69,8 +66,33 @@ namespace ResumeFactory
                 student.StuName = "Vincent";
                 student.StuAge = 20;
                 student.Class = new Class { ClassName = "信息工程" };
+                student.Courses = new List<Course>();
+                student.Courses.Add(new Course() { CourseName = "数据库原理" });
+
                 session.Add(student);
             }
+        }
+
+        public void TestGetStudent()
+        {
+            Student student = session.Get<Student>(23);
+            Shell.WriteLine(student.StuName);
+            Shell.WriteLine(student.Class.ClassName);
+            Shell.WriteLine(student.Courses[0].CourseName);
+        }
+
+        public void TestUpdateStudent()
+        {
+            Student student = session.Get<Student>(23);
+            student.StuAge = 21;
+            student.Courses.Clear();
+            session.Update(student);
+        }
+
+        public void TestDeleteStudent()
+        {
+            Student student = session.Get<Student>(24);
+            session.Delete(student);
         }
     }
 }

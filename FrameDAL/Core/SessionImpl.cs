@@ -338,12 +338,26 @@ namespace FrameDAL.Core
             }
         }
 
+        private void DeleteManyToManyRelations(object entity)
+        {
+            object id = entity.GetType().GetIdProperty().GetValue(entity, null);
+            foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
+            {
+                ManyToManyAttribute manyToMany = prop.GetManyToManyAttribute();
+                if(manyToMany != null)
+                {
+                    db.ExecuteNonQuery(db.Dialect.GetDeleteRelationsSql(prop), id);
+                }
+            }
+        }
+
         public void Delete(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
             {
                 if (enableCascade) DeleteOneToManyProperties(entity);
+                DeleteManyToManyRelations(entity);
                 object id = entity.GetType().GetIdProperty().GetValue(entity, null);
                 db.ExecuteNonQuery(db.Dialect.GetDeleteSql(entity.GetType()), new object[] { id });
             }

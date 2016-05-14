@@ -165,7 +165,7 @@ namespace ResumeFactory
         public void TestGroupBy()
         {
             var query = session.GetAll<Student>().GroupBy(
-                s => s.StuClass,
+                s => s.StuAge,
                 (k, g) => new
                 {
                     Class = k,
@@ -181,7 +181,7 @@ namespace ResumeFactory
             var query = session.GetAll<Student>()
                 .OrderBy(s => s.Id)
                 .GroupBy(
-                s => s.StuClass,
+                s => s.StuAge,
                 (k, g) => new
                 {
                     Class = k,
@@ -195,7 +195,7 @@ namespace ResumeFactory
         public void TestSqlLikeGroupBy()
         {
             var query = from s in session.GetAll<Student>()
-                        group s by s.StuClass into g
+                        group s by s.StuAge into g
                         select new
                         {
                             Class = g.Key,
