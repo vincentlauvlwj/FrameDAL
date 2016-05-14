@@ -286,7 +286,7 @@ namespace FrameDAL.SqlExpressions
             if(expr.Skip != null || expr.Take != null)
             {
                 this.NewLine(Indentation.Same);
-                this.Write(string.Format("LIMIT %d, %d", expr.Skip == null ? 0 : expr.Skip.Value, expr.Take == null ? int.MaxValue : expr.Take.Value));
+                this.Write(string.Format("LIMIT {0}, {1}", expr.Skip == null ? 0 : expr.Skip.Value, expr.Take == null ? int.MaxValue : expr.Take.Value));
             }
             return expr;
         }

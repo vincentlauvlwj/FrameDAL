@@ -10,21 +10,6 @@ namespace ResumeFactory
 {
     public class LinqTest : BaseTest
     {
-        private List<T> TestQuery<T>(IQueryable<T> query)
-        {
-            LinqQuery<T> q = query as LinqQuery<T>;
-            Shell.WriteLine("\nLinqExpression:\n{0}", q.ToString());
-            Shell.WriteLine("\nTranslated SQL:\n{0}", q.QueryText);
-            List<T> result = q.ToList();
-            StringBuilder sb = new StringBuilder();
-            foreach(T item in result)
-            {
-                sb.AppendLine(ObjectToString(item));
-            }
-            Shell.WriteLine("\nResults:\n{0}", sb.ToString());
-            return result;
-        }
-
         public void TestWhere()
         {
             var query = session.GetAll<User>()

@@ -6,6 +6,7 @@ using System.Text;
 using System.Reflection;
 using FrameDAL.Core;
 using FrameDAL.Utility;
+using FrameDAL.Linq;
 using System.Runtime.InteropServices;
 
 namespace ResumeFactory
@@ -102,6 +103,21 @@ namespace ResumeFactory
         private bool IsBaseType(Type type)
         {
             return type == typeof(string) || type.IsValueType;
+        }
+
+        protected List<T> TestQuery<T>(IQueryable<T> query)
+        {
+            LinqQuery<T> q = query as LinqQuery<T>;
+            Shell.WriteLine("\nLinqExpression:\n{0}", q.ToString());
+            Shell.WriteLine("\nTranslated SQL:\n{0}", q.QueryText);
+            List<T> result = q.ToList();
+            StringBuilder sb = new StringBuilder();
+            foreach (T item in result)
+            {
+                sb.AppendLine(ObjectToString(item));
+            }
+            Shell.WriteLine("\nResults:\n{0}", sb.ToString());
+            return result;
         }
     }
 

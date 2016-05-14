@@ -30,7 +30,7 @@ namespace ResumeFactory
             // LinqTest test = new LinqTest();
             StudentTest test = new StudentTest();
             // test.Run();
-            test.Debug(test.TestDeleteStudent);
+            test.Debug(test.TestTake);
         }
 
         private static void RunResumeFactory()

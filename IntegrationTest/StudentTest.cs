@@ -94,5 +94,65 @@ namespace ResumeFactory
             Student student = session.Get<Student>(24);
             session.Delete(student);
         }
+
+        public void TestTransaction()
+        {
+            try
+            {
+                session.BeginTransaction();
+                // ACID operations...
+                session.CommitTransaction();
+            }
+            catch
+            {
+                session.RollbackTransaction();
+                throw;
+            }
+        }
+
+        public void TestEasyTransaction()
+        {
+            AppContext context = AppContext.Instance;
+
+            context.DoTransactional(session => {
+                // ACID operations...
+            });
+        }
+
+
+        public void TestWhere()
+        {
+            var query = session.GetAll<Student>().Where(s => s.StuName == "Vincent");
+            TestQuery(query);
+        }
+
+        public void TestWhereSelect()
+        {
+            var query = session.GetAll<Student>()
+                .Where(s => s.StuName == "Vincent")
+                .Where(s => s.StuAge > 18)
+                .Select(s => new { s.StuName, s.StuAge });
+            TestQuery(query);
+        }
+
+        public void TestSqlStyle()
+        {
+            var query = from s in session.GetAll<Student>()
+                        where s.StuName == "Vincent"
+                        where s.StuAge > 18
+                        select new { s.StuName, s.StuAge };
+            TestQuery(query);
+        }
+
+        public void TestOrderBy()
+        {
+            var query = session.GetAll<Student>()
+                .Where(s => s.StuAge > 18 && s.StuAge < 20)
+                .OrderBy(s => s.StuAge)
+                .ThenBy(s => s.Id)
+                .Skip(2)
+                .Take(2);
+            TestQuery(query);
+        }
     }
 }
