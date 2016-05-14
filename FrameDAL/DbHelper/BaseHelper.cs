@@ -227,7 +227,7 @@ namespace FrameDAL.DbHelper
             }
         }
 
-        public virtual object ExecuteReader(string sqlText, object[] parameters, Func<DbDataReader, object> func)
+        public virtual T ExecuteReader<T>(string sqlText, object[] parameters, Func<DbDataReader, T> func)
         {
             try
             {
@@ -309,7 +309,16 @@ namespace FrameDAL.DbHelper
                 return null;
         }
 
-        public virtual object DoInCurrentTransaction(Func<DbConnection, DbTransaction, object> func)
+        public virtual void DoInCurrentTransaction(Action<DbConnection, DbTransaction> action)
+        {
+            DoInCurrentTransaction((conn, trans) =>
+            {
+                action(conn, trans);
+                return (object)null;
+            });
+        }
+
+        public virtual T DoInCurrentTransaction<T>(Func<DbConnection, DbTransaction, T> func)
         {
             if (InTransaction())
             {
@@ -324,7 +333,7 @@ namespace FrameDAL.DbHelper
                     DbTransaction trans = conn.BeginTransaction();
                     try
                     {
-                        object result = func(conn, trans);
+                        T result = func(conn, trans);
                         trans.Commit();
                         return result;
                     }

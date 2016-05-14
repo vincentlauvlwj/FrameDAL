@@ -90,7 +90,7 @@ namespace FrameDAL.DbHelper
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
         object ExecuteScalar(string sqlText, params object[] parameters);
 
-        object ExecuteReader(string sqlText, object[] parameters, Func<DbDataReader, object> func);
+        T ExecuteReader<T>(string sqlText, object[] parameters, Func<DbDataReader, T> func);
 
         /// <summary>
         /// 执行查询，返回数据集
@@ -110,6 +110,8 @@ namespace FrameDAL.DbHelper
         /// <exception cref="DbAccessException">执行SQL命令出错</exception>
         DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
 
-        object DoInCurrentTransaction(Func<DbConnection, DbTransaction, object> func);
+        void DoInCurrentTransaction(Action<DbConnection, DbTransaction> action);
+
+        T DoInCurrentTransaction<T>(Func<DbConnection, DbTransaction, T> func);
     }
 }

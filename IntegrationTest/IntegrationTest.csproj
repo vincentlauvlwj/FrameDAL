@@ -283,6 +283,7 @@
     <Compile Include="Service\ReportGenerator\ConciseReportGenerator.cs" />
     <Compile Include="Service\ReportGenerator\IReportGenerator.cs" />
     <Compile Include="BaseTest.cs" />
+    <Compile Include="StudentTest.cs" />
     <EmbeddedResource Include="Common\FormPopListBox.resx">
       <DependentUpon>FormPopListBox.cs</DependentUpon>
     </EmbeddedResource>

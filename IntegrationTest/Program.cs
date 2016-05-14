@@ -21,15 +21,16 @@ namespace ResumeFactory
             ResumeFactory.Common.Config.DefaultPath
                 = FrameDAL.Config.Configuration.DefaultPath
                 = Application.StartupPath + @"\ResumeFactory.ini";
-            // RunUnitTest();
-            RunResumeFactory();
+            RunUnitTest();
+            // RunResumeFactory();
         }
 
         private static void RunUnitTest()
         {
-            LinqTest test = new LinqTest();
-            test.Debug(test.TestSkipTake);
+            // LinqTest test = new LinqTest();
+            StudentTest test = new StudentTest();
             // test.Run();
+            test.Debug(test.TestAddStudent);
         }
 
         private static void RunResumeFactory()
@@ -75,56 +76,5 @@ namespace ResumeFactory
 
         [Column("user_id")]
         public string UserId { get; set; }
-    }
-
-    [Table("class")]
-    public class Class
-    {
-        [Id(GeneratorType.Identity)]
-        [Column("id")]
-        public virtual int Id { get; set; }
-
-        [Column("class_name")]
-        public virtual string ClassName { get; set; }
-
-        [OneToMany("class_id")]
-        public virtual List<Student> Students { get; set; }
-    }
-
-    [Table("student")]
-    public class Student
-    {
-        [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
-        [Column("id")]
-        public virtual int Id { get; set; }
-
-        [Column("stu_name")]
-        public virtual string StuName { get; set; }
-
-        [Column("stu_age")]
-        public virtual int StuAge { get; set; }
-
-        [Column("stu_class", ReadOnly = true)]
-        public virtual int StuClass { get; set; }
-
-        [ManyToOne("class_id", LazyLoad = false)]
-        public virtual Class Class { get; set; }
-
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
-        public virtual List<Course> Courses { get; set; }
-    }
-
-    [Table("course")]
-    public class Course
-    {
-        [Id(GeneratorType.Identity)]
-        [Column("id")]
-        public virtual int Id { get; set; }
-
-        [Column("course_name")]
-        public virtual string CourseName { get; set; }
-
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id")]
-        public virtual List<Student> Students { get; set; }
     }
 }

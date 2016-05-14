@@ -364,5 +364,33 @@ namespace FrameDAL.Core
                     return manyToMany;
                 });
         }
+
+        public void DoTransactional(Action<ISession> action)
+        {
+            DoTransactional(session =>
+            {
+                action(session);
+                return (object)null;
+            });
+        }
+
+        public T DoTransactional<T>(Func<ISession, T> func)
+        {
+            using (ISession session = this.OpenSession())
+            {
+                try
+                {
+                    session.BeginTransaction();
+                    T result = func(session);
+                    session.CommitTransaction();
+                    return result;
+                }
+                catch
+                {
+                    session.RollbackTransaction();
+                    throw;
+                }
+            }
+        }
     }
 }
