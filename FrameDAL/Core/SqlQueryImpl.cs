@@ -137,6 +137,11 @@ namespace FrameDAL.Core
         private object GetColumnValue(DataRow row, PropertyInfo prefixProp, PropertyInfo prop)
         {
             string key = prefixProp == null ? prop.Name : prefixProp.Name + "." + prop.Name;
+            ColumnAttribute col = prop.GetColumnAttribute();
+            if((ResultMap == null || !ResultMap.ContainsKey(key)) && col == null)
+            {
+                //throw new FrameDALException("获取" + key + "属性的值发生异常，若没有配置ColumnAttribute，则须在ResultMap中指出属性与结果字段的映射关系。");
+            }
             string alias = ResultMap != null && ResultMap.ContainsKey(key) ? ResultMap[key] : prop.GetColumnAttribute().Name;
             try
             {
@@ -164,7 +169,11 @@ namespace FrameDAL.Core
             foreach (PropertyInfo prop in entityType.GetCachedProperties())
             {
                 ColumnAttribute col = prop.GetColumnAttribute();
-                if (col == null || col.LazyLoad && enableLazy) continue;
+                if (col != null && col.LazyLoad && enableLazy 
+                    || prop.GetOneToManyAttribute() != null
+                    || prop.GetManyToOneAttribute() != null
+                    || prop.GetManyToManyAttribute() != null)
+                    continue;
                 prop.SetValueSafely(entity, GetColumnValue(row, prefixProp, prop));
             }
         }
@@ -176,7 +185,16 @@ namespace FrameDAL.Core
             CheckRepeatColumnName(dt);
             foreach (DataRow row in dt.Rows)
             {
-                T entity = GetElementById(results, typeof(T), GetColumnValue(row, null, typeof(T).GetIdProperty())) as T;
+                T entity;
+                try
+                {
+                    entity = GetElementById(results, typeof(T), GetColumnValue(row, null, typeof(T).GetIdProperty())) as T;
+                }
+                catch (EntityMappingException e)
+                {
+                    entity = null;
+                }
+
                 if (entity == null)
                 {
                     entity = EntityFactory.GetEntity(typeof(T), enableLazy, false) as T;

@@ -147,9 +147,9 @@ namespace ResumeFactory
 
         private static ConsoleColor GetConsoleColor(string output)
         {
-            if (output.StartsWith("AssertFailed")) return ConsoleColor.Yellow;
-            if (output.StartsWith("Error")) return ConsoleColor.Red;
-            if (output.StartsWith("Success")) return ConsoleColor.Green;
+            if (output != null && output.StartsWith("AssertFailed")) return ConsoleColor.Yellow;
+            if (output != null && output.StartsWith("Error")) return ConsoleColor.Red;
+            if (output != null && output.StartsWith("Success")) return ConsoleColor.Green;
             return ConsoleColor.Gray;
         }
     }

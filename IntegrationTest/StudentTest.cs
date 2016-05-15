@@ -17,7 +17,7 @@ namespace ResumeFactory
         [Column("class_name")]
         public virtual string ClassName { get; set; }
 
-        [OneToMany("class_id")]
+        [OneToMany("class_id", LazyLoad = false)]
         public virtual List<Student> Students { get; set; }
     }
 
@@ -34,7 +34,7 @@ namespace ResumeFactory
         [Column("stu_age")]
         public virtual int StuAge { get; set; }
 
-        [ManyToOne("class_id", LazyLoad = false)]
+        [ManyToOne("class_id")]
         public virtual Class Class { get; set; }
 
         [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
@@ -120,6 +120,7 @@ namespace ResumeFactory
         }
 
 
+
         public void TestWhere()
         {
             var query = session.GetAll<Student>().Where(s => s.StuName == "Vincent");
@@ -153,6 +154,41 @@ namespace ResumeFactory
                 .Skip(2)
                 .Take(2);
             TestQuery(query);
+        }
+
+
+        public void TestSqlQuery()
+        {
+            ISqlQuery query = session.CreateSqlQuery();
+            query.SqlText = "select * from student where stu_name=?";
+            query.Parameters = new object[] { "Vincent" };
+
+            Student student = query.ExecuteGetEntity<Student>();
+            Shell.WriteLine(student.Courses.Count.ToString());
+        }
+
+        public void TestPagination()
+        {
+            ISqlQuery query = session.CreateSqlQuery("select * from student where stu_age>?", 18);
+            query.FirstResult = 10;
+            query.PageSize = 10;
+            List<Student> students = query.ExecuteGetList<Student>();
+        }
+
+        class StudentInfo
+        {
+            public string Name { get; set; }
+            public int Age { get; set; }
+        }
+
+        public void TestResultMap()
+        {
+            ISqlQuery query = session.CreateSqlQuery("select stu_name, stu_age from student");
+            query.ResultMap = new Dictionary<string, string>();
+            query.ResultMap["Name"] = "stu_name";
+            query.ResultMap["Age"] = "stu_age";
+            List<StudentInfo> students = query.ExecuteGetList<StudentInfo>();
+            Shell.WriteLine(students[0].Name);
         }
     }
 }

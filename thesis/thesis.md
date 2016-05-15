@@ -65,7 +65,42 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
 
 ### 框架基本配置
 
-使用本框架，首先要将它编译生成的dll文件复制到使用该它的项目中，然后添加对该dll的引用。如果项目使用到的数据库需要依赖其他dll，还需添加这些dll的引用，例如使用MySQL数据库，需要添加MySql.Data.dll。最后，在程序的启动目录
+使用本框架，首先要将它编译生成的dll文件复制到使用该它的项目中，然后添加对该dll的引用。如果项目使用到的数据库需要依赖其他dll，还需添加这些dll的引用，例如使用MySQL数据库，需要添加MySql.Data.dll。最后，添加一个ini配置文件，配置框架所需的基本信息。
+
+默认的配置文件应位于程序的启动目录，文件名为FrameDAL.ini，也可以在AppContext第一次被调用之前通过Configuration.DefaultPath设置配置文件的路径。下面是一个配置文件的范例：
+
+````ini
+	[Settings]
+	EnableLazy=true
+	EnableCascade=true
+	LogFile=FrameDAL.log
+	LogAppend=true
+	DbHelperAssembly=FrameDAL.dll
+	DbHelperClass=FrameDAL.DbHelper.MySqlHelper
+	
+	[ConnStr]
+	server=localhost
+	database=test
+	user id=root
+	password=root
+	charset=utf8
+````
+
+配置文件主要分为两个节点，一个是Settings，用于配置框架运行所需的基本信息，第二个是ConnStr，用于配置数据库连接字符串。Settings节点下还有许多不同的配置项，下面是它们的具体功能：
+
+ - EnableLazy：启用懒加载的总开关，查询时关联的属性会以此作为默认配置，选择是否启用懒加载。
+ - EnableCascade：是否启用级联操作，若启用，对一个对象进行增删改等操作会影响到与其关联的其他对象。
+ - LogFile：日志输出目录，框架的运行日志将会输出到此文件，设置为空则不启用日志。
+ - LogAppend：日志输出模式，false则每次运行都会都会清空日志文件再输出，true则在原文件末尾添加新日志。
+ - DbHelperAssembly：实现了IDbHelper接口的类所在的类库的dll文件名称，不同的数据库具有不同的DbHelper，本框架内置了MySQL、Oracle等常用数据库的DbHelper，也可以使用第三方的扩展，此时这项配置就是第三方DbHelper所在的类库的dll文件名。
+ - DbHelperClass：DbHelper类的命名空间限定类名。
+
+ConnStr是数据库连接串的配置项，具体的内容依所使用的数据库不同而定。下面是MySQL中一些配置项的含义：
+
+ - server：数据库服务器的地址。
+ - database：数据库名
+ - user id：数据库用户名
+ - password：数据库密码
 
 ### 对象-关系映射配置
 
@@ -239,7 +274,7 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
                 select new { s.StuName, s.StuAge };
 ````
 
-可以看到，Linq与SQL在语法上具有一定的相似性，这对于熟悉SQL的程序员来说，只需略加学习就可上手使用。另外，本框架还支持了Linq中的连接查询、排序、分页等操作，这样，把各种操作组合在一个，就能实现一些比较复杂的查询，如：
+可以看到，Linq与SQL在语法上具有一定的相似性，这对于熟悉SQL的程序员来说，只需略加学习就可上手使用。另外，本框架还支持了Linq中的连接查询、排序、分页等操作，这样，把各种操作组合在一起，就能实现一些比较复杂的查询，如：
 
 ````C#
 	var query = session.GetAll<Student>()
@@ -254,7 +289,48 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 
 ### SQL查询
 
+无论Linq有多么方便，它始终无法完全代替SQL。因为由程序生成的的SQL对DBA十分不友好，难以进行优化，在一些特殊的场景中，还是有在SQL粒度上进行性能优化的需求，但又不希望失去ORM带来的便利性。这也是Hibernate早期希望HQL作为面向对象的查询语言，能够完全取代SQL的使用，但后来又不得不提供SQL查询相关的API的原因。
 
+使用SQL查询，首先要通过Session的CreateSQLQuery方法创建一个SQL查询对象，然后指定SQL语句以及查询参数，最后调用ExecuteGetEntity或ExecuteGetList方法，指定类型参数，就可以执行查询，并且将查询结果直接转化为对象。
+
+````C#
+	ISqlQuery query = session.CreateSqlQuery();
+    query.SqlText = "select * from student where stu_name=?";
+    query.Parameters = new object[] { "Vincent" };
+
+    List<Student> students = query.ExecuteGetList<Student>();
+    Shell.WriteLine(student.Courses.Count.ToString());
+````
+
+上面的查询从数据库中取出姓名为Vincent的Student对象。懒加载在使用SQL查询的时候也能起到作用，上面的SQL命令中并没有显式查询出任何与课程有关的信息，但是student.Courses这句话却能够取出该学生选修的所有课程，这是懒加载机制在后台起作用，在调用student.Courses时，框架会通过该学生的ID从course表中查询出需要的数据。但是，这一切对程序员都是自动化而且透明的，程序员不需要做任何额外的操作。
+
+不同的数据库对于分页的处理是不同的，如MySQL使用limit子句，而Oracle是通过rownum进行分页。SqlQuery对这种情况也提供了一定的支持，只需要设置query对象的FirstResult以及PageSize属性的值，框架即可为你拼接好分页查询的SQL。
+
+````C#
+	ISqlQuery query = session.CreateSqlQuery("select * from student where stu_age>?", 18);
+    query.FirstResult = 10;
+    query.PageSize = 10;
+    List<Student> students = query.ExecuteGetList<Student>();
+````
+
+有时候我们需要把查询结果封装到一个临时的类中，而这个类并没有配置Attribute元数据，因为你只打算使用它来临时保存数据，并不作为实体类使用。这时，使用SqlQuery中提供的ResultMap，在里面指定属性与SQL返回的字段的映射关系，就可以方便地完成结果封装，如：
+
+````C#
+	class StudentInfo
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
+
+    public void TestResultMap()
+    {
+        ISqlQuery query = session.CreateSqlQuery("select stu_name, stu_age from student");
+        query.ResultMap = new Dictionary<string, string>();
+        query.ResultMap["Name"] = "stu_name";
+        query.ResultMap["Age"] = "stu_age";
+        List<StudentInfo> students = query.ExecuteGetList<StudentInfo>();
+    }
+````
 
 ## 主要技术难点与实现方式
 
