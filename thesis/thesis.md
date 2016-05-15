@@ -114,8 +114,7 @@ ConnStr是数据库连接串的配置项，具体的内容依所使用的数据�
 
 ````C#
 	[Table("class")]
-    public class Class
-    {
+    public class Class {
         [Id(GeneratorType.Identity)]
         [Column("id")]
         public virtual int Id { get; set; }
@@ -128,8 +127,7 @@ ConnStr是数据库连接串的配置项，具体的内容依所使用的数据�
     }
 
     [Table("student")]
-    public class Student
-    {
+    public class Student {
         [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
         [Column("id")]
         public virtual int Id { get; set; }
@@ -148,8 +146,7 @@ ConnStr是数据库连接串的配置项，具体的内容依所使用的数据�
     }
 
     [Table("course")]
-    public class Course
-    {
+    public class Course {
         [Id(GeneratorType.Identity)]
         [Column("id")]
         public virtual int Id { get; set; }
@@ -185,8 +182,7 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 
 ````C#
 	AppContext context = AppContext.Instance;
-    using (ISession session = context.OpenSession())
-    {
+    using (ISession session = context.OpenSession()) {
         Student student = new Student();
         student.StuName = "Vincent";
         student.StuAge = 20;
@@ -225,14 +221,11 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 在一个Session中进行多次操作默认是不具备事务性的，如果在操作期间发生了异常，那么已经完成的操作将无法回滚。因此，当我们的某些业务逻辑对事务性有要求时，就需要我们手动进行事务控制，Session中具有事务控制相关的API，下面是它们的使用范例：
 
 ````C#
-	try
-    {
+	try {
         session.BeginTransaction();
         // ACID operations...
         session.CommitTransaction();
-    }
-    catch
-    {
+    } catch {
         session.RollbackTransaction();
         throw;
     }
@@ -316,14 +309,12 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 有时候我们需要把查询结果封装到一个临时的类中，而这个类并没有配置Attribute元数据，因为你只打算使用它来临时保存数据，并不作为实体类使用。这时，使用SqlQuery中提供的ResultMap，在里面指定属性与SQL返回的字段的映射关系，就可以方便地完成结果封装，如：
 
 ````C#
-	class StudentInfo
-    {
+	class StudentInfo {
         public string Name { get; set; }
         public int Age { get; set; }
     }
 
-    public void TestResultMap()
-    {
+    public void TestResultMap() {
         ISqlQuery query = session.CreateSqlQuery("select stu_name, stu_age from student");
         query.ResultMap = new Dictionary<string, string>();
         query.ResultMap["Name"] = "stu_name";
@@ -334,13 +325,284 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 
 ## 主要技术难点与实现方式
 
-### 数据库无关性的实现
+### 多数据库的支持
+
+在C#中，不同的数据库具有不同的DbConnection以及不同的数据库访问API，因此也有不同的访问方式。另外，对于参数化SQL的使用方式，不同的数据库也有不同，比如Oracle数据库中使用问号作为SQL中的置位符，然后将参数按照置位符的顺序传入，如“select stu_age from student where stu_name=?”。但是MySQL与SQL Server等其他数据库却使用@符号加参数名的方式，传入参数时需要指定不同参数名所对应的值，如“select stu_age from student where stu_name=@nameParam”。因此，同时支持多种数据库，并且在这些数据库之间灵活地切换，需要一些特别的实现方式。
+
+我们先抽象出一个IDbHelper接口，它是本框架的基础模块，为上层的Session以及查询等模块提供支持。抽象出接口的好处显而易见，可以使上层模块不依赖于DbHelper模块的具体实现，并且可以在不同的实现中切换。此接口需要具备的功能包括，数据库连接管理、事务管理、SQL命令预处理、基本的命令执行方法等等。为了统一参数化SQL的使用方式，我们选择了问号置位符的方式，对于使用参数名的数据库，在各自的实现类中进行转换即可。
+
+````C#
+	public interface IDbHelper {
+        string ConnectionString { get; set; }
+        IDialect Dialect { get; }
+        DbConnection NewConnection();
+        DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+        DbDataAdapter NewDataAdapter(DbCommand cmd);
+        bool InTransaction();
+        void BeginTransaction();
+        void CommitTransaction();
+        void RollbackTransaction();
+        int ExecuteNonQuery(string sqlText, params object[] parameters);
+        object ExecuteScalar(string sqlText, params object[] parameters);
+        T ExecuteReader<T>(string sqlText, object[] parameters, Func<DbDataReader, T> func);
+        DataSet ExecuteGetDataSet(string sqlText, params object[] parameters);
+        DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
+        void DoInCurrentTransaction(Action<DbConnection, DbTransaction> action);
+        T DoInCurrentTransaction<T>(Func<DbConnection, DbTransaction, T> func);
+    }
+````
+
+抽象出一个确定的接口之后，不同数据库的DbHelper类只需要实现这个接口，就可以为上层模块提供服务了。但是，不同数据库的操作方式虽然存在差异，但还是有许多相同的逻辑，比如数据库连接管理与事务管理，其实无论什么数据库都是相同的逻辑，区别只是创建数据库连接的方式不同而已。因此，我们将这些相同的逻辑提取出来，放到一个抽象的基类BaseHelper中，再把不同的逻辑声明为抽象方法，在各自的子类中分别实现，这就是基于继承的代码复用技术——模版方法（Template Method）设计模式。
+
+````C#
+	public abstract class BaseHelper : IDbHelper {
+        public abstract IDialect Dialect { get; }
+        public abstract DbConnection NewConnection();
+        public abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+        public abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
+
+        public string ConnectionString { get; set; }
+
+        protected BaseHelper() { }
+
+        protected BaseHelper(string connStr) {
+            this.ConnectionString = connStr;
+        }
+
+        protected class Bundle {
+            public DbConnection Connection { get; set; }
+            public DbTransaction Transaction { get; set; }
+            public int Tier { get; set; }
+        }
+
+        protected ThreadLocal<Bundle> local = new ThreadLocal<Bundle>();
+
+        protected int GetTransactionTier() {
+            return InTransaction() ? local.Value.Tier : 0;
+        }
+
+        public virtual bool InTransaction() {
+            return local.IsValueCreated && local.Value != null;
+        }
+
+        public virtual void BeginTransaction() {
+            if (GetTransactionTier() == 0) {
+                Bundle bundle = new Bundle();
+                bundle.Connection = NewConnection();
+                bundle.Connection.Open();
+                bundle.Transaction = bundle.Connection.BeginTransaction();
+                bundle.Tier = 1;
+                local.Value = bundle;
+            } else {
+                local.Value.Tier++;
+            }
+        }
+
+        public virtual void CommitTransaction() {
+            int tier = GetTransactionTier();
+            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
+            if (tier == 1) {
+                Bundle bundle = local.Value;
+                local.Value = null;
+                bundle.Transaction.Commit();
+                bundle.Connection.Close();
+            } else {
+                local.Value.Tier--;
+            }
+        }
+
+        public virtual void RollbackTransaction() {
+            int tier = GetTransactionTier();
+            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
+            if (tier == 1) {
+                Bundle bundle = local.Value;
+                local.Value = null;
+                bundle.Transaction.Rollback();
+                bundle.Connection.Close();
+            } else {
+                local.Value.Tier--;
+            }
+        }
+
+        public virtual int ExecuteNonQuery(string sqlText, params object[] parameters) {
+            if (InTransaction()) {
+                Bundle bundle = local.Value;
+                return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
+            } else {
+                using (DbConnection conn = NewConnection()) {
+                    conn.Open();
+                    return PrepareCommand(conn, null, sqlText, parameters).ExecuteNonQuery();
+                }
+            }
+        }
+
+		// 省略其他方法的实现
+    }
+````
+
+由于篇幅限制，这里只展示了BaseHelper类的一部分——事务管理。可以看到，已实现的方法里面调用了一些抽象方法，比如NewConnection、PrepareCommand，这些抽象方法将留待子类实现。有了BaseHelper的大部分公共代码，具体的DbHelper类就只需要实现它自己特有的那一部分就好了，下面是MySqlHelper的实现。
+
+````C#
+	public class MySqlHelper : BaseHelper {
+        private IDialect _Dialect;
+
+        public override IDialect Dialect { get { return _Dialect; } }
+
+        public MySqlHelper(string connStr) : base(connStr) {
+            _Dialect = new MySqlDialect();
+        }
+
+        public override DbConnection NewConnection() {
+            return new MySqlConnection(ConnectionString);
+        }
+
+        public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
+            DbCommand cmd = new MySqlCommand();
+            if (conn != null) cmd.Connection = conn;
+            if (trans != null) cmd.Transaction = trans;
+
+            cmd.CommandText = sqlText;
+            if (parameters != null && parameters.Length != 0) {
+                AddParamsToCmd(cmd as MySqlCommand, parameters);
+            }
+            return cmd;
+        }
+
+        public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
+            return new MySqlDataAdapter(cmd as MySqlCommand);
+        }
+
+        private void AddParamsToList(List<object> arr, ICollection parameters) {
+            foreach (object param in parameters) {
+                if (param is ICollection && !(param is byte[])) {
+                    AddParamsToList(arr, param as ICollection);
+                } else {
+                    if(param == null)
+                        throw new NotSupportedException("查询参数列表中有元素为null。");
+                    arr.Add(param == null ? DBNull.Value : param);
+                }
+            }
+        }
+
+        private void AddParamsToCmd(MySqlCommand cmd, object[] parameters) {
+            List<object> arr = new List<object>();
+            AddParamsToList(arr, parameters);
+
+            StringBuilder sb = new StringBuilder();
+            string[] temp = cmd.CommandText.Split('?');
+            for (int i = 0; i < temp.Length - 1; i++) {
+                string paramName = "@param" + i;
+                sb.Append(temp[i] + paramName);
+                cmd.Parameters.AddWithValue(paramName, arr[i]);
+            }
+            sb.Append(temp[temp.Length - 1]);
+            cmd.CommandText = sb.ToString();
+        }
+    }
+````
+
+可以看到，对于NewConnection、NewDataAdapter等方法的实现，我们只是简单地创建了一个MySqlConnection或者MySQLDataAdapter对象。在PrepareCommand方法的实现中，我们调用了AddParamsToCmd方法，把问号置位符表示的参数化SQL字符串转换为以参数名表示的形式，将具体的查询参数以名-值对的形式添加到MySqlCommand对象中。
+
+OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHelper类似，但对于PrepareCommand方法，却有着不同的实现。因为Oracle数据库本来就是使用问号置位符，因此不需要特别的转换，只需要将参数添加到OleDbCommand对象中即可。
+
+````C#
+	public class OracleHelper : BaseHelper {
+        private IDialect _Dialect;
+
+        public override IDialect Dialect { get { return _Dialect; } }
+
+        public OracleHelper(string connStr) : base(connStr) {
+            _Dialect = new OracleDialect();
+        }
+
+        public override DbConnection NewConnection() {
+            return new OleDbConnection(ConnectionString);
+        }
+
+        public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
+            DbCommand cmd = new OleDbCommand();
+            if (conn != null) cmd.Connection = conn;
+            if (trans != null) cmd.Transaction = trans;
+
+            cmd.CommandText = sqlText;
+            if (parameters != null && parameters.Length != 0) {
+                AddParamsToCmd(cmd as OleDbCommand, parameters);
+            }
+            return cmd;
+        }
+
+        public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
+            return new OleDbDataAdapter(cmd as OleDbCommand);
+        }
+
+        private void AddParamsToCmd(OleDbCommand cmd, ICollection parameters) {
+            foreach (object param in parameters) {
+                if (param is ICollection && !(param is byte[])) {
+                    AddParamsToCmd(cmd, param as ICollection);
+                } else {
+                    cmd.Parameters.AddWithValue(null, param == null ? DBNull.Value : param);
+                }
+            }
+        }
+    }
+````
+
+最终，这一系列的类与接口形成了如下图的继承结构。IDbHelper接口规定了一个DbHelper类所具有的基本功能，抽象类BaseHelper继承了IDbHelper接口，实现了部分可重用的方法，把其他方法声明为抽象方法，MySqlHelper和OracleHelper继承了BaseHelper类，各自实现了BaseHelper中的抽象方法。
+
+![](DbHelper.png)
+
+现在我们已经有了不同的DbHelper类，要如何把它们应用到框架中来呢？我们是通过配置化来实现这一点的。在配置文件中配置好要使用的DbHelper类所在的程序集及其命名空间限定类名，如将DbHelperAssembly设置为FrameDAL.dll，将DbHelperClass设置为FrameDAL.DbHelper.MySqlHelper。AppContext类在加载配置文件后，会根据配置的内容使用反射创建指定的DbHelper对象。
+
+````C#
+	Assembly assembly = Assembly.LoadFrom(config.DbHelperAssembly);
+	Type type = assembly.GetType(config.DbHelperClass, true);
+	IDbHelper db = Activator.CreateInstance(type) as IDbHelper;
+````
+
+如此，就可以通过配置化的方式解除程序代码与具体数据库的耦合，而且，这种设计对于第三方扩展也是友好的。如果要扩展此框架，增加对其他数据库的支持，可以另外编写一个实现了IDbHelper接口的类（可以选择从BaseHelper类继承，也可以完全重新实现），然后在配置文件中配置好改类所属的程序集及其类名就可以了。这种设计符合设计模式中的开闭原则（OCP），即对扩展开放，对修改封闭。
 
 ### 懒加载的实现
 
-### 缓存的实现
+实现透明的懒加载机制，主要的思路是通过动态代理创建一个实体类的子类对象，这个对象代理了这个实体类的所有方法，因此能得知需懒加载的属性的访问时机，从数据库中查询数据。接下来先以基于继承的静态代理模式为例，介绍代理模式的运行方式，然后再将其扩展到动态代理。
 
-### 对反射的性能改进
+在一个Student类中，有两个属性，一个是普通属性Name，另一个是关联属性Course，因为Course的数据存在于另一个表，把所有数据都查询出来会有一定的性能开销，因此希望对这个属性开启懒加载，等到真正需要的时候才进行查询。为了实现这一点，我们在返回查询结果的时候，并不直接返回一个Student对象，而是另外创建一个它的子类StudentProxy，返回这个子类的对象。
+
+````C#
+	public class Student {
+        public virtual string Name { get; set; }
+        public virtual List<Course> Courses { get; set; }
+    }
+
+    public class StudentProxy : Student {
+        public override string Name {
+            get { return base.Name; }
+            set { base.Name = value; }
+        }
+
+        private List<Course> courses;
+
+        public override List<Course> Courses {
+            get {
+                if(courses == null) {
+                    courses = LoadCoursesFromDatabase();
+                }
+                return courses;
+            }
+
+            set {
+                courses = value;
+            }
+        }
+    }
+````
+
+StudentProxy重写了Student中的两个属性，因为Name属性不需要懒加载，因此只是简单地对父类中的属性进行调用。而Courses属性的访问器却有所不同，当Courses属性被访问时，程序首先检查对象中是否已存在courses数据，若不存在，则从数据库中加载相应的信息。若Courses属性没有被使用过，则永远也不会再次访问数据库。这就是使用代理模式实现懒加载的基本原理。这种实现方式对于程序员是透明的，程序员获得的虽然是StudentProxy而不是Student的对象，但是它们具有相同的接口，因此对外的表现是完全一致的。这种基于继承的代理模式，要求被代理的方法必须是可重写的，这就是框架要求实体类不可使用sealed修饰符，而且开启懒加载的字段必须使用virtual关键字的原因，这是因为sealed关键字会阻止继承，非virtual的属性无法被重写。
+
+
+
+### 操作缓存的实现
+
+### Linq表达式解析与SQL生成
 
 ## 成果
 
