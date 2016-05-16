@@ -104,49 +104,5 @@ namespace ResumeFactory.Service
                 }
             }
         }
-
-
-
-
-        public class Student
-        {
-            public virtual string Name { get; set; }
-            public virtual List<Course> Courses { get; set; }
-        }
-
-        public class StudentProxy : Student
-        {
-            public override string Name
-            {
-                get
-                {
-                    return base.Name;
-                }
-
-                set
-                {
-                    base.Name = value;
-                }
-            }
-
-            private List<Course> courses;
-
-            public override List<Course> Courses
-            {
-                get
-                {
-                    if(courses == null)
-                    {
-                        courses = new List<Course>();
-                    }
-                    return courses;
-                }
-
-                set
-                {
-                    courses = value;
-                }
-            }
-        }
     }
 }

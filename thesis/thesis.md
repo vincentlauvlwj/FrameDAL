@@ -598,11 +598,76 @@ OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHel
 
 StudentProxy重写了Student中的两个属性，因为Name属性不需要懒加载，因此只是简单地对父类中的属性进行调用。而Courses属性的访问器却有所不同，当Courses属性被访问时，程序首先检查对象中是否已存在courses数据，若不存在，则从数据库中加载相应的信息。若Courses属性没有被使用过，则永远也不会再次访问数据库。这就是使用代理模式实现懒加载的基本原理。这种实现方式对于程序员是透明的，程序员获得的虽然是StudentProxy而不是Student的对象，但是它们具有相同的接口，因此对外的表现是完全一致的。这种基于继承的代理模式，要求被代理的方法必须是可重写的，这就是框架要求实体类不可使用sealed修饰符，而且开启懒加载的字段必须使用virtual关键字的原因，这是因为sealed关键字会阻止继承，非virtual的属性无法被重写。
 
+静态代理的技术虽然实现简单，但是却无法真正应用到ORM框架的懒加载实现中，因为静态代理需要为每一个类都编写一个代理子类，框架显然不能要求程序员自己来编写这些代理类。这时候动态代理的作用就体现出来了，动态代理可以在运行时生成IL代码，创建指定类的代理子类。实现动态代理，可以使用C#反射类库中内置的Emit，也可以使用第三方的动态代理工具。这里我们选用了著名的开源项目Castle中的DynamicProxy工具，下面是一段示例代码：
 
+````C#
+	public T CreateEntityProxy<T>() where T : class {
+        ProxyGenerator generator = new ProxyGenerator();
+        IEnumerable<string> propNames = GetLazyPropertiesFromConfiguration();
+        return generator.CreateClassProxy<T>(new EntityInterceptor(propNames));
+    }
 
-### 操作缓存的实现
+    public class EntityInterceptor : IInterceptor {
+        private Dictionary<string, bool> initMap;
+
+        public EntityInterceptor(IEnumerable<string> propNames) {
+            initMap = propNames.ToDictionary(s => s, s => false);
+        }
+
+        public void Intercept(IInvocation invocation) {
+            string methodName = invocation.Method.Name;
+            object target = invocation.InvocationTarget;
+            Type targetType = invocation.TargetType;
+            string propName = methodName.Substring(4);
+
+            if (methodName.StartsWith("get_") && initMap.ContainsKey(propName) && !initMap[propName]) {
+                PropertyInfo prop = targetType.GetProperties().Where(p => p.Name == propName).First();
+                object result = LoadDataFromDatabase();
+                prop.SetValue(target, result);
+                invocation.ReturnValue = prop.GetValue(target, null);
+            } else {
+                invocation.Proceed();
+                if (methodName.StartsWith("set_") && initMap.ContainsKey(propName)) {
+                    initMap[propName] = true;
+                }
+            }
+        }
+    }
+````
+
+在Castle的创建的动态代理对象中，保存了一个IInterceptor拦截器的引用，代理类重写了父类的所有方法，在这些方法中调用了拦截器的Intercept方法，由拦截器来指定具体要执行的代码。因此，我们需要自己编写一个拦截器类，统一实现代理子类的拦截逻辑。上面的代码先从映射配置中读取出需要进行懒加载的属性的集合，然后创建一个拦截器，将这个集合传进拦截器中，再使用这个拦截器创建一个代理类的对象。
+
+拦截器的构造方法中初始化了一个Dictionary对象，它将所有属性的初始化标记设置为false，表示尚未从数据库中读取到数据。Intercept方法中的内容就是真正执行拦截的操作，它通过方法的名称判断当前被拦截的是哪个属性，拦截的是get访问器还是set访问器。当拦截到get访问器，并且正好是需要进行懒加载的字段（即存在于initMap中），而且initMap中保存的初始化标记为false时，就从数据库中查询出所需的数据，手工调用该属性的set访问器保存数据并将initMap中的标记设置为true，表示已经加载过数据，再设置方法的返回值。当下次再拦截到该get访问器的时候，因为initMap中的标记已经设置为true，因此不会再做额外的操作，而是直接调用Proceed方法执行被代理类原本应有的逻辑。
+
+这样，使用动态代理技术，不需要重复地编写代理类，只需要编写一个可重用的拦截器，即可实现透明的懒加载机制。当然，上面的代码只是最简单的示例，在实际应用中，还有许多复杂的问题要处理，由于篇幅所限，就不一一列举了。
 
 ### Linq表达式解析与SQL生成
+
+C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表达式就是解析这个树形结构。下面以一个简单的Linq查询为例，介绍表达式树的具体结构以及解析方法。有如下查询：
+
+````C#
+	session.GetAll<Student>()
+		.Where(s => s.StuName==”Vincent”)
+		.Select(s => new {s.StuName, s.StuAge})
+````
+
+这个查询表达式是一个普通的链式操作，这个链式操作的最后一个方法调用是Select方法，它就是这颗表达式树的根节点，节点类型是MethodCallExpression。对Select方法的调用传递了两个参数，第一个参数也是一个MethodCallExpression，它表示前面的Where方法的调用，第二个参数是一个lambda表达式。继续对前面的Where方法调用进行分析，它也具有两个参数，第一个参数是一个表示默认查询的常量节点，第二个参数也是一个lambda表达式，它是一个谓词，表示了查询的筛选条件。将这颗表达式树表示为图形的方式如下，在图中，每个方框表示一个表达式节点，方框中有三行文字，第一行是该节点的节点类型，第二行是该节点所表示的Linq表达式，第三行是从该节点解析出来的SQL文本。
+
+![](expression-parsing.png)
+
+在解析Linq表达式时，我们后序遍历这颗表达式树。步骤如下：
+
+1. 访问表达式开头的常量节点session.GetAll<Student>()，它表示一个默认的查询，因此将它翻译为select * from student。
+2. 访问Where方法的第二个参数——即作为筛选条件的lambda表达式s => s.StuName=="Vincent"。这个lambda表达式的表达式体是一个二元表达式，它表示一个相等比较操作，它的左操作数是一个成员访问表达式，可以从中解析出字段名stu_name，右操作数是一个表示参数的常量表达式。最后，我们把左操作数和右操作数结合起来，加上等号比较符，组成了SQL的一个片段stu_name='Vincent'。
+3. 访问Where方法调用。把前面两步的解析结果组合起来，形成这一步的结果select * from student where stu_name='Vincent'。
+4. 访问Select方法的第二个参数，即lambda表达式s => new {s.StuName, s.StuAge}。这个二元表达式的表达式体是一个MemberInitExpression，我们可以从这里得知它使用到了stu_name、stu_age两个字段。
+5. 访问Select方法调用，即表达式树的根节点。把前两步的结果组合起来，形成最终的SQL：select stu_name, stu_age from student where stu_name='Vincent'。
+
+然而，上面的分析只是最理想的情况，并且省略了许多小细节。实际上，我们要解析的Linq表达式远远比这复杂，生成SQL也不是仅仅拼接字符串那么容易。为了降低这些复杂性，我们还引入了SQL表达式树的概念，这是一种和Linq表达式树类似的树形结构。比如，上面的Linq表达式最终会被翻译为如下图的SQL表达式树。
+
+![](sql-expression.png)
+
+可以看到，最终生成的SQL具有很明显的嵌套层级，虽然在语义上没有错误，但它并没有理想中那么简洁优雅，它显然还有很大的优化空间。关于解析Linq表达式的解析与SQL生成的算法，我们还有很长的路要走。
 
 ## 成果
 
