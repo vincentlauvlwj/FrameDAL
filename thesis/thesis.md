@@ -120,7 +120,7 @@ ConnStr是数据库连接串的配置项，具体的内容依所使用的数据�
 
 在此例中，具有班级、学生和课程三个实体。班级和学生是一对多的关系，一个班级可以有多个学生，但每个学生只能属于一个班级。体现在表的结构上，student表中具有一个class_id的外键字段，引用了class表的主键。学生和课程是多对多的关系，一个学生可以修多门课程，一门课程也能有多个学生。多对多的关系需要额外使用一张关联表stu_course来表示，这张关联表中只有两个外键字段，分别引用了student表和course表的主键。具体的表结构如下图所示。
 
-![](db-sample.png)
+![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/db-sample.png)
 
 现在，我们对这个业务场景进行面向对象的建模，我们分别用Class、Student和Course三个类来表示这三个实体。其中，Class类中应该具有一个Student对象的集合，以表示该班级中的所有学生，Student类中应该具有一个Class类的嵌套对象，以表示该学生所属的班级。另外Student类中还应具有一个Course对象的集合，表示该学生选修的所有课程，同理，Course类中也应该有一个Student对象的集合。将上面的分析转换成C#代码如下。
 
@@ -561,7 +561,7 @@ OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHel
 
 最终，这一系列的类与接口形成了如下图的继承结构。IDbHelper接口规定了一个DbHelper类所具有的基本功能，抽象类BaseHelper继承了IDbHelper接口，实现了部分可重用的方法，把其他方法声明为抽象方法，MySqlHelper和OracleHelper继承了BaseHelper类，各自实现了BaseHelper中的抽象方法。
 
-![](DbHelper.png)
+![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/DbHelper.png)
 
 现在我们已经有了不同的DbHelper类，要如何把它们应用到框架中来呢？我们是通过配置化来实现这一点的。在配置文件中配置好要使用的DbHelper类所在的程序集及其命名空间限定类名，如将DbHelperAssembly设置为FrameDAL.dll，将DbHelperClass设置为FrameDAL.DbHelper.MySqlHelper。AppContext类在加载配置文件后，会根据配置的内容使用反射创建指定的DbHelper对象。
 
@@ -665,7 +665,7 @@ C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表�
 
 这个查询表达式是一个普通的链式操作，这个链式操作的最后一个方法调用是Select方法，它就是这颗表达式树的根节点，节点类型是MethodCallExpression。对Select方法的调用传递了两个参数，第一个参数也是一个MethodCallExpression，它表示前面的Where方法的调用，第二个参数是一个lambda表达式。继续对前面的Where方法调用进行分析，它也具有两个参数，第一个参数是一个表示默认查询的常量节点，第二个参数也是一个lambda表达式，它是一个谓词，表示了查询的筛选条件。将这颗表达式树表示为图形的方式如下，在图中，每个方框表示一个表达式节点，方框中有三行文字，第一行是该节点的节点类型，第二行是该节点所表示的Linq表达式，第三行是从该节点解析出来的SQL文本。
 
-![](expression-parsing.png)
+![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/expression-parsing.png)
 
 在解析Linq表达式时，我们后序遍历这颗表达式树。步骤如下：
 
@@ -677,7 +677,7 @@ C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表�
 
 然而，上面的分析只是最理想的情况，并且省略了许多小细节。实际上，我们要解析的Linq表达式远远比这复杂，生成SQL也不是仅仅拼接字符串那么容易。为了降低这些复杂性，我们还引入了SQL表达式树的概念，这是一种和Linq表达式树类似的树形结构。比如，上面的Linq表达式最终会被翻译为如下图的SQL表达式树。
 
-![](sql-expression.png)
+![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/sql-expression.png)
 
 可以看到，最终生成的SQL具有很明显的嵌套层级，虽然在语义上没有错误，但它并没有理想中那么简洁优雅，它显然还有很大的优化空间。关于解析Linq表达式的解析与SQL生成的算法，我们还有很长的路要走。
 
