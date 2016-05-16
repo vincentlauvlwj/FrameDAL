@@ -2,7 +2,19 @@
 
 ## 摘要
 
+ORM（Object Relational Mapping，对象关系映射）是一种程序设计技术，用于实现面向对象编程语言里不同类型系统的数据之间的转换。从效果上说，它其实是创建了一个可在编程语言里使用的“虚拟对象数据库”。
+
+在体检系统的开发过程中，暴露出许多问题，它们对于软件系统的安全性以及可维护性都造成了一定的影响。本文吸取了体检系统的经验教训，并以其数据访问层的部分代码为核心，开发了一个较为完整的ORM持久化框架。本框架具有数据库连接管理、事务控制、多数据库支持、对象存取、Linq查询等功能，为了实现这些功能，我们使用到了面向接口编程、动态代理等技术。
+
+关键字：软件工程，对象关系映射，面向接口编程，动态代理
+
 ## Abstract
+
+ORM (Object Relational Mapping) in computer science is a programming technique for converting data between incompatible type systems in object-oriented programming languages. This creates, in effect, a "virtual object database" that can be used from within the programming language.
+
+In the developing of Physical Examination Information System, we encounted many problems which influenced the safety and maintainability of the software system to some extent. This thesis develops a complete ORM persistence framework based on the experience of Physical Examination System and some code of its data access layer. The framework supports database connection management, transaction control, multi databases, object saving and retrieving, Linq query, etc. To implement these, we uses the technique of interface-oriented programming, dynamic proxy, etc.
+
+Key Words: Software Engineering, Object Relational Mapping, Interface-oriented Programming, Dynamic Proxy
 
 ## 引言
 
@@ -673,7 +685,21 @@ C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表�
 
 ### 对编程方式的影响
 
+ORM框架对于软件工程带来的影响可以说是翻天覆地的，它将程序员从繁琐的数据库操作中解放出来，得以专注于业务逻辑的实现，提高了软件开发的效率，增强了软件系统的可维护性。另外，在编程方式上，ORM带来的影响也是巨大的。
+
+传统的数据库系统的编程方式，一般是先进行数据库设计，然后根据为每张表设计一个实体类与一个DAO类，最后才是业务逻辑的实现。但是，如果使用具有反向工程功能的ORM，比如Hibernate，我们可以首先围绕业务建立对象模型，再通过反向工程自动生成数据库。这种编程方式以业务为中心，更加符合面向对象的思维方式，不需要以数据库为中心，避免了许多琐碎的问题。
+
+开发这个ORM框架，对于体检系统的开发以及我个人的其他系统的也是有重大的意义的。在体检系统开发的早期，我们仍然在使用传统ADO.NET的数据库访问方式，配合一点工具类。这给我们带来了许多问题，比如系统存在SQL注入的风险、没有完善的事务管理、SQL拼接十分繁琐而且易出错。最重要的是，我们虽然在使用三层架构，但还是存在分层不清晰的问题，我们会将很多本来应该属于数据访问层的SQL硬编码在业务逻辑层，导致数据访问代码与业务代码混在一起，造成了十分严重的可维护性问题。后来，我们才自己发展出了一个简易的ORM，逐步解决了一些问题。在体检系统完成以后，我才以其数据库访问层的部分代码为核心，逐渐开发出了这个较为完整的ORM框架，有了它的支持，以前的许多问题都迎刃而解了。
+
 ### 对性能的影响
+
+对比传统的数据库访问方式，使用ORM确实会使系统的性能有所下降，这也是许多人不愿意使用ORM的原因。ORM框架对性能的影响主要有两个原因，一是频繁地使用反射，二是框架难以对自动生成的SQL进行优化。针对这两个原因，可以使用不同的策略对其进行改进。
+
+ORM不可能不使用反射技术，我们能做到的，是避免许多不必要的反射操作。因此许多框架都会对反射得到的类的字段信息以及元数据信息等作一定程度的缓存，下次需要时，可以从缓存中获取，降低使用反射的频率。此外，优化反射的性能还有许多其他的方式，比如利用委托的执行速度比反射调用快的特性，可以将一些反射调用先编译成委托再执行，或者直接修改IL代码以优化反射性能。
+
+对于第二个原因，我们可以改进SQL生成的算法，针对不同的情况进行优化，尽量提升生成的SQL的执行性能，Hibernate等著名的ORM已经可以生成优化良好的SQL了。特别地，针对一些框架暂时没有进行优化，但是又对性能有比较高的需求的场景，我们还可以使用框架提供的SQL查询功能，既可以手动编写SQL，又不至于完全失去ORM的便利。
+
+另外，一些著名的ORM框架还有许多性能优化的技术，比如懒加载、二级缓存等等。经过良好优化的ORM框架性能甚至能超过没有进行特殊优化的传统数据库访问方式。而且，随着计算机硬件的发展，今天的硬件性能早已是往日的几倍甚至十几倍，再以性能为借口，不愿意学习使用新技术，就显得顽固不化了。
 
 ## 参考文献
 
