@@ -4,7 +4,9 @@
 
 ORM（Object Relational Mapping，对象关系映射）是一种程序设计技术，用于实现面向对象编程语言里不同类型系统的数据之间的转换。从效果上说，它其实是创建了一个可在编程语言里使用的“虚拟对象数据库”。
 
-在体检系统的开发过程中，暴露出许多问题，它们对于软件系统的安全性以及可维护性都造成了一定的影响。本文吸取了体检系统的经验教训，并以其数据访问层的部分代码为核心，开发了一个较为完整的ORM持久化框架。本框架具有数据库连接管理、事务控制、多数据库支持、对象存取、Linq查询等功能，为了实现这些功能，我们使用到了面向接口编程、动态代理等技术。
+在体检系统的开发过程中，暴露出许多问题，它们对于软件系统的安全性以及可维护性都造成了一定的影响。本文吸取了体检系统的经验教训，并以其数据访问层的部分代码为核心，开发了一个较为完整的ORM持久化框架。本框架具有数据库连接管理、事务控制、多数据库支持、对象存取、LINQ查询等功能，为了实现这些功能，我们使用到了面向接口编程、动态代理等技术。
+
+本文首先比较了传统的数据库访问方式与使用ORM框架的数据库访问方式的优劣，介绍了C#平台下现有的几个ORM框架及它们各自的特点，分析了一个完整的ORM框架应实现的功能以及技术背景。然后，介绍了本框架的具体使用方式，包括配置管理、对象存取、事务管理等等。最后，就实现本框架过程中遇到的一些技术难点，进行了细致地分析，给出了具体的解决方案。
 
 关键字：软件工程，对象关系映射，面向接口编程，动态代理
 
@@ -12,7 +14,9 @@ ORM（Object Relational Mapping，对象关系映射）是一种程序设计技�
 
 ORM (Object Relational Mapping) in computer science is a programming technique for converting data between incompatible type systems in object-oriented programming languages. This creates, in effect, a "virtual object database" that can be used from within the programming language.
 
-In the developing of Physical Examination Information System, we encounted many problems which influenced the safety and maintainability of the software system to some extent. This thesis develops a complete ORM persistence framework based on the experience of Physical Examination System and some code of its data access layer. The framework supports database connection management, transaction control, multi databases, object saving and retrieving, Linq query, etc. To implement these, we uses the technique of interface-oriented programming, dynamic proxy, etc.
+In the developing of Physical Examination Information System, we encountered many problems which influenced the safety and maintainability of the software system to some extent. This paper develops a complete ORM persistence framework based on the experience of Physical Examination System and some code of its data access layer. The framework supports database connection management, transaction control, multi databases, object saving and retrieving, LINQ query, etc. To implement these, we uses the technique of interface-oriented programming, dynamic proxy, etc.
+
+This paper firstly compares the advantages and disadvantages of traditional data access techniques and using an ORM, introduces some existing ORMs and their special points on C# platform, analyses the features that a complete ORM should support and their own technique background. Then, it introduces some specific usages of this framework, including configuration management, object saving and retrieving, transaction management, etc. Finally, it analyses some technique problems encountered and provides specific solutions for anyone.
 
 Key Words: Software Engineering, Object Relational Mapping, Interface-oriented Programming, Dynamic Proxy
 
@@ -50,7 +54,7 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
 
  - NHibernate：NHibernate由Java平台下广为使用的开源ORM框架Hibernate移植而来，它是一个“重量级”的框架，对数据库结构提供了较为完整的封装，实现了实体类和数据表之间的映射。程序员只需要定义好映射关系，即可通过NHibernate提供的方法完成持久层操作。使用NHibernate，程序员不需要对SQL熟练掌握，甚至完全不需要写SQL，NHibernate会根据指定的存储逻辑，自动生成对应的SQL并调用ADO.NET加以执行。
  - MyBatis.NET:与NHibernate相比，MyBatis提供的是一种“半自动化”的ORM，它的着力点在于实体类与SQL（而不是数据表）之间的映射关系。使用MyBatis，程序员仍然需要在配置文件中手动写SQL，然后通过映射配置文件，将SQL所需的参数，以及返回的结果字段映射到指定的实体类。配置简单，可在SQL粒度上进行性能优化是其主要的优势。
- - Linq to SQL：C#在3.5版本中引入了Linq（Language-Integrated Query， 语言集成查询）的新特性，自此全面支持了函数式的编程方式。Linq to SQL将数据库中的数据视为C#语言中普通的集合，然后我们可以借助lambda表达式（即匿名函数）提供的便利对这些抽象出来的集合进行filter（即Where函数）、map（即Select函数）等经典的函数式操作。最终，一系列链式操作会形成一个Linq表达式，Linq to SQL解析这个表达式，生成合适的SQL送到数据库中执行。其最大的优点在于程序员可使用函数式的编程方式写出极为精简的数据库访问代码，然而缺点也很明显，那就是只支持SQL Server一种数据库。为了弥补这个缺点，微软已推出了Linq to SQL的替代者Entity Framework，它将Linq to SQL的理念进一步发扬光大，同时修复了种种缺点，包括多数据库的支持。
+ - LINQ to SQL：C#在3.5版本中引入了LINQ（Language-Integrated Query， 语言集成查询）的新特性，自此全面支持了函数式的编程方式。LINQ to SQL将数据库中的数据视为C#语言中普通的集合，然后我们可以借助lambda表达式（即匿名函数）提供的便利对这些抽象出来的集合进行filter（即Where函数）、map（即Select函数）等经典的函数式操作。最终，一系列链式操作会形成一个LINQ表达式，LINQ to SQL解析这个表达式，生成合适的SQL送到数据库中执行。其最大的优点在于程序员可使用函数式的编程方式写出极为精简的数据库访问代码，然而缺点也很明显，那就是只支持SQL Server一种数据库。为了弥补这个缺点，微软已推出了LINQ to SQL的替代者Entity Framework，它将LINQ to SQL的理念进一步发扬光大，同时修复了种种缺点，包括多数据库的支持。
 
 ### ORM框架应实现的功能
 
@@ -60,7 +64,7 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
  - 消除程序代码与SQL的耦合。具体来说，就是尽量避免在代码中直接编写SQL命令。对于这个，不同的ORM有着不同的思想，NHibernate等传统的ORM的解决方式是由框架来生成SQL，避免程序员亲自编写。而MyBatis的实现方式是将SQL配置化，把SQL编写在配置文件中，从而将其从程序代码中分离出来。
  - 多数据库支持。一个完整的ORM应该具有多数据库的支持，以消除程序代码与具体数据库的耦合，在不同的数据库之间切换时，只需更改配置文件即可，不需修改程序代码。具有SQL生成机制的ORM，在支持多数据库的时候，还应该针对当前使用的具体数据库来优化生成的SQL，以充分发挥不同数据库的优势。
  - 数据库连接与事务的自动化管理。一个ORM必须将程序员从创建与关闭数据库连接等模版性代码中解脱出来，使他们专注于业务逻辑，同时还要提供一个事务管理的机制，用以将多个操作组合成事务。出于性能考虑，ORM还可以提供连接池机制。
- - 设计良好的查询API。一套设计良好、使用方便的查询API可以大大减轻程序员的工作量。NHibernate就为此专门设计了一门查询语言HQL，它借鉴了SQL的语法，却是一门面向对象的查询语言，极大地方便了查询代码的编写。另外，DSL（Domain Specific Language，领域专用语言）也是设计查询API的一种思路，前文提到的Linq也就是一种DSL。
+ - 设计良好的查询API。一套设计良好、使用方便的查询API可以大大减轻程序员的工作量。NHibernate就为此专门设计了一门查询语言HQL，它借鉴了SQL的语法，却是一门面向对象的查询语言，极大地方便了查询代码的编写。另外，DSL（Domain Specific Language，领域专用语言）也是设计查询API的一种思路，前文提到的LINQ也就是一种DSL。
  - 缓存机制。许多人不愿意使用ORM的主要原因是较高层次的封装可能会使查询成为性能的瓶颈。为了优化性能，许多ORM都会提供一个缓存机制，用以缓存查询的结果，当同样的SQL再次执行的时候，ORM可能不会再去访问数据库，而改为从缓存中直接获取。当然，可缓存的内容不仅仅是数据，一些对实时性要求不高的操作也可以缓存下来，积累到下次数据库连接发起时再批量执行，以此降低连接发起的频率。
  - 懒加载机制。当我们从数据库取得一个对象时，我们可能并不需要这个对象的所有信息，这时如果还将它们查询出来是一种对性能的浪费，特别是对象中还具有嵌套对象（对应数据库中的外键关系）的情况下，ORM可能还需要生成一个连接查询将嵌套对象的信息一并取出。懒加载就是在取得这个对象的时候，只查询它的一些基本信息，不查询与之关联的其他表以及某些大字段，只有在程序中使用到这些信息的时候，才从数据库中查询。而这一切对于程序员是透明的，程序员只需假设对象中具有他需要的所有信息，不必关心它们是如何查询出来的。
 
@@ -70,7 +74,7 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
 
  - 反射。反射是指计算机程序在运行时可以访问、检测和修改它本身状态或行为的一种能力。在这里，我们使用到反射的地方主要是读取配置在实体类中的元数据以构建对象和数据表之间的映射信息，以及利用这些映射信息进行对象和关系型数据之间的自动转换。另外，为了解除程序代码与特定数据库的耦合，我们将具体的数据库操作类进行配置化，这时就不能通过常规的方式来创建对象，只能使用反射。总之，反射作为框架构建的基本技术，在一个ORM中几乎处处都有它的身影。
  - 面向接口编程。在C#中，接口是一个包含了方法声明但是没有方法实现的特殊的类，它是一组规则的集合，它规定了实现本接口的类必须拥有的一组规则。我们这里把面向接口编程的思想主要应用在实现多数据库的支持上，根据这种思想，我们访问数据库的底层模块并不是直接向其上层提供服务，而是通过定义一组接口，仅向上层暴露其接口功能，上层对于下层仅仅是接口依赖，而不依赖具体的类。这样做使得系统具有很大的灵活性及扩展性，我们能够随时替换底层的实现，而接口保持不变，体现在我们的框架中，在更换数据库时，只需要更改一下配置文件即可。
- - Linq表达式解析与SQL语法树。微软还为Linq提供了表达式树支持，一条Linq表达式会被表示为一个树形的数据结构，第三方开发者在使用Linq作为其DSL时，直接解析这颗表达式数转换成自己需要的目标语言即可，不需要再进行词法分析和语法分析。在这里，我们使用Linq作为自己的查询API，通过解析Linq表达式树来生成SQL。另外，为了编码的方便，我们将SQL也抽象为一个树形结构，在解析Linq表达式树时，并不直接生成SQL字符串，而是生成一颗SQL表达式树，最后在将这颗表达式树翻译为SQL文本。
+ - LINQ表达式解析与SQL语法树。微软还为LINQ提供了表达式树支持，一条LINQ表达式会被表示为一个树形的数据结构，第三方开发者在使用LINQ作为其DSL时，直接解析这颗表达式数转换成自己需要的目标语言即可，不需要再进行词法分析和语法分析。在这里，我们使用LINQ作为自己的查询API，通过解析LINQ表达式树来生成SQL。另外，为了编码的方便，我们将SQL也抽象为一个树形结构，在解析LINQ表达式树时，并不直接生成SQL字符串，而是生成一颗SQL表达式树，最后在将这颗表达式树翻译为SQL文本。
  - 动态代理。有时候我们希望拦截某些方法的执行，在这些方法执行之前或之后加入一些特定的处理，比如打印日志或者加入缓存机制等等，这就是所谓AOP（Aspect Oriented Programming，面向切面编程）的思想。使用代理模式可以很方便地实现这一点，比如提供一个被代理类的子类，这个子类重写了父类的所有方法，在里面添加自己的操作，然后再调用父类的方法。这就是利用继承实现的静态代理模式，静态代理模式的缺点在于，对于每一个被代理类，我们都要为其编写一个代理子类。因此，在需要批量对一些类进行统一的代理的时候，就需要使用到动态代理的技术，我们可以使用Emit在运行时动态创建被代理类的子类，在这个动态创建出来的子类中动态添加代理逻辑，也可以使用第三方动态代理类库，提供一个拦截器对象作为拦截的时候执行的操作。在这里我们使用动态代理主要是为了实现懒加载机制，通过拦截属性的访问，我们就能得知数据被访问的时机，做到延迟查询数据库。
 
 ## 总体功能设计
@@ -82,20 +86,20 @@ DbHelper工具类是位于业务逻辑代码与数据库访问代码之间的一
 默认的配置文件应位于程序的启动目录，文件名为FrameDAL.ini，也可以在AppContext第一次被调用之前通过Configuration.DefaultPath设置配置文件的路径。下面是一个配置文件的范例：
 
 ````ini
-	[Settings]
-	EnableLazy=true
-	EnableCascade=true
-	LogFile=FrameDAL.log
-	LogAppend=true
-	DbHelperAssembly=FrameDAL.dll
-	DbHelperClass=FrameDAL.DbHelper.MySqlHelper
-	
-	[ConnStr]
-	server=localhost
-	database=test
-	user id=root
-	password=root
-	charset=utf8
+[Settings]
+EnableLazy=true
+EnableCascade=true
+LogFile=FrameDAL.log
+LogAppend=true
+DbHelperAssembly=FrameDAL.dll
+DbHelperClass=FrameDAL.DbHelper.MySqlHelper
+
+[ConnStr]
+server=localhost
+database=test
+user id=root
+password=root
+charset=utf8
 ````
 
 配置文件主要分为两个节点，一个是Settings，用于配置框架运行所需的基本信息，第二个是ConnStr，用于配置数据库连接字符串。Settings节点下还有许多不同的配置项，下面是它们的具体功能：
@@ -125,50 +129,50 @@ ConnStr是数据库连接串的配置项，具体的内容依所使用的数据�
 现在，我们对这个业务场景进行面向对象的建模，我们分别用Class、Student和Course三个类来表示这三个实体。其中，Class类中应该具有一个Student对象的集合，以表示该班级中的所有学生，Student类中应该具有一个Class类的嵌套对象，以表示该学生所属的班级。另外Student类中还应具有一个Course对象的集合，表示该学生选修的所有课程，同理，Course类中也应该有一个Student对象的集合。将上面的分析转换成C#代码如下。
 
 ````C#
-	[Table("class")]
-    public class Class {
-        [Id(GeneratorType.Identity)]
-        [Column("id")]
-        public virtual int Id { get; set; }
+[Table("class")]
+public class Class {
+    [Id(GeneratorType.Identity)]
+    [Column("id")]
+    public virtual int Id { get; set; }
 
-        [Column("class_name")]
-        public virtual string ClassName { get; set; }
+    [Column("class_name")]
+    public virtual string ClassName { get; set; }
 
-        [OneToMany("class_id")]
-        public virtual List<Student> Students { get; set; }
-    }
+    [OneToMany("class_id")]
+    public virtual List<Student> Students { get; set; }
+}
 
-    [Table("student")]
-    public class Student {
-        [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
-        [Column("id")]
-        public virtual int Id { get; set; }
+[Table("student")]
+public class Student {
+    [Id(GeneratorType.Sequence, SeqName = "student_sequence")]
+    [Column("id")]
+    public virtual int Id { get; set; }
 
-        [Column("stu_name")]
-        public virtual string StuName { get; set; }
+    [Column("stu_name")]
+    public virtual string StuName { get; set; }
 
-        [Column("stu_age")]
-        public virtual int StuAge { get; set; }
+    [Column("stu_age")]
+    public virtual int StuAge { get; set; }
 
-        [ManyToOne("class_id", LazyLoad = false)]
-        public virtual Class Class { get; set; }
+    [ManyToOne("class_id", LazyLoad = false)]
+    public virtual Class Class { get; set; }
 
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
-        public virtual List<Course> Courses { get; set; }
-    }
+    [ManyToMany(JoinTable = "stu_course", JoinColumn = "stu_id", InverseJoinColumn = "course_id")]
+    public virtual List<Course> Courses { get; set; }
+}
 
-    [Table("course")]
-    public class Course {
-        [Id(GeneratorType.Identity)]
-        [Column("id")]
-        public virtual int Id { get; set; }
+[Table("course")]
+public class Course {
+    [Id(GeneratorType.Identity)]
+    [Column("id")]
+    public virtual int Id { get; set; }
 
-        [Column("course_name")]
-        public virtual string CourseName { get; set; }
+    [Column("course_name")]
+    public virtual string CourseName { get; set; }
 
-        [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id")]
-        public virtual List<Student> Students { get; set; }
-    }
+    [ManyToMany(JoinTable = "stu_course", JoinColumn = "course_id", InverseJoinColumn = "stu_id")]
+    public virtual List<Student> Students { get; set; }
+}
 ````
 
 上面的代码与普通的C#类并没有太大的区别，唯一的不同在于这些类使用了大量Attribute元数据标记，这些元数据描述了这些类与数据表之间的映射关系。另外，这些Attribute中还具有一些额外的配置项，这些配置项将对框架的运行方式有不同的影响。
@@ -193,17 +197,17 @@ Session抽象出了数据库会话的概念，它代表一个完整的业务操�
 Session对象可通过AppContext对象获得，获得Session对象之后，我们就可以使用它提供的方法，对实体进行各种CURD操作。下面是往数据库中保存一个学生对象的例子：
 
 ````C#
-	AppContext context = AppContext.Instance;
-    using (ISession session = context.OpenSession()) {
-        Student student = new Student();
-        student.StuName = "Vincent";
-        student.StuAge = 20;
-        student.Class = new Class { ClassName = "信息工程" };
-        student.Courses = new List<Course>();
-        student.Courses.Add(new Course() { CourseName = "数据库原理" });
-		
-        session.Add(student);
-    }
+AppContext context = AppContext.Instance;
+using (ISession session = context.OpenSession()) {
+    Student student = new Student();
+    student.StuName = "Vincent";
+    student.StuAge = 20;
+    student.Class = new Class { ClassName = "信息工程" };
+    student.Courses = new List<Course>();
+    student.Courses.Add(new Course() { CourseName = "数据库原理" });
+	
+    session.Add(student);
+}
 ````
 
 上面的代码首先获得了全局上下文对象，通过这个对象打开了一个数据库会话，然后创建了一个Student实体对象，并且给这个对象填充了各种信息，包括与之关联的Class对象与Course集合的信息，最后调用Add方法将该实体保存到数据库。代码执行的结果是在class表和course表中分别插入关联的数据，在再student表中插入该实体的数据，其中class_id外键字段保存了刚刚在class表中插入的数据的主键，最后再在stu_course关联表中插入student与course之间的关联。如此复杂的多表插入操作，得益于框架的帮助，只需要调用一个Add方法，即可自动完成。
@@ -211,10 +215,10 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 修改一个实体类的信息也十分简单：
 
 ````C#
-	Student student = session.Get<Student>(23);
-    student.StuAge = 21;
-    student.Courses.Clear();
-    session.Update(student);
+Student student = session.Get<Student>(23);
+student.StuAge = 21;
+student.Courses.Clear();
+session.Update(student);
 ````
 
 上面的代码先通过Get方法从数据库中取出了Id为23的学生，然后将该学生的年龄修改为21岁，清除他选修的所有课程，再调用Update方法将所作的改动保存到数据库。代码执行的结果是student表中该条记录的stu_age字段被修改为21，关联表stu_course中所有与该学生对应的关联信息都被清除，但是course表中的记录还会保留，因为可能也有其他学生选修了这些课程。
@@ -222,8 +226,8 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 删除一个实体的代码也是只需调用一个Delete方法即可：
 
 ````C#
-	Student student = session.Get<Student>(23);
-    session.Delete(student);
+Student student = session.Get<Student>(23);
+session.Delete(student);
 ````
 
 上面的代码不仅删除了student表中的这条记录，还会同时清除关联表stu_course中的记录，避免数据库中残留无用数据。
@@ -233,14 +237,14 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 在一个Session中进行多次操作默认是不具备事务性的，如果在操作期间发生了异常，那么已经完成的操作将无法回滚。因此，当我们的某些业务逻辑对事务性有要求时，就需要我们手动进行事务控制，Session中具有事务控制相关的API，下面是它们的使用范例：
 
 ````C#
-	try {
-        session.BeginTransaction();
-        // ACID operations...
-        session.CommitTransaction();
-    } catch {
-        session.RollbackTransaction();
-        throw;
-    }
+try {
+    session.BeginTransaction();
+    // ACID operations...
+    session.CommitTransaction();
+} catch {
+    session.RollbackTransaction();
+    throw;
+}
 ````
 
 这里使用了一个try-catch语句块，我们首先调用BeginTransaction方法开启事务，再进行具体的业务操作，最后调用CommitTransaction方法提交事务，若其中发生了异常，则跳转到catch语句中，在里面进行RollbackTransaction回滚事务，并且用throw语句将异常抛出，使外界得知异常的发生。把我们的业务代码用上述语句包裹起来，就可拥有事务的ACID特性，即原子性（atomicity）、一致性（consistency）、隔离性（isolation）和持久性（durability）。
@@ -248,63 +252,63 @@ Session对象可通过AppContext对象获得，获得Session对象之后，我�
 Session把事务控制从数据访问层提升到了业务逻辑层，使程序员不需要管理数据库连接就可进行事务控制，但即便如此，显式的事务控制代码还是太模板化，显得有点冗余。因此，AppContext类提供了DoTransactional方法，调用这个方法，传入一个委托作为参数，这个委托中的代码就会在事务中执行。配合C# 3.0新增的lambda表达式的特性，事务控制的代码就能变得十分简洁。
 
 ````C#
-	context.DoTransactional(session => {
-        // ACID operations...
-    });
+context.DoTransactional(session => {
+    // ACID operations...
+});
 ````
 
 ### LINQ查询
 
-查询是发生最频繁的数据库操作，本框架使用Linq作为标准查询API，因此适用于Linq的写法，大部分都可用于本框架中的数据库查询。要使用Linq查询，首先要获得一个IQueryable对象，Session中的GetAll方法就是获得一个默认的IQueryable对象的方法，它表示返回指定实体类所有对象的默认查询。我们可以在这个默认的查询上调用Where方法，传入一个lambda表达式作为谓词，就得到一个具有指定的筛选条件的查询，比如：
+查询是发生最频繁的数据库操作，本框架使用LINQ作为标准查询API，因此适用于LINQ的写法，大部分都可用于本框架中的数据库查询。要使用LINQ查询，首先要获得一个IQueryable对象，Session中的GetAll方法就是获得一个默认的IQueryable对象的方法，它表示返回指定实体类所有对象的默认查询。我们可以在这个默认的查询上调用Where方法，传入一个lambda表达式作为谓词，就得到一个具有指定的筛选条件的查询，比如：
 
 ````C#
-	var query = session.GetAll<Student>().Where(s => s.StuName == "Vincent");
+var query = session.GetAll<Student>().Where(s => s.StuName == "Vincent");
 ````
 
 上面的查询返回所有名字为Vincent的Student对象。我们还可以在新的查询对象上继续调用Where方法进一步地筛选结果，或者调用Select方法对结果作投影操作，最终会形成一连串的链式方法调用，如：
 
 ````C#
-	var query = session.GetAll<Student>()
-        .Where(s => s.StuName == "Vincent")
-        .Where(s => s.StuAge > 18)
-        .Select(s => new { s.StuName, s.StuAge });
+var query = session.GetAll<Student>()
+    .Where(s => s.StuName == "Vincent")
+    .Where(s => s.StuAge > 18)
+    .Select(s => new { s.StuName, s.StuAge });
 ````
 
 上面的查询将返回所有名字为Vincent并且年龄大于18的学生的名字和年龄。C#还提供了一系列关键字，用于简化这种链式方法调用的编写，下面的查询与上面的链式调用是等效的。
 
 ````C#
-	var query = from s in session.GetAll<Student>()
-                where s.StuName == "Vincent"
-                where s.StuAge > 18
-                select new { s.StuName, s.StuAge };
+var query = from s in session.GetAll<Student>()
+            where s.StuName == "Vincent"
+            where s.StuAge > 18
+            select new { s.StuName, s.StuAge };
 ````
 
-可以看到，Linq与SQL在语法上具有一定的相似性，这对于熟悉SQL的程序员来说，只需略加学习就可上手使用。另外，本框架还支持了Linq中的连接查询、排序、分页等操作，这样，把各种操作组合在一起，就能实现一些比较复杂的查询，如：
+可以看到，LINQ与SQL在语法上具有一定的相似性，这对于熟悉SQL的程序员来说，只需略加学习就可上手使用。另外，本框架还支持了LINQ中的连接查询、排序、分页等操作，这样，把各种操作组合在一起，就能实现一些比较复杂的查询，如：
 
 ````C#
-	var query = session.GetAll<Student>()
-	    .Where(s => s.StuAge > 18 && s.StuAge < 20)
-	    .OrderBy(s => s.StuAge)
-	    .ThenBy(s => s.Id)
-	    .Skip(2)
-	    .Take(2);
+var query = session.GetAll<Student>()
+    .Where(s => s.StuAge > 18 && s.StuAge < 20)
+    .OrderBy(s => s.StuAge)
+    .ThenBy(s => s.Id)
+    .Skip(2)
+    .Take(2);
 ````
 
-使用Linq查询，不仅可以避免直接在代码中编写SQL，而且受益于编译期检查，写出类型安全的查询也会比较容易。
+使用LINQ查询，不仅可以避免直接在代码中编写SQL，而且受益于编译期检查，写出类型安全的查询也会比较容易。
 
 ### SQL查询
 
-无论Linq有多么方便，它始终无法完全代替SQL。因为由程序生成的的SQL对DBA十分不友好，难以进行优化，在一些特殊的场景中，还是有在SQL粒度上进行性能优化的需求，但又不希望失去ORM带来的便利性。这也是Hibernate早期希望HQL作为面向对象的查询语言，能够完全取代SQL的使用，但后来又不得不提供SQL查询相关的API的原因。
+无论LINQ有多么方便，它始终无法完全代替SQL。因为由程序生成的的SQL对DBA十分不友好，难以进行优化，在一些特殊的场景中，还是有在SQL粒度上进行性能优化的需求，但又不希望失去ORM带来的便利性。这也是Hibernate早期希望HQL作为面向对象的查询语言，能够完全取代SQL的使用，但后来又不得不提供SQL查询相关的API的原因。
 
 使用SQL查询，首先要通过Session的CreateSQLQuery方法创建一个SQL查询对象，然后指定SQL语句以及查询参数，最后调用ExecuteGetEntity或ExecuteGetList方法，指定类型参数，就可以执行查询，并且将查询结果直接转化为对象。
 
 ````C#
-	ISqlQuery query = session.CreateSqlQuery();
-    query.SqlText = "select * from student where stu_name=?";
-    query.Parameters = new object[] { "Vincent" };
+ISqlQuery query = session.CreateSqlQuery();
+query.SqlText = "select * from student where stu_name=?";
+query.Parameters = new object[] { "Vincent" };
 
-    List<Student> students = query.ExecuteGetList<Student>();
-    Shell.WriteLine(student.Courses.Count.ToString());
+List<Student> students = query.ExecuteGetList<Student>();
+Shell.WriteLine(student.Courses.Count.ToString());
 ````
 
 上面的查询从数据库中取出姓名为Vincent的Student对象。懒加载在使用SQL查询的时候也能起到作用，上面的SQL命令中并没有显式查询出任何与课程有关的信息，但是student.Courses这句话却能够取出该学生选修的所有课程，这是懒加载机制在后台起作用，在调用student.Courses时，框架会通过该学生的ID从course表中查询出需要的数据。但是，这一切对程序员都是自动化而且透明的，程序员不需要做任何额外的操作。
@@ -312,27 +316,27 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 不同的数据库对于分页的处理是不同的，如MySQL使用limit子句，而Oracle是通过rownum进行分页。SqlQuery对这种情况也提供了一定的支持，只需要设置query对象的FirstResult以及PageSize属性的值，框架即可为你拼接好分页查询的SQL。
 
 ````C#
-	ISqlQuery query = session.CreateSqlQuery("select * from student where stu_age>?", 18);
-    query.FirstResult = 10;
-    query.PageSize = 10;
-    List<Student> students = query.ExecuteGetList<Student>();
+ISqlQuery query = session.CreateSqlQuery("select * from student where stu_age>?", 18);
+query.FirstResult = 10;
+query.PageSize = 10;
+List<Student> students = query.ExecuteGetList<Student>();
 ````
 
 有时候我们需要把查询结果封装到一个临时的类中，而这个类并没有配置Attribute元数据，因为你只打算使用它来临时保存数据，并不作为实体类使用。这时，使用SqlQuery中提供的ResultMap，在里面指定属性与SQL返回的字段的映射关系，就可以方便地完成结果封装，如：
 
 ````C#
-	class StudentInfo {
-        public string Name { get; set; }
-        public int Age { get; set; }
-    }
+class StudentInfo {
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
 
-    public void TestResultMap() {
-        ISqlQuery query = session.CreateSqlQuery("select stu_name, stu_age from student");
-        query.ResultMap = new Dictionary<string, string>();
-        query.ResultMap["Name"] = "stu_name";
-        query.ResultMap["Age"] = "stu_age";
-        List<StudentInfo> students = query.ExecuteGetList<StudentInfo>();
-    }
+public void TestResultMap() {
+    ISqlQuery query = session.CreateSqlQuery("select stu_name, stu_age from student");
+    query.ResultMap = new Dictionary<string, string>();
+    query.ResultMap["Name"] = "stu_name";
+    query.ResultMap["Age"] = "stu_age";
+    List<StudentInfo> students = query.ExecuteGetList<StudentInfo>();
+}
 ````
 
 ## 主要技术难点与实现方式
@@ -344,173 +348,108 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 我们先抽象出一个IDbHelper接口，它是本框架的基础模块，为上层的Session以及查询等模块提供支持。抽象出接口的好处显而易见，可以使上层模块不依赖于DbHelper模块的具体实现，并且可以在不同的实现中切换。此接口需要具备的功能包括，数据库连接管理、事务管理、SQL命令预处理、基本的命令执行方法等等。为了统一参数化SQL的使用方式，我们选择了问号置位符的方式，对于使用参数名的数据库，在各自的实现类中进行转换即可。
 
 ````C#
-	public interface IDbHelper {
-        string ConnectionString { get; set; }
-        IDialect Dialect { get; }
-        DbConnection NewConnection();
-        DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
-        DbDataAdapter NewDataAdapter(DbCommand cmd);
-        bool InTransaction();
-        void BeginTransaction();
-        void CommitTransaction();
-        void RollbackTransaction();
-        int ExecuteNonQuery(string sqlText, params object[] parameters);
-        object ExecuteScalar(string sqlText, params object[] parameters);
-        T ExecuteReader<T>(string sqlText, object[] parameters, Func<DbDataReader, T> func);
-        DataSet ExecuteGetDataSet(string sqlText, params object[] parameters);
-        DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
-        void DoInCurrentTransaction(Action<DbConnection, DbTransaction> action);
-        T DoInCurrentTransaction<T>(Func<DbConnection, DbTransaction, T> func);
-    }
+public interface IDbHelper {
+    string ConnectionString { get; set; }
+    IDialect Dialect { get; }
+    DbConnection NewConnection();
+    DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+    DbDataAdapter NewDataAdapter(DbCommand cmd);
+    bool InTransaction();
+    void BeginTransaction();
+    void CommitTransaction();
+    void RollbackTransaction();
+    int ExecuteNonQuery(string sqlText, params object[] parameters);
+    object ExecuteScalar(string sqlText, params object[] parameters);
+    T ExecuteReader<T>(string sqlText, object[] parameters, Func<DbDataReader, T> func);
+    DataSet ExecuteGetDataSet(string sqlText, params object[] parameters);
+    DataTable ExecuteGetDataTable(string sqlText, params object[] parameters);
+    void DoInCurrentTransaction(Action<DbConnection, DbTransaction> action);
+    T DoInCurrentTransaction<T>(Func<DbConnection, DbTransaction, T> func);
+}
 ````
 
 抽象出一个确定的接口之后，不同数据库的DbHelper类只需要实现这个接口，就可以为上层模块提供服务了。但是，不同数据库的操作方式虽然存在差异，但还是有许多相同的逻辑，比如数据库连接管理与事务管理，其实无论什么数据库都是相同的逻辑，区别只是创建数据库连接的方式不同而已。因此，我们将这些相同的逻辑提取出来，放到一个抽象的基类BaseHelper中，再把不同的逻辑声明为抽象方法，在各自的子类中分别实现，这就是基于继承的代码复用技术——模版方法（Template Method）设计模式。
 
 ````C#
-	public abstract class BaseHelper : IDbHelper {
-        public abstract IDialect Dialect { get; }
-        public abstract DbConnection NewConnection();
-        public abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
-        public abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
+public abstract class BaseHelper : IDbHelper {
+    public abstract IDialect Dialect { get; }
+    public abstract DbConnection NewConnection();
+    public abstract DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters);
+    public abstract DbDataAdapter NewDataAdapter(DbCommand cmd);
 
-        public string ConnectionString { get; set; }
+    public string ConnectionString { get; set; }
 
-        protected BaseHelper() { }
+    protected BaseHelper() { }
 
-        protected BaseHelper(string connStr) {
-            this.ConnectionString = connStr;
-        }
-
-        protected class Bundle {
-            public DbConnection Connection { get; set; }
-            public DbTransaction Transaction { get; set; }
-            public int Tier { get; set; }
-        }
-
-        protected ThreadLocal<Bundle> local = new ThreadLocal<Bundle>();
-
-        protected int GetTransactionTier() {
-            return InTransaction() ? local.Value.Tier : 0;
-        }
-
-        public virtual bool InTransaction() {
-            return local.IsValueCreated && local.Value != null;
-        }
-
-        public virtual void BeginTransaction() {
-            if (GetTransactionTier() == 0) {
-                Bundle bundle = new Bundle();
-                bundle.Connection = NewConnection();
-                bundle.Connection.Open();
-                bundle.Transaction = bundle.Connection.BeginTransaction();
-                bundle.Tier = 1;
-                local.Value = bundle;
-            } else {
-                local.Value.Tier++;
-            }
-        }
-
-        public virtual void CommitTransaction() {
-            int tier = GetTransactionTier();
-            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
-            if (tier == 1) {
-                Bundle bundle = local.Value;
-                local.Value = null;
-                bundle.Transaction.Commit();
-                bundle.Connection.Close();
-            } else {
-                local.Value.Tier--;
-            }
-        }
-
-        public virtual void RollbackTransaction() {
-            int tier = GetTransactionTier();
-            if (tier == 0) throw new InvalidOperationException("非法操作，事务尚未开启。");
-            if (tier == 1) {
-                Bundle bundle = local.Value;
-                local.Value = null;
-                bundle.Transaction.Rollback();
-                bundle.Connection.Close();
-            } else {
-                local.Value.Tier--;
-            }
-        }
-
-        public virtual int ExecuteNonQuery(string sqlText, params object[] parameters) {
-            if (InTransaction()) {
-                Bundle bundle = local.Value;
-                return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
-            } else {
-                using (DbConnection conn = NewConnection()) {
-                    conn.Open();
-                    return PrepareCommand(conn, null, sqlText, parameters).ExecuteNonQuery();
-                }
-            }
-        }
-
-		// 省略其他方法的实现
+    protected BaseHelper(string connStr) {
+        this.ConnectionString = connStr;
     }
+
+    public virtual int ExecuteNonQuery(string sqlText, params object[] parameters) {
+        if (InTransaction()) {
+            Bundle bundle = local.Value;
+            return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
+        } else {
+            using (DbConnection conn = NewConnection()) {
+                conn.Open();
+                return PrepareCommand(conn, null, sqlText, parameters).ExecuteNonQuery();
+            }
+        }
+    }
+
+	// 省略其他方法的实现
+}
 ````
 
-由于篇幅限制，这里只展示了BaseHelper类的一部分——事务管理。可以看到，已实现的方法里面调用了一些抽象方法，比如NewConnection、PrepareCommand，这些抽象方法将留待子类实现。有了BaseHelper的大部分公共代码，具体的DbHelper类就只需要实现它自己特有的那一部分就好了，下面是MySqlHelper的实现。
+由于篇幅限制，这里只展示了BaseHelper类的一小部分。可以看到，已实现的方法里面调用了一些抽象方法，比如NewConnection、PrepareCommand，这些抽象方法将留待子类实现。有了BaseHelper的大部分公共代码，具体的DbHelper类就只需要实现它自己特有的那一部分就好了，下面是MySqlHelper的实现。
 
 ````C#
-	public class MySqlHelper : BaseHelper {
-        private IDialect _Dialect;
+public class MySqlHelper : BaseHelper {
+    public MySqlHelper(string connStr) : base(connStr) { }
 
-        public override IDialect Dialect { get { return _Dialect; } }
+    public override DbConnection NewConnection() {
+        return new MySqlConnection(ConnectionString);
+    }
 
-        public MySqlHelper(string connStr) : base(connStr) {
-            _Dialect = new MySqlDialect();
+    public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
+        DbCommand cmd = new MySqlCommand(sqlText, conn, trans);
+        if (parameters != null && parameters.Length != 0) {
+            AddParamsToCmd(cmd as MySqlCommand, parameters);
         }
+        return cmd;
+    }
 
-        public override DbConnection NewConnection() {
-            return new MySqlConnection(ConnectionString);
-        }
+    public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
+        return new MySqlDataAdapter(cmd as MySqlCommand);
+    }
 
-        public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
-            DbCommand cmd = new MySqlCommand();
-            if (conn != null) cmd.Connection = conn;
-            if (trans != null) cmd.Transaction = trans;
-
-            cmd.CommandText = sqlText;
-            if (parameters != null && parameters.Length != 0) {
-                AddParamsToCmd(cmd as MySqlCommand, parameters);
+    private void AddParamsToList(List<object> arr, ICollection parameters) {
+        foreach (object param in parameters) {
+            if (param is ICollection && !(param is byte[])) {
+                AddParamsToList(arr, param as ICollection);
+            } else {
+                if(param == null)
+                    throw new NotSupportedException("查询参数列表中有元素为null。");
+                arr.Add(param == null ? DBNull.Value : param);
             }
-            return cmd;
-        }
-
-        public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
-            return new MySqlDataAdapter(cmd as MySqlCommand);
-        }
-
-        private void AddParamsToList(List<object> arr, ICollection parameters) {
-            foreach (object param in parameters) {
-                if (param is ICollection && !(param is byte[])) {
-                    AddParamsToList(arr, param as ICollection);
-                } else {
-                    if(param == null)
-                        throw new NotSupportedException("查询参数列表中有元素为null。");
-                    arr.Add(param == null ? DBNull.Value : param);
-                }
-            }
-        }
-
-        private void AddParamsToCmd(MySqlCommand cmd, object[] parameters) {
-            List<object> arr = new List<object>();
-            AddParamsToList(arr, parameters);
-
-            StringBuilder sb = new StringBuilder();
-            string[] temp = cmd.CommandText.Split('?');
-            for (int i = 0; i < temp.Length - 1; i++) {
-                string paramName = "@param" + i;
-                sb.Append(temp[i] + paramName);
-                cmd.Parameters.AddWithValue(paramName, arr[i]);
-            }
-            sb.Append(temp[temp.Length - 1]);
-            cmd.CommandText = sb.ToString();
         }
     }
+
+    private void AddParamsToCmd(MySqlCommand cmd, object[] parameters) {
+        List<object> arr = new List<object>();
+        AddParamsToList(arr, parameters);
+
+        StringBuilder sb = new StringBuilder();
+        string[] temp = cmd.CommandText.Split('?');
+        for (int i = 0; i < temp.Length - 1; i++) {
+            string paramName = "@param" + i;
+            sb.Append(temp[i] + paramName);
+            cmd.Parameters.AddWithValue(paramName, arr[i]);
+        }
+        sb.Append(temp[temp.Length - 1]);
+        cmd.CommandText = sb.ToString();
+    }
+}
 ````
 
 可以看到，对于NewConnection、NewDataAdapter等方法的实现，我们只是简单地创建了一个MySqlConnection或者MySQLDataAdapter对象。在PrepareCommand方法的实现中，我们调用了AddParamsToCmd方法，把问号置位符表示的参数化SQL字符串转换为以参数名表示的形式，将具体的查询参数以名-值对的形式添加到MySqlCommand对象中。
@@ -518,45 +457,35 @@ Session把事务控制从数据访问层提升到了业务逻辑层，使程序�
 OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHelper类似，但对于PrepareCommand方法，却有着不同的实现。因为Oracle数据库本来就是使用问号置位符，因此不需要特别的转换，只需要将参数添加到OleDbCommand对象中即可。
 
 ````C#
-	public class OracleHelper : BaseHelper {
-        private IDialect _Dialect;
+public class OracleHelper : BaseHelper {
+    public OracleHelper(string connStr) : base(connStr) { }
 
-        public override IDialect Dialect { get { return _Dialect; } }
+    public override DbConnection NewConnection() {
+        return new OleDbConnection(ConnectionString);
+    }
 
-        public OracleHelper(string connStr) : base(connStr) {
-            _Dialect = new OracleDialect();
+    public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
+        DbCommand cmd = new OleDbCommand(sqlText, conn,  trans);
+        if (parameters != null && parameters.Length != 0) {
+            AddParamsToCmd(cmd as OleDbCommand, parameters);
         }
+        return cmd;
+    }
 
-        public override DbConnection NewConnection() {
-            return new OleDbConnection(ConnectionString);
-        }
+    public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
+        return new OleDbDataAdapter(cmd as OleDbCommand);
+    }
 
-        public override DbCommand PrepareCommand(DbConnection conn, DbTransaction trans, string sqlText, params object[] parameters) {
-            DbCommand cmd = new OleDbCommand();
-            if (conn != null) cmd.Connection = conn;
-            if (trans != null) cmd.Transaction = trans;
-
-            cmd.CommandText = sqlText;
-            if (parameters != null && parameters.Length != 0) {
-                AddParamsToCmd(cmd as OleDbCommand, parameters);
-            }
-            return cmd;
-        }
-
-        public override DbDataAdapter NewDataAdapter(DbCommand cmd) {
-            return new OleDbDataAdapter(cmd as OleDbCommand);
-        }
-
-        private void AddParamsToCmd(OleDbCommand cmd, ICollection parameters) {
-            foreach (object param in parameters) {
-                if (param is ICollection && !(param is byte[])) {
-                    AddParamsToCmd(cmd, param as ICollection);
-                } else {
-                    cmd.Parameters.AddWithValue(null, param == null ? DBNull.Value : param);
-                }
+    private void AddParamsToCmd(OleDbCommand cmd, ICollection parameters) {
+        foreach (object param in parameters) {
+            if (param is ICollection && !(param is byte[])) {
+                AddParamsToCmd(cmd, param as ICollection);
+            } else {
+                cmd.Parameters.AddWithValue(null, param == null ? DBNull.Value : param);
             }
         }
     }
+}
 ````
 
 最终，这一系列的类与接口形成了如下图的继承结构。IDbHelper接口规定了一个DbHelper类所具有的基本功能，抽象类BaseHelper继承了IDbHelper接口，实现了部分可重用的方法，把其他方法声明为抽象方法，MySqlHelper和OracleHelper继承了BaseHelper类，各自实现了BaseHelper中的抽象方法。
@@ -566,9 +495,9 @@ OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHel
 现在我们已经有了不同的DbHelper类，要如何把它们应用到框架中来呢？我们是通过配置化来实现这一点的。在配置文件中配置好要使用的DbHelper类所在的程序集及其命名空间限定类名，如将DbHelperAssembly设置为FrameDAL.dll，将DbHelperClass设置为FrameDAL.DbHelper.MySqlHelper。AppContext类在加载配置文件后，会根据配置的内容使用反射创建指定的DbHelper对象。
 
 ````C#
-	Assembly assembly = Assembly.LoadFrom(config.DbHelperAssembly);
-	Type type = assembly.GetType(config.DbHelperClass, true);
-	IDbHelper db = Activator.CreateInstance(type) as IDbHelper;
+Assembly assembly = Assembly.LoadFrom(config.DbHelperAssembly);
+Type type = assembly.GetType(config.DbHelperClass, true);
+IDbHelper db = Activator.CreateInstance(type) as IDbHelper;
 ````
 
 如此，就可以通过配置化的方式解除程序代码与具体数据库的耦合，而且，这种设计对于第三方扩展也是友好的。如果要扩展此框架，增加对其他数据库的支持，可以另外编写一个实现了IDbHelper接口的类（可以选择从BaseHelper类继承，也可以完全重新实现），然后在配置文件中配置好改类所属的程序集及其类名就可以了。这种设计符合设计模式中的开闭原则（OCP），即对扩展开放，对修改封闭。
@@ -580,94 +509,92 @@ OracleHelper中对于NewConnection、NewDataAdapter等方法的实现与MySqlHel
 在一个Student类中，有两个属性，一个是普通属性Name，另一个是关联属性Course，因为Course的数据存在于另一个表，把所有数据都查询出来会有一定的性能开销，因此希望对这个属性开启懒加载，等到真正需要的时候才进行查询。为了实现这一点，我们在返回查询结果的时候，并不直接返回一个Student对象，而是另外创建一个它的子类StudentProxy，返回这个子类的对象。
 
 ````C#
-	public class Student {
-        public virtual string Name { get; set; }
-        public virtual List<Course> Courses { get; set; }
+public class Student {
+    public virtual string Name { get; set; }
+    public virtual List<Course> Courses { get; set; }
+}
+
+public class StudentProxy : Student {
+    public override string Name {
+        get { return base.Name; }
+        set { base.Name = value; }
     }
 
-    public class StudentProxy : Student {
-        public override string Name {
-            get { return base.Name; }
-            set { base.Name = value; }
+    public override List<Course> Courses {
+        get {
+            if(base.Courses == null) {
+                base.Courses = LoadCoursesFromDatabase();
+            }
+            return base.Courses;
         }
 
-        private List<Course> courses;
-
-        public override List<Course> Courses {
-            get {
-                if(courses == null) {
-                    courses = LoadCoursesFromDatabase();
-                }
-                return courses;
-            }
-
-            set {
-                courses = value;
-            }
+        set {
+            base.Courses = value;
         }
     }
+}
 ````
 
-StudentProxy重写了Student中的两个属性，因为Name属性不需要懒加载，因此只是简单地对父类中的属性进行调用。而Courses属性的访问器却有所不同，当Courses属性被访问时，程序首先检查对象中是否已存在courses数据，若不存在，则从数据库中加载相应的信息。若Courses属性没有被使用过，则永远也不会再次访问数据库。这就是使用代理模式实现懒加载的基本原理。这种实现方式对于程序员是透明的，程序员获得的虽然是StudentProxy而不是Student的对象，但是它们具有相同的接口，因此对外的表现是完全一致的。这种基于继承的代理模式，要求被代理的方法必须是可重写的，这就是框架要求实体类不可使用sealed修饰符，而且开启懒加载的字段必须使用virtual关键字的原因，这是因为sealed关键字会阻止继承，非virtual的属性无法被重写。
+StudentProxy重写了Student中的两个属性，因为Name属性不需要懒加载，因此只是简单地对父类中的属性进行调用。而Courses属性的访问器却有所不同，当Courses属性被访问时，程序首先检查对象中是否已存在数据，若不存在，则从数据库中加载相应的信息。若Courses属性没有被使用过，则永远也不会再次访问数据库。这就是使用代理模式实现懒加载的基本原理。这种实现方式对于程序员是透明的，程序员获得的虽然是StudentProxy而不是Student的对象，但是它们具有相同的接口，因此对外的表现是完全一致的。这种基于继承的代理模式，要求被代理的方法必须是可重写的，这就是框架要求实体类不可使用sealed修饰符，而且开启懒加载的字段必须使用virtual关键字的原因，这是因为sealed关键字会阻止继承，非virtual的属性无法被重写。
 
 静态代理的技术虽然实现简单，但是却无法真正应用到ORM框架的懒加载实现中，因为静态代理需要为每一个类都编写一个代理子类，框架显然不能要求程序员自己来编写这些代理类。这时候动态代理的作用就体现出来了，动态代理可以在运行时生成IL代码，创建指定类的代理子类。实现动态代理，可以使用C#反射类库中内置的Emit，也可以使用第三方的动态代理工具。这里我们选用了著名的开源项目Castle中的DynamicProxy工具，下面是一段示例代码：
 
 ````C#
-	public T CreateEntityProxy<T>() where T : class {
-        ProxyGenerator generator = new ProxyGenerator();
-        IEnumerable<string> propNames = GetLazyPropertiesFromConfiguration();
-        return generator.CreateClassProxy<T>(new EntityInterceptor(propNames));
+public T CreateEntityProxy<T>() where T : class {
+    ProxyGenerator generator = new ProxyGenerator();
+    IEnumerable<string> propNames = GetLazyPropertiesFromConfiguration();
+    return generator.CreateClassProxy<T>(new EntityInterceptor(propNames));
+}
+
+public class EntityInterceptor : IInterceptor {
+    private Dictionary<string, bool> initMap;
+
+    public EntityInterceptor(IEnumerable<string> propNames) {
+        initMap = propNames.ToDictionary(s => s, s => false);
     }
 
-    public class EntityInterceptor : IInterceptor {
-        private Dictionary<string, bool> initMap;
+    public void Intercept(IInvocation invocation) {
+        string methodName = invocation.Method.Name;
+        object target = invocation.InvocationTarget;
+        Type targetType = invocation.TargetType;
+        string propName = methodName.Substring(4);
 
-        public EntityInterceptor(IEnumerable<string> propNames) {
-            initMap = propNames.ToDictionary(s => s, s => false);
-        }
-
-        public void Intercept(IInvocation invocation) {
-            string methodName = invocation.Method.Name;
-            object target = invocation.InvocationTarget;
-            Type targetType = invocation.TargetType;
-            string propName = methodName.Substring(4);
-
-            if (methodName.StartsWith("get_") && initMap.ContainsKey(propName) && !initMap[propName]) {
-                PropertyInfo prop = targetType.GetProperties().Where(p => p.Name == propName).First();
-                object result = LoadDataFromDatabase();
-                prop.SetValue(target, result);
-                invocation.ReturnValue = prop.GetValue(target, null);
-            } else {
-                invocation.Proceed();
-                if (methodName.StartsWith("set_") && initMap.ContainsKey(propName)) {
-                    initMap[propName] = true;
-                }
+        if (methodName.StartsWith("get_") && initMap.ContainsKey(propName) && !initMap[propName]) {
+            PropertyInfo prop = targetType.GetProperties().Where(p => p.Name == propName).First();
+            object result = LoadDataFromDatabase();
+            prop.SetValue(target, result);
+            invocation.ReturnValue = prop.GetValue(target, null);
+        } else {
+            invocation.Proceed();
+            if (methodName.StartsWith("set_") && initMap.ContainsKey(propName)) {
+                initMap[propName] = true;
             }
         }
     }
+}
 ````
 
-在Castle的创建的动态代理对象中，保存了一个IInterceptor拦截器的引用，代理类重写了父类的所有方法，在这些方法中调用了拦截器的Intercept方法，由拦截器来指定具体要执行的代码。因此，我们需要自己编写一个拦截器类，统一实现代理子类的拦截逻辑。上面的代码先从映射配置中读取出需要进行懒加载的属性的集合，然后创建一个拦截器，将这个集合传进拦截器中，再使用这个拦截器创建一个代理类的对象。
+在Castle创建的动态代理对象中，保存了一个IInterceptor拦截器的引用，代理类重写了父类的所有方法，在这些方法中调用了拦截器的Intercept方法，由拦截器来指定具体要执行的代码。因此，我们需要自己编写一个拦截器类，统一实现代理子类的拦截逻辑。上面的代码先从映射配置中读取出需要进行懒加载的属性的集合，然后创建一个拦截器，将这个集合传进拦截器中，再使用这个拦截器创建一个代理类的对象。
 
 拦截器的构造方法中初始化了一个Dictionary对象，它将所有属性的初始化标记设置为false，表示尚未从数据库中读取到数据。Intercept方法中的内容就是真正执行拦截的操作，它通过方法的名称判断当前被拦截的是哪个属性，拦截的是get访问器还是set访问器。当拦截到get访问器，并且正好是需要进行懒加载的字段（即存在于initMap中），而且initMap中保存的初始化标记为false时，就从数据库中查询出所需的数据，手工调用该属性的set访问器保存数据并将initMap中的标记设置为true，表示已经加载过数据，再设置方法的返回值。当下次再拦截到该get访问器的时候，因为initMap中的标记已经设置为true，因此不会再做额外的操作，而是直接调用Proceed方法执行被代理类原本应有的逻辑。
 
 这样，使用动态代理技术，不需要重复地编写代理类，只需要编写一个可重用的拦截器，即可实现透明的懒加载机制。当然，上面的代码只是最简单的示例，在实际应用中，还有许多复杂的问题要处理，由于篇幅所限，就不一一列举了。
 
-### Linq表达式解析与SQL生成
+### LINQ表达式解析与SQL生成
 
-C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表达式就是解析这个树形结构。下面以一个简单的Linq查询为例，介绍表达式树的具体结构以及解析方法。有如下查询：
+C#会把LINQ查询表达式转换成一个树形结构，因此，解析LINQ表达式就是解析这个树形结构。下面以一个简单的LINQ查询为例，介绍表达式树的具体结构以及解析方法。有如下查询：
 
 ````C#
-	session.GetAll<Student>()
-		.Where(s => s.StuName==”Vincent”)
-		.Select(s => new {s.StuName, s.StuAge})
+session.GetAll<Student>()
+	.Where(s => s.StuName==”Vincent”)
+	.Select(s => new {s.StuName, s.StuAge});
 ````
 
-这个查询表达式是一个普通的链式操作，这个链式操作的最后一个方法调用是Select方法，它就是这颗表达式树的根节点，节点类型是MethodCallExpression。对Select方法的调用传递了两个参数，第一个参数也是一个MethodCallExpression，它表示前面的Where方法的调用，第二个参数是一个lambda表达式。继续对前面的Where方法调用进行分析，它也具有两个参数，第一个参数是一个表示默认查询的常量节点，第二个参数也是一个lambda表达式，它是一个谓词，表示了查询的筛选条件。将这颗表达式树表示为图形的方式如下，在图中，每个方框表示一个表达式节点，方框中有三行文字，第一行是该节点的节点类型，第二行是该节点所表示的Linq表达式，第三行是从该节点解析出来的SQL文本。
+这个查询表达式是一个普通的链式操作，这个链式操作的最后一个方法调用是Select方法，它就是这颗表达式树的根节点，节点类型是MethodCallExpression。对Select方法的调用传递了两个参数，第一个参数也是一个MethodCallExpression，它表示前面的Where方法的调用，第二个参数是一个lambda表达式。继续对前面的Where方法调用进行分析，它也具有两个参数，第一个参数是一个表示默认查询的常量节点，第二个参数也是一个lambda表达式，它是一个谓词，表示了查询的筛选条件。将这颗表达式树表示为图形的方式如下，在图中，每个方框表示一个表达式节点，方框中有三行文字，第一行是该节点的节点类型，第二行是该节点所表示的LINQ表达式，第三行是从该节点解析出来的SQL文本。
 
 ![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/expression-parsing.png)
 
-在解析Linq表达式时，我们后序遍历这颗表达式树。步骤如下：
+在解析LINQ表达式时，我们后序遍历这颗表达式树。步骤如下：
 
 1. 访问表达式开头的常量节点session.GetAll<Student>()，它表示一个默认的查询，因此将它翻译为select * from student。
 2. 访问Where方法的第二个参数——即作为筛选条件的lambda表达式s => s.StuName=="Vincent"。这个lambda表达式的表达式体是一个二元表达式，它表示一个相等比较操作，它的左操作数是一个成员访问表达式，可以从中解析出字段名stu_name，右操作数是一个表示参数的常量表达式。最后，我们把左操作数和右操作数结合起来，加上等号比较符，组成了SQL的一个片段stu_name='Vincent'。
@@ -675,11 +602,11 @@ C#会把Linq查询表达式转换成一个树形结构，因此，解析Linq表�
 4. 访问Select方法的第二个参数，即lambda表达式s => new {s.StuName, s.StuAge}。这个二元表达式的表达式体是一个MemberInitExpression，我们可以从这里得知它使用到了stu_name、stu_age两个字段。
 5. 访问Select方法调用，即表达式树的根节点。把前两步的结果组合起来，形成最终的SQL：select stu_name, stu_age from student where stu_name='Vincent'。
 
-然而，上面的分析只是最理想的情况，并且省略了许多小细节。实际上，我们要解析的Linq表达式远远比这复杂，生成SQL也不是仅仅拼接字符串那么容易。为了降低这些复杂性，我们还引入了SQL表达式树的概念，这是一种和Linq表达式树类似的树形结构。比如，上面的Linq表达式最终会被翻译为如下图的SQL表达式树。
+然而，上面的分析只是最理想的情况，并且省略了许多小细节。实际上，我们要解析的LINQ表达式远远比这复杂，生成SQL也不是仅仅拼接字符串那么容易。为了降低这些复杂性，我们还引入了SQL表达式树的概念，这是一种和LINQ表达式树类似的树形结构。比如，上面的LINQ表达式最终会被翻译为如下图的SQL表达式树。
 
 ![](https://raw.githubusercontent.com/vincentlauvlwj/FrameDAL/master/thesis/sql-expression.png)
 
-可以看到，最终生成的SQL具有很明显的嵌套层级，虽然在语义上没有错误，但它并没有理想中那么简洁优雅，它显然还有很大的优化空间。关于解析Linq表达式的解析与SQL生成的算法，我们还有很长的路要走。
+可以看到，最终生成的SQL具有很明显的嵌套层级，虽然在语义上没有错误，但它并没有理想中那么简洁优雅，它显然还有很大的优化空间。关于解析LINQ表达式的解析与SQL生成的算法，我们还有很长的路要走。
 
 ## 成果
 
