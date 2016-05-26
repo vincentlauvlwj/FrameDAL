@@ -307,7 +307,7 @@ ISqlQuery query = session.CreateSqlQuery();
 query.SqlText = "select * from student where stu_name=?";
 query.Parameters = new object[] { "Vincent" };
 
-List<Student> students = query.ExecuteGetList<Student>();
+Student student = query.ExecuteGetEntity<Student>();
 Shell.WriteLine(student.Courses.Count.ToString());
 ````
 
@@ -388,7 +388,8 @@ public abstract class BaseHelper : IDbHelper {
     public virtual int ExecuteNonQuery(string sqlText, params object[] parameters) {
         if (InTransaction()) {
             Bundle bundle = local.Value;
-            return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters).ExecuteNonQuery();
+            return PrepareCommand(bundle.Connection, bundle.Transaction, sqlText, parameters)
+                .ExecuteNonQuery();
         } else {
             using (DbConnection conn = NewConnection()) {
                 conn.Open();

@@ -28,9 +28,10 @@ namespace ResumeFactory
         private static void RunUnitTest()
         {
             // LinqTest test = new LinqTest();
-            StudentTest test = new StudentTest();
+            // StudentTest test = new StudentTest();
+            TraditionalTest test = new TraditionalTest();
             // test.Run();
-            test.Debug(test.TestResultMap);
+            test.Debug(test.TestAddStudent);
         }
 
         private static void RunResumeFactory()

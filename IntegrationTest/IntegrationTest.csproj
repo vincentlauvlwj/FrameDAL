@@ -51,6 +51,10 @@
       <HintPath>bin\Debug\IrisSkin4.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualBasic.PowerPacks.Vs, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="MySql.Data, Version=5.2.3.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\MySql.Data.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -284,6 +288,7 @@
     <Compile Include="Service\ReportGenerator\IReportGenerator.cs" />
     <Compile Include="BaseTest.cs" />
     <Compile Include="StudentTest.cs" />
+    <Compile Include="TraditionalTest.cs" />
     <EmbeddedResource Include="Common\FormPopListBox.resx">
       <DependentUpon>FormPopListBox.cs</DependentUpon>
     </EmbeddedResource>
