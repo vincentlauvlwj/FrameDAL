@@ -125,6 +125,8 @@ namespace FrameDAL.Core
             List<object> parameters = new List<object>();
             foreach (PropertyInfo prop in entity.GetType().GetCachedProperties())
             {
+                IdAttribute id = prop.GetIdAttribute();
+                if (id != null && id.GeneratorType == GeneratorType.Identity) continue;
                 ColumnAttribute col = prop.GetColumnAttribute();
                 if (col != null && !col.ReadOnly)
                 {
@@ -300,7 +302,8 @@ namespace FrameDAL.Core
             if (db.InTransaction())
             {
                 object id = entity.GetType().GetIdProperty().GetValue(entity, null);
-                if (id == null || (long)db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), id) == 0)
+                object count = db.ExecuteScalar(db.Dialect.GetCheckExistSql(entity.GetType()), id);
+                if (id == null || Convert.ToInt64(count) == 0)
                 {
                     Add(entity, enableCascade);
                 }

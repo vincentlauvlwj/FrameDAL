@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using MySql.Data.MySqlClient;
+using System.Data.OleDb;
 
 namespace ResumeFactory
 {
@@ -45,15 +46,15 @@ namespace ResumeFactory
         {
             // 创建实体对象
             Class clazz = new Class();
-            clazz.Id = 1;
+            clazz.Id = 10000;
             clazz.ClassName = "信息工程";
 
             Course course = new Course();
-            course.Id = 2;
+            course.Id = 20000;
             course.CourseName = "数据库原理";
 
             Student student = new Student();
-            student.Id = 3;
+            student.Id = 30000;
             student.StuName = "Vincent";
             student.StuAge = 20;
 
@@ -82,6 +83,52 @@ namespace ResumeFactory
 
             sql = "insert into stu_course (stu_id, course_id) values (" + stuCourse.StuId + ", " + stuCourse.CourseId + ")";
             cmd = new MySqlCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+
+            conn.Close();
+        }
+
+        public void TestAddStudentAccess()
+        {
+            // 创建实体对象
+            Class clazz = new Class();
+            clazz.Id = 10000;
+            clazz.ClassName = "信息工程";
+
+            Course course = new Course();
+            course.Id = 20000;
+            course.CourseName = "数据库原理";
+
+            Student student = new Student();
+            student.Id = 30000;
+            student.StuName = "Vincent";
+            student.StuAge = 20;
+
+            // 手动设置关联关系
+            student.ClassId = clazz.Id;
+            StuCourse stuCourse = new StuCourse();
+            stuCourse.StuId = student.Id;
+            stuCourse.CourseId = course.Id;
+
+            // 拼接SQL进行操作数据库
+            OleDbConnection conn = new OleDbConnection("Provider=Microsoft.Jet.OLEDB.4.0;Data Source=StuCourse.mdb");
+            conn.Open();
+
+            string sql = "insert into class (id, class_name) values (" + clazz.Id + ", '" + clazz.ClassName + "')";
+            OleDbCommand cmd = new OleDbCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+
+            sql = "insert into course (id, course_name) values (" + course.Id + ", '" + course.CourseName + "')";
+            cmd = new OleDbCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+
+            sql = "insert into student (id, stu_name, stu_age, class_id) "
+                + "values (" + student.Id + ", '" + student.StuName + "', " + student.StuAge + ", " + student.ClassId + ")";
+            cmd = new OleDbCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+
+            sql = "insert into stu_course (stu_id, course_id) values (" + stuCourse.StuId + ", " + stuCourse.CourseId + ")";
+            cmd = new OleDbCommand(sql, conn);
             cmd.ExecuteNonQuery();
 
             conn.Close();

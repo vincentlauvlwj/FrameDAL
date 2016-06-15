@@ -60,6 +60,8 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\TableAttribute.cs" />
     <Compile Include="Config\Configuration.cs" />
+    <Compile Include="DbHelper\AccessHelper.cs" />
+    <Compile Include="Dialect\AccessDialect.cs" />
     <Compile Include="Linq\LinqQuery.cs" />
     <Compile Include="Linq\LinqQueryProvider.cs" />
     <Compile Include="Linq\Translation\AggregateParser.cs" />

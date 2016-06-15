@@ -50,6 +50,8 @@ namespace FrameDAL.Dialect
             int count = 0;
             foreach (PropertyInfo prop in type.GetCachedProperties())
             {
+                IdAttribute id = prop.GetIdAttribute();
+                if (id != null && id.GeneratorType == GeneratorType.Identity) continue;
                 ColumnAttribute col = prop.GetColumnAttribute();
                 if (col != null && !col.ReadOnly)
                 {
@@ -87,6 +89,7 @@ namespace FrameDAL.Dialect
             int count = 0;
             foreach (PropertyInfo prop in type.GetCachedProperties())
             {
+                if (prop.GetIdAttribute() != null) continue;
                 ColumnAttribute col = prop.GetColumnAttribute();
                 if (col != null && !col.ReadOnly)
                 {
