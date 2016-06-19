@@ -26,42 +26,53 @@ namespace FrameDAL.Core
         /// <summary>
         /// 获得该Query所依赖的Session对象
         /// </summary>
-        public ISession Session { get { return session; } }
+        public virtual ISession Session { get { return session; } }
 
         private SessionImpl session;
 
-        internal SqlQueryImpl(SessionImpl session)
+        public SqlQueryImpl() : this(null) { }
+
+        internal SqlQueryImpl(ISession session)
         {
-            this.session = session;
+            this.session = session as SessionImpl;
+        }
+
+        internal SqlQueryImpl(ISession session, SqlQueryImpl other) : this(session)
+        {
+            this.FirstResult = other.FirstResult;
+            this.PageSize = other.PageSize;
+            this.Parameters = other.Parameters;
+            this.ResultMap = other.ResultMap;
+            this.SqlText = other.SqlText;
         }
 
         /// <summary>
         /// 获得或设置该Query的SQL命令
         /// </summary>
-        public string SqlText { get; set; }
+        public virtual string SqlText { get; set; }
 
         /// <summary>
         /// 获得或设置SQL命令的参数
         /// </summary>
-        public object[] Parameters { get; set; }
+        public virtual object[] Parameters { get; set; }
 
-        public Dictionary<string, string> ResultMap { get; set; }
+        public virtual Dictionary<string, string> ResultMap { get; set; }
 
         /// <summary>
         /// 当进行分页查询时，获得或设置返回的第一条结果的索引，该索引从0开始
         /// </summary>
-        public int FirstResult { get; set; }
+        public virtual int FirstResult { get; set; }
 
         /// <summary>
         /// 当进行分页查询时，获得或设置返回的结果数量。当设置为0时，返回全部结果，不进行分页。该属性默认为0
         /// </summary>
-        public int PageSize { get; set; }
+        public virtual int PageSize { get; set; }
 
         /// <summary>
         /// 执行非查询操作
         /// </summary>
         /// <returns>当事务已开启，执行操作，返回受影响的行数。当事务未开启，将操作放入缓冲区，返回null</returns>
-        public int? ExecuteNonQuery()
+        public virtual int? ExecuteNonQuery()
         {
             if(session.DbHelper.InTransaction())
             {
@@ -80,7 +91,7 @@ namespace FrameDAL.Core
         /// 获得一个标量值，即查询结果的第一行第一列的值
         /// </summary>
         /// <returns>返回一个标量，若没有结果，返回null</returns>
-        public object ExecuteScalar()
+        public virtual object ExecuteScalar()
         {
             return session.DbHelper.ExecuteScalar(SqlText, Parameters);
         }
@@ -89,7 +100,7 @@ namespace FrameDAL.Core
         /// 执行查询，返回数据集
         /// </summary>
         /// <returns>返回数据集</returns>
-        public DataSet ExecuteGetDataSet()
+        public virtual DataSet ExecuteGetDataSet()
         {
             string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
             return session.DbHelper.ExecuteGetDataSet(sql, Parameters);
@@ -99,7 +110,7 @@ namespace FrameDAL.Core
         /// 执行查询，返回数据表
         /// </summary>
         /// <returns>返回数据表</returns>
-        public DataTable ExecuteGetDataTable()
+        public virtual DataTable ExecuteGetDataTable()
         {
             string sql = session.DbHelper.Dialect.GetPagingSql(SqlText, FirstResult, PageSize);
             return session.DbHelper.ExecuteGetDataTable(sql, Parameters);
@@ -129,7 +140,7 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回对象列表，若没有结果，返回长度为0的列表</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public List<T> ExecuteGetList<T>() where T : class, new()
+        public virtual List<T> ExecuteGetList<T>() where T : class, new()
         {
             return ExecuteGetList<T>(AppContext.Instance.Configuration.EnableLazy);
         }
@@ -178,7 +189,7 @@ namespace FrameDAL.Core
             }
         }
 
-        public List<T> ExecuteGetList<T>(bool enableLazy) where T : class, new()
+        public virtual List<T> ExecuteGetList<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = new List<T>();
             DataTable dt = ExecuteGetDataTable();
@@ -247,12 +258,12 @@ namespace FrameDAL.Core
         /// </typeparam>
         /// <returns>返回一个对象，若没有找到，返回null</returns>
         /// <see cref="FrameDAL.Attributes.ColumnAttribute"/>
-        public T ExecuteGetEntity<T>() where T : class, new()
+        public virtual T ExecuteGetEntity<T>() where T : class, new()
         {
             return ExecuteGetEntity<T>(AppContext.Instance.Configuration.EnableLazy);
         }
 
-        public T ExecuteGetEntity<T>(bool enableLazy) where T : class, new()
+        public virtual T ExecuteGetEntity<T>(bool enableLazy) where T : class, new()
         {
             List<T> results = ExecuteGetList<T>(enableLazy);
             return results.Count > 0 ? results[0] : null;

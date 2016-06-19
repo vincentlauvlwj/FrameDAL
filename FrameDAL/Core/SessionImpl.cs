@@ -54,7 +54,9 @@ namespace FrameDAL.Core
 
         private Queue<CacheBundle> cache;
 
-        internal SessionImpl(IDbHelper db)
+        public SessionImpl() : this (null) { }
+
+        public SessionImpl(IDbHelper db)
         {
             this.db = db;
             IsClosed = false;
@@ -74,7 +76,7 @@ namespace FrameDAL.Core
         /// 返回一个bool值，指示是否已在此会话上开启事务
         /// </summary>
         /// <returns>事务已开启返回true，否则返回false</returns>
-        public bool InTransaction()
+        public virtual bool InTransaction()
         {
             return DbHelper.InTransaction();
         }
@@ -83,7 +85,7 @@ namespace FrameDAL.Core
         /// 开启事务，具体的实现依赖于IDbHelper.BeginTransaction()方法
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void BeginTransaction()
+        public virtual void BeginTransaction()
         {
             CheckSessionStatus();
             DbHelper.BeginTransaction();
@@ -93,7 +95,7 @@ namespace FrameDAL.Core
         /// 提交事务，具体的实现依赖于DbHelper
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void CommitTransaction()
+        public virtual void CommitTransaction()
         {
             CheckSessionStatus();
             DbHelper.CommitTransaction();
@@ -103,7 +105,7 @@ namespace FrameDAL.Core
         /// 回滚事务，具体的实现依赖于DbHelper
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void RollbackTransaction()
+        public virtual void RollbackTransaction()
         {
             CheckSessionStatus();
             DbHelper.RollbackTransaction();
@@ -115,7 +117,7 @@ namespace FrameDAL.Core
         /// <param name="entity">实体对象</param>
         /// <returns>插入成功后，返回主键值</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public object Add(object entity)
+        public virtual object Add(object entity)
         {
             return Add(entity, AppContext.Instance.Configuration.EnableCascade);
         }
@@ -219,7 +221,7 @@ namespace FrameDAL.Core
             }
         }
 
-        public object Add(object entity, bool enableCascade)
+        public virtual object Add(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
@@ -263,7 +265,7 @@ namespace FrameDAL.Core
         /// </summary>
         /// <param name="entity">要更新的实体</param>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Update(object entity)
+        public virtual void Update(object entity)
         {
             Update(entity, AppContext.Instance.Configuration.EnableCascade);
         }
@@ -275,7 +277,7 @@ namespace FrameDAL.Core
             return parameters;
         }
 
-        public void Update(object entity, bool enableCascade)
+        public virtual void Update(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
@@ -291,12 +293,12 @@ namespace FrameDAL.Core
             }
         }
 
-        public void Save(object entity)
+        public virtual void Save(object entity)
         {
             Save(entity, AppContext.Instance.Configuration.EnableCascade);
         }
 
-        public void Save(object entity, bool enableCascade)
+        public virtual void Save(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
@@ -323,7 +325,7 @@ namespace FrameDAL.Core
         /// </summary>
         /// <param name="entity">要删除的实体</param>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Delete(object entity)
+        public virtual void Delete(object entity)
         {
             Delete(entity, AppContext.Instance.Configuration.EnableCascade);
         }
@@ -354,7 +356,7 @@ namespace FrameDAL.Core
             }
         }
 
-        public void Delete(object entity, bool enableCascade)
+        public virtual void Delete(object entity, bool enableCascade)
         {
             CheckSessionStatus();
             if (db.InTransaction())
@@ -377,12 +379,12 @@ namespace FrameDAL.Core
         /// <param name="id">主键值</param>
         /// <returns>返回获得的实体，若没有结果，返回null</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public T Get<T>(object id) where T : class, new()
+        public virtual T Get<T>(object id) where T : class, new()
         {
             return Get<T>(id, AppContext.Instance.Configuration.EnableLazy);
         }
 
-        public T Get<T>(object id, bool enableLazy) where T : class, new()
+        public virtual T Get<T>(object id, bool enableLazy) where T : class, new()
         {
             CheckSessionStatus();
             Dictionary<string, string> resultMap;
@@ -397,7 +399,7 @@ namespace FrameDAL.Core
         /// 刷新缓存，把缓存中的非查询操作全部送到数据库中执行
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void AcceptChanges()
+        public virtual void AcceptChanges()
         {
             CheckSessionStatus();
             if (cache.Count == 0) return;
@@ -418,8 +420,9 @@ namespace FrameDAL.Core
             }
         }
 
-        public LinqQuery<T> GetAll<T>()
+        public virtual IQueryable<T> GetAll<T>()
         {
+            CheckSessionStatus();
             return new LinqQuery<T>(new LinqQueryProvider(this));
         }
 
@@ -428,7 +431,7 @@ namespace FrameDAL.Core
         /// </summary>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public ISqlQuery CreateSqlQuery()
+        public virtual ISqlQuery CreateSqlQuery()
         {
             CheckSessionStatus();
             return new SqlQueryImpl(this);
@@ -441,7 +444,7 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL命令参数</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public ISqlQuery CreateSqlQuery(string sqlText, params object[] parameters)
+        public virtual ISqlQuery CreateSqlQuery(string sqlText, params object[] parameters)
         {
             CheckSessionStatus();
             ISqlQuery query = CreateSqlQuery();
@@ -457,7 +460,7 @@ namespace FrameDAL.Core
         /// <param name="parameters">SQL参数值</param>
         /// <returns>返回Query对象</returns>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public ISqlQuery CreateNamedSqlQuery(string name, params object[] parameters)
+        public virtual ISqlQuery CreateNamedSqlQuery(string name, params object[] parameters)
         {
             CheckSessionStatus();
             ISqlQuery query = CreateSqlQuery();
@@ -470,7 +473,7 @@ namespace FrameDAL.Core
         /// 释放Session对象占有的资源，与Close()方法效果相同
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Dispose()
+        public virtual void Dispose()
         {
             Close();
         }
@@ -479,7 +482,7 @@ namespace FrameDAL.Core
         /// 关闭Session，Session关闭时，若已开启事务但未提交，会自动回滚事务。若缓冲区不为空，会刷新缓冲区
         /// </summary>
         /// <exception cref="InvalidOperationException">Session已关闭或在其他的线程使用此Session</exception>
-        public void Close()
+        public virtual void Close()
         {
             /*CheckSessionStatus();
             if (db.InTransaction())

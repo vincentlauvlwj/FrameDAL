@@ -59,18 +59,17 @@ namespace ResumeFactory
     {
         public void TestAddStudent()
         {
-            AppContext context = AppContext.Instance;
-            using (ISession session = context.OpenSession())
-            {
-                Student student = new Student();
-                student.StuName = "Vincent";
-                student.StuAge = 20;
-                student.Class = new Class { ClassName = "信息工程" };
-                student.Courses = new List<Course>();
-                student.Courses.Add(new Course() { CourseName = "数据库原理" });
-
-                session.Add(student);
-            }
+            Student student = new Student();
+            student.StuName = "Vincent";
+            student.StuAge = 20;
+            student.Class = new Class { ClassName = "信息工程" };
+            student.Courses = new List<Course>();
+            student.Courses.Add(new Course() { CourseName = "数据库原理" });
+            // AppContext.Instance.ObjectOperator.Add(student);
+            IObjectOperator optr = AppContext.Instance.ObjectOperator;
+            var stu = optr.GetAll<Student>().Where(s => s.Id == 30002).Single();
+            stu.StuName = "Mary";
+            optr.Update(stu);
         }
 
         public void TestGetStudent()

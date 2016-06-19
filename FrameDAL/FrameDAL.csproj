@@ -60,6 +60,8 @@
     <Compile Include="Attributes\OneToManyAttribute.cs" />
     <Compile Include="Attributes\TableAttribute.cs" />
     <Compile Include="Config\Configuration.cs" />
+    <Compile Include="Core\IObjectOperator.cs" />
+    <Compile Include="Core\ITransactionControl.cs" />
     <Compile Include="DbHelper\AccessHelper.cs" />
     <Compile Include="Dialect\AccessDialect.cs" />
     <Compile Include="Linq\LinqQuery.cs" />

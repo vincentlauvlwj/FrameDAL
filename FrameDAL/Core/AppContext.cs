@@ -27,6 +27,8 @@ namespace FrameDAL.Core
     /// <see cref="FrameDAL.Config.Configuration"/>
     public class AppContext
     {
+        private static ProxyGenerator generator = new ProxyGenerator();
+
         private static Lazy<AppContext> instance = new Lazy<AppContext>(() =>
             {
                 Configuration config = new Configuration();
@@ -49,6 +51,7 @@ namespace FrameDAL.Core
         public IDbHelper DbHelper { get; private set; }
         public Configuration Configuration { get; private set; }
         public LogUtil LogUtil { get; private set; }
+        public IObjectOperator ObjectOperator { get; private set; }
 
         // 缓存了各种信息的Dictionary
         private Dictionary<Type, TableAttribute> tables = new Dictionary<Type,TableAttribute>();
@@ -78,13 +81,73 @@ namespace FrameDAL.Core
                 else
                 {
                     LogUtil = new LogUtil(config.LogFile, config.LogAppend);
-                    DbHelper = new ProxyGenerator().CreateClassProxy(type, new LogInterceptor(LogUtil)) as IDbHelper;
+                    DbHelper = generator.CreateClassProxy(type, new LogInterceptor(LogUtil)) as IDbHelper;
                 }
                 DbHelper.ConnectionString = config.ConnStr;
+                ObjectOperator = generator.CreateClassProxy<SessionImpl>(new SessionInterceptor());
             }
             catch (Exception e)
             {
                 throw new ConfigurationException("DbHelper初始化异常，请检查配置文件中是否正确配置DbHelperAssembly和DbHelperClass属性。" + e.Message, e);
+            }
+        }
+
+        private class SessionInterceptor : IInterceptor
+        {
+            public void Intercept(IInvocation invocation)
+            {
+                switch (invocation.Method.Name)
+                {
+                    case "Add":
+                    case "Update":
+                    case "Save":
+                    case "Delete":
+                    case "Get":
+                        using (ISession session = AppContext.Instance.OpenSession())
+                        {
+                            invocation.ReturnValue = invocation.Method.Invoke(session, invocation.Arguments);
+                            break;
+                        }
+                    case "CreateSqlQuery":
+                        if (invocation.Arguments == null || invocation.Arguments.Length == 0)
+                        {
+                            invocation.ReturnValue = generator.CreateClassProxy<SqlQueryImpl>(new SqlQueryInterceptor());
+                        }
+                        else
+                        {
+                            invocation.Proceed();
+                        }
+                        break;
+                    case "CreateNamedSqlQuery":
+                    case "GetAll":
+                        invocation.Proceed();
+                        break;
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+        }
+
+        private class SqlQueryInterceptor : IInterceptor
+        {
+            public void Intercept(IInvocation invocation)
+            {
+                switch (invocation.Method.Name)
+                {
+                    case "ExecuteNonQuery":
+                    case "ExecuteScalar":
+                    case "ExecuteGetDataSet":
+                    case "ExecuteGetDataTable":
+                        using (ISession session = AppContext.Instance.OpenSession())
+                        {
+                            SqlQueryImpl query = new SqlQueryImpl(session, invocation.InvocationTarget as SqlQueryImpl);
+                            invocation.ReturnValue = invocation.Method.Invoke(query, invocation.Arguments);
+                            break;
+                        }
+                    default:
+                        invocation.Proceed();
+                        break;
+                }
             }
         }
 
